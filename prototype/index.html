@@ -248,7 +248,11 @@ body{
 
 /* answer body (revealed) — model answers render on elevated white:
    the only white surface in the app IS the model answer (material code) */
-.answer{padding:14px 18px 0;background:var(--elevated);border-top:1px solid var(--rule-strong)}
+.answer{padding:14px 18px 0;background:var(--elevated);border-top:1px solid var(--rule-strong);
+  animation:unveil .2s ease-out}
+/* the one sanctioned "event" motion (D20): brief vertical uncover on reveal;
+   killed globally under prefers-reduced-motion */
+@keyframes unveil{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0)}}
 .earn{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:13px 0;margin:2px 0 16px}
 .earn .eh{display:flex;align-items:center;gap:7px;margin-bottom:9px}
 .earn .eh svg{width:15px;height:15px;color:var(--teal)}
@@ -322,7 +326,7 @@ body{
 .tray .tc b{color:var(--teal-ink);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .rate{display:flex;gap:9px;align-items:stretch}
 .rate button{flex:1;min-height:64px;padding:9px 5px;border-radius:12px;border:1.5px solid var(--rule-strong);background:var(--elevated);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .12s ease}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:transform .12s ease}
 .rate button:active{transform:scale(.96)}
 .rate .rl{font-weight:700;font-size:13.5px;line-height:1.15;text-align:center;color:var(--ink)}
 .rate .ri{font-size:10.5px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -349,7 +353,7 @@ mark.hl.cur{background:var(--amber-soft);color:var(--amber);box-shadow:0 0 0 1.5
 /* toast ack */
 .ack{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);
   background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:10px;
-  opacity:0;pointer-events:none;transition:all .2s ease;white-space:nowrap;z-index:40}
+  opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;white-space:nowrap;z-index:40}
 .ack.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ---- TODAY ---- */
