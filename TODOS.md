@@ -10,7 +10,7 @@ Source plan: `~/.gstack/projects/nirmitgoyal-DiploMate/nirmit-main-design-202607
 - **Why:** Approved eng-review scope trim (D2) deferred both out of v1 closed beta. Open beta cannot charge strangers or sustain release cadence without them.
 - **Pros:** Charge users at open-beta scale; every merge auto-lands on testers' phones; removes founder-in-the-loop for entitlements.
 - **Cons:** ~1–2 weeks (human) / ~2–3 days (CC); billing review adds Play submission risk; needs pricing decision (doc's Open Question 3) resolved first.
-- **Context:** v1 beta uses manual UPI pre-payments + hand-set entitlement flags in Firestore (T5 ops runbook) + manual `flutter build appbundle` uploads. The entitlement flag is in the schema from day one — this slice only adds payment rails and automation, no data-model change.
+- **Context:** v1 beta uses manual UPI pre-payments + hand-set entitlement flags in Neon Postgres (T5 ops runbook) + manual `flutter build appbundle` uploads. The entitlement flag is in the schema from day one — this slice only adds payment rails and automation, no data-model change.
 - **Depends on / blocked by:** Study-loop validation (leading metric green on ≥30 activated users); pricing model decision; content licensing signed.
 
 ## 2. FSRS migration (post-v1 scheduler upgrade)
@@ -39,3 +39,12 @@ Source plan: `~/.gstack/projects/nirmitgoyal-DiploMate/nirmit-main-design-202607
 - **Cons:** Founder time in channels (~days, not delegable to CC); risks exposing the product to content-dump communities pre-launch; Play closed-beta tester list management overhead.
 - **Context:** The 5-finalist Assignment (watch them use hide→reveal, get one pre-payment) stays qualitative and happens BEFORE code. This TODO is the quantitative cohort for the in-app metric, recruited via the "Conceptual Anesthesia" audience per the distribution plan.
 - **Depends on / blocked by:** The Assignment's pre-sale signal (don't recruit 30 before 1 person pre-pays); closed beta build on Play internal track.
+
+## 5. Migrate diagram images from Postgres bytea to object storage
+
+- **What:** Move WebP diagram scans out of Neon Postgres bytea columns into object storage (Neon Object Storage once GA, or Cloudflare R2) with entitlement-checked delivery; bundle semantics on the client stay identical.
+- **Why:** The 2026-07-03 Neon revision stores images as bytea so RLS gates ALL content (text + images) with zero extra services — correct for beta scale, but bytea images have a ceiling: DB size growth and egress cost as users × specialities grow.
+- **Pros:** Cheaper egress at scale (R2 egress is free); smaller database; faster bundle downloads via CDN; unlocks Neon Object Storage branch-with-DB story if GA by then.
+- **Cons:** Reintroduces a second storage system + a signed-URL/entitlement check component (Neon Function or CF Worker); migration script for existing content; two delivery paths during transition.
+- **Context:** Design doc D3 (revised) carries the `ponytail:` ceiling note. Trigger: monthly Neon egress or storage line item becomes noticeable, OR speciality count × pack size makes bundle fetches slow. Client repository pattern isolates the change — only the bundle-fetch implementation swaps.
+- **Depends on / blocked by:** Real scale signal (do NOT do this during beta); Neon Object Storage GA status check at that time.
