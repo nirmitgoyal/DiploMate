@@ -14,16 +14,19 @@ answer previews) and sell the unlock.
 ## UI (top → bottom)
 
 - Topbar title: `Anaesthesia`.
-- Breadcrumb: `Syllabus ›` + `8 chapters`.
+- Breadcrumb: `Syllabus ›` + `18 chapters`.
 - **Chapter rows** (title · meta · state · progress):
   1. `Airway Management` · `14 topics · offline ✓` · done · 57 %
   2. `General Anaesthesia — Pharmacology` · `18 topics` · locked
   3. `Regional Anaesthesia` · `16 topics` · locked
-  4. `Monitoring & Equipment` · `11 topics` · locked
-  5. `Obstetric Anaesthesia` · `13 topics` · locked
-  6. `Cardiac Anaesthesia` · `15 topics` · locked
-  7. `Critical Care & Ventilation` · `19 topics` · locked
-  8. `Pain Medicine` · `9 topics` · locked
+  4–18. locked: `Monitoring & Equipment` 11 · `Obstetric Anaesthesia` 13 ·
+  `Cardiac Anaesthesia` 15 · `Neuroanaesthesia` 12 · `Paediatric
+  Anaesthesia` 13 · `Critical Care & Ventilation` 19 · `Pain Medicine` 9 ·
+  `Trauma, Burns & Resuscitation` 10 · `Blood, Fluids & Transfusion` 8 ·
+  `Acid–Base & Electrolytes` 7 · `Anaesthesia for Comorbid Disease` 14 ·
+  `Day-care & Remote-location Anaesthesia` 6 · `Physics, Equipment &
+  Machines` 12 · `Statistics & Research Methodology` 5 · `Ethics, Consent &
+  Medicolegal` 6 (topic counts)
 - Row rendering by state:
   - **done** → tappable (→ Topics), progress bar at 57 %, right stat `8/14`
     over `recalled`.
@@ -40,6 +43,6 @@ shown so you can see the full syllabus — answers stay hidden until unlock.`
 
 ## Verify (manual, preview server)
 
-1. Row 1 → Topics; rows 2–8 → paywall sheet (no navigation).
+1. Row 1 → Topics; rows 2–18 → paywall sheet (no navigation).
 2. Locked rows show lock icon + `Locked` lozenge and no progress bar.
 3. Footer copy present; crumb count matches the row count.
