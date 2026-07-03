@@ -3,9 +3,13 @@
   "configurations": [
     {
       "name": "prototype",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4322", "--directory", "prototype"],
-      "port": 4322
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "python3 -m http.server ${PORT:-4322} --directory prototype"
+      ],
+      "port": 4322,
+      "autoPort": true
     }
   ]
 }

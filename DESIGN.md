@@ -115,7 +115,7 @@ maps to one of these steps. `sp` on device (respects system text scale).
 | --------- | ------ | -------------------- | --------------------------------------------------- |
 | `display` | 28px   | Serif 600            | Home title (`.tt.big`), sign-in wordmark            |
 | `title`   | 24px   | Serif 600            | Screen titles (`.tt`), the **question** (`.qtxt`)   |
-| `section` | 19px   | Serif 600            | Answer section heads (`.ah`), countdown, epigraph   |
+| `section` | 19px   | Serif 600            | Answer section heads (`.ah`)                        |
 | `body`    | 17px   | Serif 400 / 1.55–1.6 | Answer prose + list items (`.asec p`, `.asec li`)   |
 | `body-ui` | 15px   | Manrope 600          | Row titles (`.t1`), CTA labels                      |
 | `meta`    | 12.5px | Manrope 500–600      | Row subtitles (`.t2`), breadcrumb, secondary meta   |
@@ -234,8 +234,9 @@ gradient fills, no decorative color.
     icon + line, no fill, no border.
 - **Bottom navigation: three tabs — Home · Syllabus · Account** (Manrope 11px
   labels; active = `--teal-ink`). This **supersedes** D13's four-tab spec
-  (Today · Syllabus · Downloads · Account): the built prototype folds Downloads
-  into an Account row ("Downloads & storage"), and Topics/Bookmarks are stack
+  (Today · Syllabus · Downloads · Account): Downloads is no surface at all —
+  no tab, no screen, no Account row (struck 2026-07-03; offline state appears
+  inline on syllabus rows, "offline ✓") — and Topics/Bookmarks are stack
   children of their parent tab (Topics under Syllabus, Bookmarks under Home) —
   a child screen lights its parent tab. The Reader has **no** bottom nav (full
   focus on recall).
@@ -315,16 +316,13 @@ Nine screens + one sheet. Reference `prototype/index.html`.
    grouped, single-select radio, substring search with highlight + result count,
    Enter = pick top match. Continue disabled until one is chosen. Shown once;
    changeable **once** later from Account.
-3. **Home** — queue-first. Top matter is the **exam countdown as first-class
-   typeset text**: "12 due · 3 overdue · exam in 148 days" (overdue in `--amber`)
-   — the finalist's real dashboard, typeset like a chart header. Then greeting
-   ("Good morning, Ananya," name in `--teal-ink`) → primary CTA "View N
-   suggested answers" → ghost CTA "View your bookmarks" → "This Week" (two honest
-   stats) → **pinned resume row** (sticky above the nav, never scrolls away).
-   This countdown **supersedes** the earlier epigraph/quote top-matter: a
-   panic-mode finalist's cosmology is days-remaining, and no competitor prints
-   it this starkly. (Exam date is one optional Account field; the line degrades
-   to "12 due · 3 overdue" without it.)
+3. **Home** — queue-first. Top matter is the greeting ("Good morning, Ananya,"
+   name in `--teal-ink`) → primary CTA "View N suggested answers" (**hidden
+   entirely when N = 0** — no empty or disabled CTA; the ghost "View your
+   bookmarks" drops its top margin to close the gap) → ghost CTA "View your
+   bookmarks" → "This Week" (two honest stats) → **pinned resume row** (sticky
+   above the nav, never scrolls away). No countdown, no epigraph — both struck
+   (see Decisions Log 2026-07-03).
 4. **Syllabus** — chapter rows: title, topic count, offline note in the subtitle,
    and **recall progress as the loud right-side signal** ("8/14 recalled" in
    `--teal-ink`) — recall is the data, offline is a footnote. Locked chapters
@@ -340,14 +338,14 @@ Nine screens + one sheet. Reference `prototype/index.html`.
    - **After:** answer renders on **white** with the **examiner's red margin**
      (per-section mark weights). Anatomy: "What earns marks" outline → numbered
      serif sections → full-width diagram plate (with fullscreen viewer) →
-     summary. **Rating tray is pinned to the bottom** (Again · Hard · Good,
-     fixed order, interval hints, icon+label) with a "N done · M due" counter —
-     you never scroll back through the answer to rate (the in-flow tray forced
-     exactly the reread the product forbids). In-answer fuzzy search appears
+     summary → rating tray. **Rating tray is in-flow**, last thing in the
+     answer (Again · Hard · Good, fixed order, interval hints, icon+label)
+     with a "N done · M due" counter (D15 reversed — see Decisions Log).
+     In-answer fuzzy search appears
      **only after reveal** (never leaks answers). Diagram reproduction practice
      is post-v1 (D15).
-7. **Account** — identity → Exam speciality (one-time change) → Downloads &
-   storage → daily reminder → sign out → delete account (Play mandate).
+7. **Account** — identity → Exam speciality (one-time change) → daily
+   reminder → sign out → delete account (Play mandate).
 8. **Bookmarks** — saved questions as rows (question + `Chapter · Topic` source),
    reached from Home, lights the Home tab.
 9. **Paywall sheet** — locked contents (titles + counts, never previews) →
@@ -383,3 +381,5 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 | 2026-07-03 | Pre-reveal skeleton deferred to a post-beta A/B                                                                                                                                         | It changes what the recall metric measures; ship as a measured experiment, not a v1 guess                                                 |
 | 2026-07-03 | Rating tray pinned to bottom (was in-flow)                                                                                                                                              | In-flow tray forced scrolling back through the answer — the exact reread the product forbids (D15)                                        |
 | 2026-07-03 | Copy fixes: "streak-free"→"answers recalled"; "QnAs"→"answers"; nav "Ananya"→"Account"; false "Pinch to zoom"→"Tap to enlarge"; TAP block filed under Regional Anaesthesia (not Airway) | Register discipline + a content-taxonomy credibility bug in the demo data                                                                 |
+| 2026-07-03 | D15 reversed: rating tray back to in-flow (was pinned bottom)                                                                                                                           | Explicit user call, made aware of the reread tradeoff D15 documented                                                                      |
+| 2026-07-03 | Struck: Home exam-countdown top matter (Home opens at the greeting) and Account "Downloads & storage" row (no Downloads surface; offline state stays inline on syllabus rows)           | Founder call — prototype stands as built; all five sync-3 flagged items discarded                                                         |

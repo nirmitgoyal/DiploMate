@@ -311,9 +311,8 @@ body{
 /* reveal control (before) */
 .revealwrap{margin-top:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule);background:var(--paper)}
-/* rating tray (after) — pinned bottom (D15): rating never requires scrolling
-   back through the answer */
-.traywrap{flex-shrink:0;padding:10px 18px calc(12px + env(safe-area-inset-bottom));
+/* rating tray (after) — in-flow at bottom of answer content; scrolls with it */
+.traywrap{padding:10px 18px calc(12px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule-strong);background:var(--elevated)}
 .tray .tc{display:flex;align-items:center;justify-content:space-between;
   font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:9px}
@@ -352,12 +351,6 @@ mark.hl.cur{background:var(--amber-soft);color:var(--amber);box-shadow:0 0 0 1.5
 
 /* ---- TODAY ---- */
 .agenda{padding:8px 18px 4px}
-/* exam countdown — the finalist's real dashboard, typeset like a chart header */
-.count{font-family:'Source Serif 4',serif;font-size:19px;line-height:1.4;color:var(--ink-2);
-  font-weight:500;letter-spacing:-.005em;margin-bottom:9px}
-.count b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-.count .od{color:var(--amber)}
-.count .dot{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--ink-3);vertical-align:middle;margin:0 7px 3px}
 .agenda .hello{font-family:'Source Serif 4',serif;font-size:16px;font-weight:500;color:var(--ink-2);letter-spacing:-.01em;margin-bottom:7px}
 .agenda .hello b{color:var(--teal-ink);font-weight:600}
 .resume-sec{flex-shrink:0;background:var(--paper);border-top:1px solid var(--rule)}
@@ -569,18 +562,19 @@ function speciality(){
 </div>`;}
 
 /* ---- TODAY ---- */
-function today(){return `
+function today(){
+  const suggested = 12; // ponytail: placeholder count; wire to real recall-queue length when backend lands
+  return `
 <div class="pane" data-screen="today">
   ${statusbar()}
   <div class="topbar"><span class="tt big">Home</span></div>
   <div class="view">
     <div class="agenda" style="padding-top:10px">
-      <div class="count"><b>12</b> due<span class="dot"></span><b class="od">3</b> <span class="od">overdue</span><span class="dot"></span>exam in <b>148</b> days</div>
       <div class="hello">Good morning, <b>Ananya</b></div>
     </div>
     <div style="padding:14px 18px 4px">
-      <button class="cta" data-go="reader">${I.play}<span>View 12 suggested answers</span></button>
-      <button class="cta ghost" data-go="bookmarks" style="margin-top:10px">${I.bookmark}<span>View your bookmarks</span></button>
+      ${suggested>0?`<button class="cta" data-go="reader">${I.play}<span>View ${suggested} suggested answer${suggested===1?'':'s'}</span></button>`:''}
+      <button class="cta ghost" data-go="bookmarks"${suggested>0?' style="margin-top:10px"':''}>${I.bookmark}<span>View your bookmarks</span></button>
     </div>
     <div class="blk">
       <div class="kh"><span class="ovl2">This Week</span></div>
@@ -748,25 +742,25 @@ function reader(){return `
           <li>Block failure, transient femoral nerve palsy.</li>
         </ul></div>
       <div class="asec"><span class="mk-m">1</span><div class="ah">Summary line</div>
-        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p>
-        <div style="height:18px"></div></div>
+        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p></div>
+
+      <!-- rating tray (after) — in-flow at bottom of answer; scrolls with content -->
+      <div class="traywrap after-only" style="display:none">
+        <div class="tray">
+          <div class="tc"><span>How well did you recall it?</span><b>2 done · 10 due</b></div>
+          <div class="rate">
+            <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
+            <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
+            <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- reveal control (before) -->
   <div class="revealwrap before-only">
     <button class="cta reveal-btn">Reveal Answer</button>
-  </div>
-  <!-- rating tray (after) — pinned per D15: rate without scrolling back -->
-  <div class="traywrap after-only" style="display:none">
-    <div class="tray">
-      <div class="tc"><span>How well did you recall it?</span><b>2 done · 10 due</b></div>
-      <div class="rate">
-        <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
-        <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
-        <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
-      </div>
-    </div>
   </div>
   <div class="ack"></div>
 </div>`;}

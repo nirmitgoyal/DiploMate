@@ -2,6 +2,10 @@
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo).
+Status: **Implemented in the prototype (2026-07-03).** UI, matching, and
+lifecycle below match the implementation (search entry lives in the reader
+topbar; the answer's Summary section is an `.asec`, so it is in scope; diagram
+SVG sits outside the searched elements, so its labels are excluded as specified).
 
 ## What
 
