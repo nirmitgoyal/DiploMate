@@ -591,7 +591,7 @@ function today(){
     <div class="kh" style="padding:13px 18px 3px"><span class="ovl2">Pick up where you left off</span></div>
     <button class="row resume" data-go="reader">
       <span class="rbadge">${I.play}</span>
-      <div class="gr"><div class="t1">Airway Management</div><div class="t2">Topic 6 of 8 · Rapid sequence induction</div></div>
+      <div class="gr"><div class="t1">Airway Management</div><div class="t2">Topic 3 of 14 · Rapid sequence induction</div></div>
       ${I.chev}
     </button>
   </div>
@@ -607,14 +607,24 @@ function syllabus(){
     ['Monitoring &amp; Equipment','11 topics','lock',''],
     ['Obstetric Anaesthesia','13 topics','lock',''],
     ['Cardiac Anaesthesia','15 topics','lock',''],
+    ['Neuroanaesthesia','12 topics','lock',''],
+    ['Paediatric Anaesthesia','13 topics','lock',''],
     ['Critical Care &amp; Ventilation','19 topics','lock',''],
     ['Pain Medicine','9 topics','lock',''],
+    ['Trauma, Burns &amp; Resuscitation','10 topics','lock',''],
+    ['Blood, Fluids &amp; Transfusion','8 topics','lock',''],
+    ['Acid–Base &amp; Electrolytes','7 topics','lock',''],
+    ['Anaesthesia for Comorbid Disease','14 topics','lock',''],
+    ['Day-care &amp; Remote-location Anaesthesia','6 topics','lock',''],
+    ['Physics, Equipment &amp; Machines','12 topics','lock',''],
+    ['Statistics &amp; Research Methodology','5 topics','lock',''],
+    ['Ethics, Consent &amp; Medicolegal','6 topics','lock',''],
   ];
   return `
 <div class="pane" data-screen="syllabus">
   ${statusbar()}
   <div class="topbar"><span class="tt">Anaesthesia</span></div>
-  <div class="crumb">Syllabus ${I.chevR} <span style="color:var(--ink-2)">8 chapters</span></div>
+  <div class="crumb">Syllabus ${I.chevR} <span style="color:var(--ink-2)">18 chapters</span></div>
   <div class="view">
     ${rows.map(([t,s,st,pv])=>{
       if(st==='done') return `<div class="row" data-go="topics">
@@ -802,10 +812,10 @@ function bookmarks(){
   const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
   // [question, source]
   const rows=[
-    ['TAP block — anatomy, technique &amp; complications','Airway · Difficult airway'],
-    ['Rapid sequence induction — steps &amp; drug doses','Airway Management'],
-    ['Difficult airway algorithm (DAS 2015)','Airway · Difficult airway'],
-    ['Cricothyroidotomy — front-of-neck access','Airway Management'],
+    ['TAP block — anatomy, technique &amp; complications','Regional Anaesthesia · Truncal blocks'],
+    ['Rapid sequence induction — steps &amp; drug doses','Airway Management · Rapid sequence induction'],
+    ['Difficult airway algorithm (DAS 2015)','Airway Management · Difficult airway algorithm'],
+    ['Cricothyroidotomy — front-of-neck access','Airway Management · Cricothyroidotomy / front-of-neck'],
   ];
   return `
 <div class="pane" data-screen="bookmarks">
