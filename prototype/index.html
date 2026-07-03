@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DiploMate — Prototype (3 directions)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ RESET ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+svg{display:block}
+:root{
+  --desk:#2A2724; --desk-2:#211E1B; --label:#B7ADA0;
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* ============ DESK / PAGE ============ */
+body{
+  font-family:'Manrope',system-ui,sans-serif;
+  background:radial-gradient(120% 120% at 50% 0%, var(--desk) 0%, var(--desk-2) 100%);
+  color:var(--label); min-height:100vh; padding:28px 20px 64px;
+  -webkit-font-smoothing:antialiased;
+}
+.masthead{max-width:420px;margin:0 auto 22px}
+.masthead h1{font-family:'Source Serif 4',serif;font-weight:600;font-size:26px;color:#F3EEE6;letter-spacing:-.01em}
+.masthead .sub{font-size:13.5px;margin-top:5px;line-height:1.5;max-width:760px;color:#B7ADA0}
+.masthead .sub b{color:#E4DBCC;font-weight:600}
+
+/* global screen switcher */
+.switcher{max-width:420px;margin:18px auto 0;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.switcher .sw-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#8C837680;margin-right:4px;color:#8C8376}
+.switcher button{
+  font-size:12.5px;font-weight:600;color:#C7BEB1;padding:7px 13px;border-radius:8px;
+  border:1px solid #ffffff14;background:#ffffff08;transition:all .15s ease;
+}
+.switcher button:hover{background:#ffffff12;color:#F3EEE6}
+.switcher button.on{background:#F3EEE6;color:#211E1B;border-color:#F3EEE6}
+
+/* ============ PHONE RAIL ============ */
+.rail{max-width:420px;margin:22px auto 0;display:flex;gap:26px;justify-content:center;flex-wrap:wrap}
+.slot{width:344px;max-width:100%}
+.slot-cap{display:flex;align-items:baseline;gap:8px;margin:0 4px 11px}
+.slot-cap .k{font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;color:#F3EEE6}
+.slot-cap .d{font-size:12px;color:#9A9184;line-height:1.4}
+
+.phone{
+  width:344px;height:720px;border-radius:38px;padding:9px;
+  background:linear-gradient(160deg,#3a3631,#1c1a17);
+  box-shadow:0 1px 0 #ffffff1a inset, 0 24px 50px -14px #000000a0, 0 8px 20px -8px #00000090;
+  position:relative;
+}
+.screen{
+  position:absolute;inset:9px;border-radius:30px;overflow:hidden;
+  background:var(--paper);color:var(--ink);
+  font-size:15px;display:flex;flex-direction:column;
+}
+/* notch */
+.notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:112px;height:26px;
+  background:#141210;border-radius:0 0 15px 15px;z-index:60}
+
+/* scroll body */
+.view{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.view::-webkit-scrollbar{width:0}
+.pane{display:none;flex-direction:column}
+.pane.show{display:flex;flex:1;min-height:0}
+
+/* ============ THEME TOKENS ============ */
+/* A — Paper Ledger (warm light) */
+.dir-a{
+  --paper:#FAF6EF; --elevated:#FFFFFF; --sunk:#F3ECE0;
+  --ink:#1E1B17; --ink-2:#6E655A; --ink-3:#9A9081;
+  --rule:#E6DCCC; --rule-strong:#D8CCB6;
+  --teal:#0F766E; --teal-soft:#0f766e14; --teal-ink:#0B5A54;
+  --amber:#B45309; --amber-soft:#b4530912;
+  --danger:#B4271F; --ok:#1E7A46;
+  --nav-bg:#FBF8F2; --nav-rule:#EADFCD;
+}
+/* B — Clinical Chart (cool light) */
+.dir-b{
+  --paper:#F6F8FA; --elevated:#FFFFFF; --sunk:#EDF1F5;
+  --ink:#0E1626; --ink-2:#57657A; --ink-3:#8A97A8;
+  --rule:#E1E7EE; --rule-strong:#CFD8E2;
+  --teal:#0D8F86; --teal-soft:#0d8f8614; --teal-ink:#0A6E67;
+  --amber:#A85B10; --amber-soft:#a85b1012;
+  --danger:#B4271F; --ok:#1E7A46;
+  --nav-bg:#FBFCFD; --nav-rule:#E4EAF0;
+}
+/* C — Night Desk (warm dark) */
+.dir-c{
+  --paper:#19181A; --elevated:#211F22; --sunk:#141315;
+  --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#6E675C;
+  --rule:#302D31; --rule-strong:#3E3A3F;
+  --teal:#3ED8C4; --teal-soft:#3ed8c418; --teal-ink:#8CEBDD;
+  --amber:#F2B44C; --amber-soft:#f2b44c14;
+  --danger:#F08A82; --ok:#5FCF8A;
+  --nav-bg:#141315; --nav-rule:#2A282C;
+}
+
+/* ============ SHARED COMPONENTS ============ */
+.serif{font-family:'Source Serif 4',serif}
+.status{height:34px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px 0;font-size:12px;font-weight:600;color:var(--ink);flex-shrink:0;padding-top:4px}
+.status .r{display:flex;gap:5px;align-items:center}
+.status svg{width:15px;height:15px}
+
+/* top bar */
+.topbar{display:flex;align-items:center;gap:10px;padding:6px 18px 12px;flex-shrink:0}
+.topbar .tt{font-family:'Source Serif 4',serif;font-weight:600;font-size:22px;color:var(--ink);letter-spacing:-.01em}
+.topbar .tt.big{font-size:26px}
+.topbar .sp{flex:1}
+.iconbtn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--ink-2)}
+.iconbtn:hover{background:var(--sunk)}
+.iconbtn svg{width:21px;height:21px}
+
+/* breadcrumb */
+.crumb{padding:2px 18px 10px;font-size:11.5px;color:var(--ink-3);font-weight:600;letter-spacing:.01em;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.crumb svg{width:11px;height:11px;opacity:.6}
+.crumb button{color:var(--ink-3);padding:3px 3px;border-radius:5px;transition:color .12s ease}
+.crumb button:hover{color:var(--teal-ink)}
+.crumb button:active{opacity:.55}
+
+/* overline / small label */
+.ovl{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.dir-b .ovl{color:var(--teal);letter-spacing:.16em}
+
+/* section head in reader */
+.sech{font-family:'Source Serif 4',serif;font-weight:600;font-size:16.5px;color:var(--ink)}
+
+/* meta chips row */
+.meta{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-2);font-weight:600}
+.meta .dot{width:3px;height:3px;border-radius:50%;background:var(--ink-3)}
+.tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em}
+.tag.marks{background:var(--teal-soft);color:var(--teal-ink)}
+.tag.year{background:var(--sunk);color:var(--ink-2)}
+
+/* recall state pips */
+.pip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--ink-3)}
+.pip .b{width:7px;height:7px;border-radius:2px;background:var(--rule-strong)}
+.pip.due .b{background:var(--amber)}
+.pip.due{color:var(--amber)}
+.pip.good .b{background:var(--ok)}
+.pip.good{color:var(--ok)}
+
+/* bottom nav */
+.nav{height:64px;flex-shrink:0;display:flex;background:var(--nav-bg);border-top:1px solid var(--nav-rule);
+  padding-bottom:6px}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--ink-3);font-size:10.5px;font-weight:600}
+.nav button svg{width:22px;height:22px}
+.nav button.on{color:var(--teal)}
+.dir-a .nav button.on,.dir-b .nav button.on{color:var(--teal)}
+
+/* primary CTA (thumb zone) */
+.cta{width:100%;height:52px;border-radius:13px;background:var(--teal);color:#fff;
+  font-weight:700;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 6px 16px -6px var(--teal);transition:transform .12s ease}
+.dir-c .cta{color:#0C1413}
+.cta:active{transform:scale(.98)}
+.cta svg{width:19px;height:19px}
+.cta.ghost{background:transparent;color:var(--teal);box-shadow:none;border:1.5px solid var(--rule-strong)}
+.dir-c .cta.ghost{color:var(--teal)}
+
+/* generic row (no cards — rows + rules) */
+.row{display:flex;align-items:center;gap:13px;padding:15px 18px;border-bottom:1px solid var(--rule);
+  cursor:pointer;transition:background .12s ease}
+.row:hover{background:var(--sunk)}
+.row .gr{flex:1;min-width:0}
+.row .t1{font-weight:600;color:var(--ink);font-size:15px;letter-spacing:-.005em}
+.row .t2{font-size:12px;color:var(--ink-2);margin-top:3px;font-weight:500}
+.row .rt{font-size:12px;font-weight:600;color:var(--ink-3);text-align:right;white-space:nowrap}
+.chev{width:17px;height:17px;color:var(--ink-3);flex-shrink:0}
+
+/* progress bar (hairline) */
+.bar{height:3px;border-radius:2px;background:var(--rule);overflow:hidden;margin-top:9px}
+.bar i{display:block;height:100%;background:var(--teal);border-radius:2px}
+.dir-b .bar i{background:var(--teal)}
+
+/* download state lozenge */
+.lz{font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.lz svg{width:12px;height:12px}
+.lz.done{background:var(--teal-soft);color:var(--teal-ink)}
+.lz.lock{background:var(--sunk);color:var(--ink-3)}
+.lz.upd{background:var(--amber-soft);color:var(--amber)}
+.lz.fail{background:#b4271f14;color:var(--danger)}
+
+/* ---- SIGN IN ---- */
+.signin{flex:1;display:flex;flex-direction:column;padding:0 26px;text-align:center}
+.signin .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.wordmark{font-family:'Source Serif 4',serif;font-weight:600;font-size:30px;color:var(--ink);letter-spacing:-.02em}
+.wordmark b{color:var(--teal)}
+.signin .lede{font-family:'Source Serif 4',serif;font-size:18px;line-height:1.45;color:var(--ink-2);max-width:250px}
+.specimen{width:100%;border:1px solid var(--rule);border-radius:12px;background:var(--elevated);
+  padding:15px 16px;text-align:left;position:relative;overflow:hidden;margin-top:4px}
+.specimen .sq{font-family:'Source Serif 4',serif;font-size:13px;font-weight:600;color:var(--ink);line-height:1.35}
+.specimen .so{font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);margin:9px 0 5px}
+.specimen .sl{font-family:'Source Serif 4',serif;font-size:11.5px;color:var(--ink-2);line-height:1.5}
+.specimen .fade{position:absolute;left:0;right:0;bottom:0;height:38px;background:linear-gradient(transparent,var(--elevated))}
+.gbtn{height:52px;border-radius:13px;background:var(--elevated);border:1.5px solid var(--rule-strong);
+  display:flex;align-items:center;justify-content:center;gap:11px;font-weight:700;font-size:15px;color:var(--ink)}
+.gbtn:active{transform:scale(.98)}
+.gbtn svg{width:20px;height:20px}
+.signin .util{font-size:11.5px;color:var(--ink-3);line-height:1.5;padding:16px 8px 30px;font-weight:500}
+
+/* ---- SPECIALITY ONBOARDING ---- */
+.spec-head{padding:0 18px 12px;flex-shrink:0}
+.spec-lede{font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.5;color:var(--ink-2);margin-bottom:12px}
+.searchwrap{position:relative}
+.searchwrap>svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--ink-3);pointer-events:none}
+.spec-input{width:100%;height:46px;border-radius:11px;border:1.5px solid var(--rule-strong);background:var(--elevated);
+  color:var(--ink);font:600 16px 'Manrope',sans-serif;padding:0 14px 0 38px;outline:none;transition:border-color .12s ease;
+  -webkit-appearance:none;appearance:none}
+.spec-input::placeholder{color:var(--ink-3);font-weight:500}
+.spec-input:focus{border-color:var(--teal)}
+.spec-count{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:9px 2px 0;font-variant-numeric:tabular-nums}
+.spec-group{position:sticky;top:0;z-index:5;background:var(--paper);padding:13px 18px 7px;border-bottom:1px solid var(--rule)}
+.spec-row{width:100%;text-align:left;padding:13px 18px}
+.spec-row .typ{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:6px;background:var(--sunk);color:var(--ink-2);flex-shrink:0}
+.spec-row .okk{width:18px;height:18px;color:var(--teal);flex-shrink:0;display:none}
+.spec-row.sel{background:var(--teal-soft)}
+.spec-row.sel .t1{color:var(--teal-ink)}
+.spec-row.sel .typ{background:var(--teal);color:#fff}
+.dir-c .spec-row.sel .typ{color:#0C1413}
+.spec-row.sel .okk{display:block}
+.spec-row mark{background:var(--teal-soft);color:var(--teal-ink);border-radius:3px;padding:0 1px}
+.spec-empty{padding:34px 22px;text-align:center;font-size:13px;color:var(--ink-2);font-weight:500;line-height:1.55;display:none}
+.spec-note{text-align:center;font-size:11.5px;color:var(--ink-3);font-weight:600;padding-top:10px;line-height:1.4}
+.spec-note b{color:var(--ink-2)}
+.cta:disabled{opacity:.45;box-shadow:none;cursor:default}
+.cta:disabled:active{transform:none}
+.row[aria-disabled="true"]{opacity:.55;cursor:default}
+.row[aria-disabled="true"]:hover{background:transparent}
+
+/* ---- READER ---- */
+.reader-q{padding:4px 18px 16px}
+.reader-q .qtxt{font-family:'Source Serif 4',serif;font-size:20px;line-height:1.5;color:var(--ink);font-weight:600;letter-spacing:0;margin-bottom:14px}
+.prompt{margin:2px 18px 0;padding:13px 15px;border-radius:11px;background:var(--teal-soft);
+  border:1px solid var(--teal-soft);display:flex;gap:10px;align-items:flex-start}
+.prompt svg{width:17px;height:17px;color:var(--teal);flex-shrink:0;margin-top:1px}
+.prompt .pt{font-size:13px;line-height:1.45;color:var(--teal-ink);font-weight:600}
+.attempt{font-size:11px;color:var(--ink-3);font-weight:600;text-align:center;padding:14px 0 6px;letter-spacing:.02em}
+.attempt b{color:var(--ink-2)}
+
+/* answer body (revealed) */
+.answer{padding:0 18px}
+.earn{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:13px 0;margin:2px 0 16px}
+.earn .eh{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.earn .eh svg{width:15px;height:15px;color:var(--teal)}
+.earn .eh span{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.earn ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.earn li{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);font-weight:500}
+.earn li b{color:var(--ink);font-weight:600}
+.earn li .mk{font-variant-numeric:tabular-nums;color:var(--teal-ink);font-weight:700;font-size:11.5px}
+.asec{margin-bottom:16px}
+.asec .ah{font-family:'Source Serif 4',serif;font-weight:700;font-size:14px;color:var(--ink);margin-bottom:5px;
+  display:flex;align-items:baseline;gap:8px}
+.asec .an{font-size:10px;font-weight:700;color:var(--teal);font-family:'Manrope';letter-spacing:.04em}
+.asec p{font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:var(--ink-2)}
+.asec p b{color:var(--ink);font-weight:600}
+.asec ul.body{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:5px}
+.asec ul.body li{font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.45;color:var(--ink-2);padding-left:15px;position:relative}
+.asec ul.body li::before{content:"";position:absolute;left:2px;top:9px;width:4px;height:4px;border-radius:50%;background:var(--teal)}
+
+/* diagram */
+.diagram{border:1px solid var(--rule);border-radius:12px;background:var(--elevated);padding:14px;margin:4px 0 8px}
+.diagram .dc{font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.diagram .dz{display:inline-flex;align-items:center;gap:4px;color:var(--teal);font-weight:700}
+.diagram .dz svg{width:13px;height:13px}
+
+/* reveal control (before) */
+.revealwrap{margin-top:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--rule);background:var(--paper)}
+/* rating tray (after) — in-flow at the bottom of the answer, not pinned */
+.tray{padding:16px 0 26px;margin-top:14px;border-top:1px solid var(--rule)}
+.tray .tc{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);text-align:center;margin-bottom:10px}
+.rate{display:flex;gap:9px;align-items:stretch}
+.rate button{flex:1;min-height:64px;padding:9px 5px;border-radius:12px;border:1.5px solid var(--rule-strong);background:var(--elevated);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .12s ease}
+.rate button:active{transform:scale(.96)}
+.rate .rl{font-weight:700;font-size:13.5px;line-height:1.15;text-align:center;color:var(--ink)}
+.rate .ri{font-size:10.5px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.rate .again{border-color:#b4271f30}.rate .again .rl{color:var(--danger)}
+.rate .hard{border-color:var(--amber)}.rate .hard .rl{color:var(--amber)}
+.rate .good{border-color:var(--teal)}.rate .good .rl{color:var(--teal-ink)}
+.rate svg{width:16px;height:16px;margin-bottom:1px}
+
+/* progress counter under reader */
+.rcount{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11.5px;font-weight:600;
+  color:var(--ink-3);padding:9px 0 2px;font-variant-numeric:tabular-nums}
+.rcount b{color:var(--teal-ink)}
+
+/* toast ack */
+.ack{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--paper);font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:10px;
+  opacity:0;pointer-events:none;transition:all .2s ease;white-space:nowrap;z-index:40}
+.ack.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---- TODAY ---- */
+.agenda{padding:8px 18px 4px}
+.agenda .big{font-family:'Source Serif 4',serif;font-size:34px;font-weight:600;color:var(--ink);letter-spacing:-.02em;line-height:1.05}
+.agenda .big b{color:var(--teal)}
+.agenda .hello{font-family:'Source Serif 4',serif;font-size:16px;font-weight:500;color:var(--ink-2);letter-spacing:-.01em;margin-bottom:7px}
+.agenda .hello b{color:var(--teal-ink);font-weight:600}
+.resume-sec{flex-shrink:0;background:var(--paper);border-top:1px solid var(--rule)}
+.resume{width:100%;text-align:left;border-bottom:none}
+.rbadge{width:38px;height:38px;border-radius:10px;background:var(--teal-soft);color:var(--teal);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rbadge svg{width:15px;height:15px}
+.agenda .sub{font-size:13.5px;color:var(--ink-2);margin-top:6px;font-weight:500;line-height:1.4}
+.blk{padding:16px 18px;border-bottom:1px solid var(--rule)}
+.blk .kh{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.blk .kh .ovl2{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.mini{display:flex;align-items:center;gap:11px}
+.mini .num{font-family:'Source Serif 4',serif;font-size:22px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.mini .ml{font-size:12px;color:var(--ink-2);font-weight:500;line-height:1.3}
+.prog-line{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
+.prog-line .pv{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---- ACCOUNT ---- */
+.acct-id{display:flex;align-items:center;gap:13px;padding:18px;border-bottom:1px solid var(--rule)}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--teal-soft);color:var(--teal-ink);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;font-family:'Source Serif 4',serif}
+.acct-id .an{font-weight:700;color:var(--ink);font-size:15.5px}
+.acct-id .ae{font-size:12px;color:var(--ink-2);margin-top:2px}
+.danger-row .t1{color:var(--danger)!important}
+
+/* ---- PAYWALL SHEET ---- */
+.scrim{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:70;border-radius:30px}
+.scrim.show{opacity:.5;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);border-radius:22px 22px 30px 30px;
+  z-index:80;transform:translateY(102%);transition:transform .28s cubic-bezier(.2,.8,.2,1);
+  max-height:88%;display:flex;flex-direction:column;box-shadow:0 -12px 30px -10px #00000050}
+.sheet.show{transform:translateY(0)}
+.sheet .grab{width:36px;height:4px;border-radius:2px;background:var(--rule-strong);margin:10px auto 4px}
+.sheet .sv{overflow-y:auto;padding:8px 20px 0}
+.sheet .sv::-webkit-scrollbar{width:0}
+.sheet h3{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.sheet .price{font-family:'Source Serif 4',serif;font-size:32px;font-weight:600;color:var(--ink);margin:14px 0 2px;font-variant-numeric:tabular-nums}
+.sheet .price small{font-size:14px;color:var(--ink-2);font-weight:500;font-family:'Manrope'}
+.incl{list-style:none;margin:14px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:6px 0}
+.incl li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13.5px;color:var(--ink-2);font-weight:500;line-height:1.4}
+.incl li svg{width:16px;height:16px;color:var(--teal);flex-shrink:0;margin-top:2px}
+.incl li b{color:var(--ink);font-weight:600}
+.howto{background:var(--sunk);border-radius:11px;padding:13px 15px;margin-bottom:14px}
+.howto .ht{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.howto p{font-size:13px;line-height:1.5;color:var(--ink-2);font-weight:500}
+.howto p b{color:var(--ink)}
+.sheet .foot{padding:12px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--rule);background:var(--paper)}
+.sheet .restore{text-align:center;font-size:13px;font-weight:600;color:var(--teal-ink);padding:12px 0 2px}
+.sheet .support{text-align:center;font-size:11.5px;color:var(--ink-3);padding-bottom:6px;font-weight:500}
+
+/* locked hint on syllabus */
+.locked .t1{color:var(--ink-2)}
+.locked .lockicon{width:15px;height:15px;color:var(--ink-3)}
+
+/* footer note */
+.footnote{max-width:420px;margin:34px auto 0;text-align:center;font-size:12px;color:#8C8376;line-height:1.6}
+.footnote b{color:#C7BEB1}
+@media(max-width:760px){.phone{transform:scale(.92);transform-origin:top center}}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>DiploMate — end-to-end prototype</h1>
+  <p class="sub"><b>Direction B · Clinical Chart</b> — chosen. Clinical-editorial study desk for DNB Anaesthesia theory prep: <b>no cards</b>, Source Serif 4 reading body + Manrope UI, medical-teal accent, queue-first Today, soft reveal gate. Tap through all screens — <b>Sign-in → Speciality → Today → Syllabus → Topics → Reader</b>. The <b>recall reveal + rating</b> flow is live. New: <b>unskippable speciality onboarding</b> after sign-in (61 DNB/DrNB options, substring search) — changeable <b>once</b> from Account.</p>
+</div>
+
+<div class="switcher" id="switcher">
+  <span class="sw-label">Go to screen</span>
+  <button data-jump="signin">Sign-in</button>
+  <button data-jump="speciality">Speciality</button>
+  <button data-jump="today" class="on">Today</button>
+  <button data-jump="syllabus">Syllabus</button>
+  <button data-jump="topics">Topics</button>
+  <button data-jump="reader">Reader / Recall</button>
+  <button data-jump="account">Account</button>
+  <button data-jump="__paywall">Paywall sheet</button>
+</div>
+
+<div class="rail" id="rail"></div>
+
+<p class="footnote">Navigate via the bottom nav, the rows, or the “Go to screen” chips above. The <b>recall reveal → rate</b> loop is live. Fonts load from Google Fonts CDN.<br><b>Direction B · Clinical Chart</b> locked — cool near-white, precise, small-caps labels. Dark mode (former Direction C) ships as this same product’s night theme via the D20 tokens.</p>
+
+<script>
+/* ============================================================
+   ICONS (inline, single stroke set — Lucide-style 1.75px)
+============================================================ */
+const I = {
+  play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>',
+  chev:'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  chevR:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="m9 16 2 2 4-4"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>',
+  target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+  zoom:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  again:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+  hard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5"/></svg>',
+  good:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9M2 13v6a1 1 0 0 0 1 1h3V11H3a1 1 0 0 0-1 1zM7 11l4-8a2 2 0 0 1 3 1.7V9h4.5a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg>',
+  sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9c-2.5 0-4.7-1-6.3-2.6M3 12a9 9 0 0 1 9-9c2.5 0 4.7 1 6.3 2.6"/><path d="M21 3v6h-6M3 21v-6h6"/></svg>',
+  hd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
+  logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  google:'<svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1" fill="currentColor"/></svg>',
+  batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/><rect x="4" y="9" width="12" height="6" rx="1" fill="currentColor" stroke="none"/></svg>',
+  fail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+};
+
+/* TAP-block schematic diagram (mark-earning content is the product) */
+function tapDiagram(){
+  return `<svg viewBox="0 0 300 168" style="width:100%;height:auto">
+    <defs><style>
+      .mus{fill:var(--sunk);stroke:var(--rule-strong);stroke-width:1.4}
+      .lbl{font:600 9px Manrope,sans-serif;fill:var(--ink-2)}
+      .lblk{font:700 8px Manrope,sans-serif;fill:var(--teal-ink);letter-spacing:.04em}
+      .skin{fill:none;stroke:var(--ink-3);stroke-width:1.4}
+    </style></defs>
+    <path class="skin" d="M8 26 Q150 12 292 26"/>
+    <text class="lbl" x="8" y="20">Skin / subcutaneous fat</text>
+    <path class="mus" d="M8 40 Q150 28 292 40 L292 58 Q150 46 8 58 Z"/>
+    <text class="lbl" x="12" y="53">External oblique</text>
+    <path class="mus" d="M8 64 Q150 52 292 64 L292 84 Q150 72 8 84 Z"/>
+    <text class="lbl" x="12" y="78">Internal oblique</text>
+    <path class="mus" d="M8 90 Q150 78 292 90 L292 110 Q150 98 8 110 Z"/>
+    <text class="lbl" x="12" y="104">Transversus abdominis</text>
+    <path class="skin" d="M8 120 Q150 108 292 120"/>
+    <text class="lbl" x="8" y="134">Peritoneum</text>
+    <!-- needle in TAP plane between IO and TA -->
+    <line x1="232" y1="18" x2="150" y2="86" stroke="var(--teal)" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="150" cy="86" r="4.5" fill="var(--teal)"/>
+    <circle cx="150" cy="86" r="10" fill="none" stroke="var(--teal)" stroke-width="1.2" opacity=".5"/>
+    <text class="lblk" x="158" y="83">LA deposit — TAP plane</text>
+    <text class="lblk" x="200" y="16">Needle (in-plane USG)</text>
+  </svg>`;
+}
+
+/* ============================================================
+   ONE STRUCTURE — themed 3× by wrapper class
+============================================================ */
+function statusbar(){
+  return `<div class="status"><span>7:14</span><span class="r">${I.wifi}${I.batt}</span></div>`;
+}
+function nav(active){
+  const items=[['today',I.today,'Today'],['syllabus',I.book,'Syllabus'],['account',I.user,'Ananya']];
+  return `<div class="nav">${items.map(([k,ic,l])=>
+    `<button data-go="${k}" class="${active===k?'on':''}">${ic}<span>${l}</span></button>`).join('')}</div>`;
+}
+
+/* ---- SIGN IN ---- */
+function signin(){return `
+<div class="pane" data-screen="signin">
+  ${statusbar()}
+  <div class="signin">
+    <div class="top">
+      <div class="wordmark">Diplo<b>Mate</b></div>
+      <p class="lede">Master DNB theory answers by recalling them — not rereading them.</p>
+    </div>
+    <button class="gbtn" data-go="speciality-onboard" style="margin-bottom:40px">${I.google}<span>Continue with Google</span></button>
+  </div>
+</div>`;}
+
+/* ---- SPECIALITY SELECT (onboarding step + one-time change from Account) ---- */
+const SPEC_DNB=['Anaesthesiology','Anatomy','Biochemistry','Community Medicine','Dermatology, Venereology and Leprosy','Emergency Medicine','Family Medicine','Forensic Medicine','General Medicine','General Surgery','Hospital Administration','Immunohematology and Blood Transfusion','Maternal and Child Health','Microbiology','Nuclear Medicine','Obstetrics and Gynaecology','Ophthalmology','Orthopaedics','Otorhinolaryngology (ENT)','Paediatrics','Palliative Medicine','Pathology','Pharmacology','Physical Medicine and Rehabilitation','Physiology','Psychiatry','Radiation Oncology','Radio Diagnosis','Respiratory Medicine','Trauma and Acute Care Surgery'];
+const SPEC_DRNB=['Cardiac Anaesthesia','Cardiology','Cardiovascular & Thoracic Surgery','Clinical Haematology','Clinical Immunology & Rheumatology','Critical Care Medicine','Endocrinology','Gynaecological Oncology','Head and Neck Oncology','Infectious Disease','Interventional Radiology','Medical Gastroenterology','Medical Genetics','Medical Oncology','Neonatology','Nephrology','Neuro Anaesthesia','Neurology','Neurosurgery','Paediatric Cardiology','Paediatric Critical Care','Paediatric Haemato-Oncology','Paediatric Neurology','Paediatric Surgery','Plastic & Reconstructive Surgery','Pulmonary Medicine','Surgical Gastroenterology','Surgical Oncology','Thoracic Surgery','Urology','Vascular Surgery'];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function specRows(list,typ){
+  return list.map(n=>`<button class="row spec-row" role="radio" aria-checked="false" data-name="${n} (${typ})">
+    <div class="gr"><div class="t1">${esc(n)}</div></div>
+    <span class="typ">${typ}</span><span class="okk">${I.check}</span></button>`).join('');
+}
+function speciality(){
+  const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
+  return `
+<div class="pane" data-screen="speciality">
+  ${statusbar()}
+  <div class="topbar" style="padding-bottom:4px">
+    <button class="iconbtn spec-back" data-go="account" style="display:none">${back}</button>
+    <span class="tt">Your speciality</span></div>
+  <div class="spec-head">
+    <p class="spec-lede">Model answers, syllabus and your recall queue are built for one exam. Pick yours.</p>
+    <div class="searchwrap">${I.search}<input class="spec-input" type="search" placeholder="Search — e.g. cardio, ENT, DrNB…" aria-label="Search specialities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="spec-count" aria-live="polite">30 DNB · 31 DrNB</div>
+  </div>
+  <div class="view" role="radiogroup" aria-label="Speciality">
+    <div class="spec-group ovl" data-group="dnb">DNB — Broad Specialities</div>
+    <div data-rows="dnb">${specRows(SPEC_DNB,'DNB')}</div>
+    <div class="spec-group ovl" data-group="drnb">DrNB — Super Specialities</div>
+    <div data-rows="drnb">${specRows(SPEC_DRNB,'DrNB')}</div>
+    <div class="spec-empty">No speciality matches &ldquo;<b class="qq"></b>&rdquo;.<br>Try a shorter term — e.g. &ldquo;cardio&rdquo; or &ldquo;paediatric&rdquo;.</div>
+  </div>
+  <div class="revealwrap">
+    <button class="cta spec-cta" disabled>Continue</button>
+    <div class="spec-note"></div>
+  </div>
+</div>`;}
+
+/* ---- TODAY ---- */
+function today(){return `
+<div class="pane" data-screen="today">
+  ${statusbar()}
+  <div class="topbar"><span class="tt big">Today</span><span class="sp"></span>
+    <button class="iconbtn" data-go="account">${I.user}</button></div>
+  <div class="view">
+    <div style="padding:6px 18px 16px;text-align:center">
+      <p class="serif" style="font-style:italic;font-size:15px;line-height:1.45;color:var(--ink-2)">“What you can recall, you truly know.”</p>
+    </div>
+    <div class="agenda">
+      <div class="hello">Good morning, <b>Ananya</b></div>
+      <div class="big"><b>12</b> answers due today</div>
+    </div>
+    <div style="padding:14px 18px 4px">
+      <button class="cta" data-go="reader">${I.play}<span>Start recall</span></button>
+    </div>
+    <div class="blk">
+      <div class="kh"><span class="ovl2">Recall this week</span></div>
+      <div style="display:flex;gap:22px">
+        <div class="mini"><span class="num">38</span><span class="ml">answers<br>recalled</span></div>
+        <div class="mini"><span class="num">6</span><span class="ml">day<br>streak-free</span></div>
+        <div class="mini"><span class="num" style="color:var(--ok)">71%</span><span class="ml">rated<br>Good</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="resume-sec">
+    <div class="kh" style="padding:13px 18px 3px"><span class="ovl2">Pick up where you left off</span></div>
+    <button class="row resume" data-go="reader">
+      <span class="rbadge">${I.play}</span>
+      <div class="gr"><div class="t1">Airway Management</div><div class="t2">Topic 6 of 8 · Rapid sequence induction</div></div>
+      ${I.chev}
+    </button>
+  </div>
+  ${nav('today')}
+</div>`;}
+
+/* ---- SYLLABUS ---- */
+function syllabus(){
+  const rows=[
+    ['Airway Management','14 topics · 8 recalled','done','57%'],
+    ['General Anaesthesia — Pharmacology','18 topics','lock',''],
+    ['Regional Anaesthesia','16 topics','lock',''],
+    ['Monitoring &amp; Equipment','11 topics','lock',''],
+    ['Obstetric Anaesthesia','13 topics','lock',''],
+    ['Cardiac Anaesthesia','15 topics','lock',''],
+    ['Critical Care &amp; Ventilation','19 topics','lock',''],
+    ['Pain Medicine','9 topics','lock',''],
+  ];
+  return `
+<div class="pane" data-screen="syllabus">
+  ${statusbar()}
+  <div class="topbar"><span class="tt">Anaesthesia</span></div>
+  <div class="crumb">Syllabus ${I.chevR} <span style="color:var(--ink-2)">18 chapters</span></div>
+  <div class="view">
+    ${rows.map(([t,s,st,pv])=>{
+      if(st==='done') return `<div class="row" data-go="topics">
+        <div class="gr"><div class="t1">${t}</div><div class="t2">${s}</div>
+          <div class="bar" style="max-width:180px"><i style="width:${pv}"></i></div></div>
+        <span class="lz done">${I.check}Offline</span>${I.chev}</div>`;
+      return `<div class="row locked" data-sheet="1">
+        <div class="gr"><div class="t1" style="display:flex;align-items:center;gap:7px"><span class="lockicon">${I.lock}</span>${t}</div>
+          <div class="t2">${s}</div></div>
+        <span class="lz lock">Locked</span>${I.chev}</div>`;
+    }).join('')}
+    <div style="padding:16px 18px 8px;font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.5">
+      Locked chapters unlock with Anaesthesia access. Titles shown so you can see the full syllabus — answers stay hidden until unlock.</div>
+  </div>
+  ${nav('syllabus')}
+</div>`;}
+
+/* ---- TOPICS (chapter → topics — the browse level between Syllabus and Reader) ---- */
+function topics(){
+  const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
+  // [topic, meta, recall-state, when]  state: good | due | '' (new/unseen)
+  const rows=[
+    ['Airway anatomy &amp; landmarks','3 model answers · 14 marks','good','in 6 days'],
+    ['Assessing the difficult airway','2 answers · 10 marks','good','in 4 days'],
+    ['Rapid sequence induction','2 answers · 10 marks','due','Due today'],
+    ['Difficult airway algorithm (DAS)','1 answer · 10 marks','due','Due today'],
+    ['Supraglottic airway devices','2 answers · 8 marks','good','in 3 days'],
+    ['Videolaryngoscopy','1 answer · 6 marks','good','in 5 days'],
+    ['Awake fibreoptic intubation','1 answer · 10 marks','','New'],
+    ['Cricothyroidotomy / front-of-neck','1 answer · 8 marks','','New'],
+  ];
+  return `
+<div class="pane" data-screen="topics">
+  ${statusbar()}
+  <div class="topbar" style="padding-bottom:6px">
+    <button class="iconbtn" data-go="syllabus">${back}</button>
+    <span class="tt">Airway Management</span></div>
+  <div class="crumb"><button data-go="syllabus">Anaesthesia</button> ${I.chevR} <span style="color:var(--ink-2)">Airway Management · 14 topics</span></div>
+  <div class="view">
+    <div class="blk" style="padding:12px 18px">
+      <div class="prog-line"><span>Chapter recall</span><span class="pv">8 of 14 recalled</span></div>
+      <div class="bar"><i style="width:57%"></i></div>
+    </div>
+    ${rows.map(([t,m,st,w])=>{
+      const cls=st?` ${st}`:'';
+      return `<div class="row" data-go="reader">
+        <div class="gr"><div class="t1">${t}</div><div class="t2">${m}</div></div>
+        <span class="pip${cls}"><span class="b"></span>${w}</span>
+        ${I.chev}</div>`;
+    }).join('')}
+    <div style="padding:16px 18px 8px;font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.5">
+      Each topic is one recall unit — open it to hide, attempt, then reveal the model answer. Due topics surface automatically in <b>Today</b>.</div>
+  </div>
+  ${nav('syllabus')}
+</div>`;}
+
+/* ---- READER / RECALL (two states in one surface) ---- */
+function reader(){return `
+<div class="pane reader" data-screen="reader" data-state="before">
+  ${statusbar()}
+  <div class="topbar" style="padding-bottom:6px">
+    <button class="iconbtn" data-go="topics">${I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"')}</button>
+    <span class="sp"></span><span class="ovl">Recall · 3 of 12</span></div>
+  <div class="crumb"><button data-go="topics">Airway</button> ${I.chevR} <button data-go="topics">Difficult airway</button> ${I.chevR} <span style="color:var(--ink-2)">TAP block</span></div>
+
+  <div class="view">
+    <div class="reader-q">
+      <div class="meta" style="margin-bottom:10px">
+        <span class="tag year">2022 Paper II</span><span class="tag marks">10 marks</span>
+        <span class="dot"></span><span class="rreveal-hide" style="color:var(--amber)">Due today</span></div>
+      <div class="qtxt">Define TAP block. Describe the anatomical basis, technique, and complications of an ultrasound-guided Transversus Abdominis Plane block.</div>
+    </div>
+
+    <!-- BEFORE reveal -->
+    <div class="before-only">
+      <div class="prompt">${I.mic}<div class="pt">Outline your answer aloud or on paper. Then reveal to check what earns marks.</div></div>
+      <div class="attempt"><b>Attempting…</b> &nbsp;take your time — nothing’s timing you.</div>
+    </div>
+
+    <!-- AFTER reveal -->
+    <div class="answer after-only" style="display:none">
+      <div class="earn">
+        <div class="eh">${I.target}<span>What earns marks</span></div>
+        <ul>
+          <li><b>Definition</b><span class="mk">1</span></li>
+          <li><b>Anatomy — 3 muscle layers, plane</b><span class="mk">2</span></li>
+          <li><b>USG-guided technique</b><span class="mk">3</span></li>
+          <li><b>Indications</b><span class="mk">1</span></li>
+          <li><b>Complications</b><span class="mk">2</span></li>
+          <li><b>Labelled diagram</b><span class="mk">1</span></li>
+        </ul>
+      </div>
+      <div class="asec"><div class="ah"><span class="an">01</span>Definition</div>
+        <p>The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the <b>internal oblique</b> and <b>transversus abdominis</b> muscles, blocking the anterior rami of <b>T6–L1</b> to provide somatic analgesia to the anterior abdominal wall.</p></div>
+      <div class="asec"><div class="ah"><span class="an">02</span>Anatomical basis</div>
+        <ul class="body">
+          <li>Three muscle layers: external oblique → internal oblique → transversus abdominis.</li>
+          <li>Thoracolumbar nerves (T6–L1) run in the plane deep to internal oblique.</li>
+          <li>Landmark (Petit’s triangle) vs USG approach — USG is now standard.</li>
+        </ul></div>
+      <div class="asec"><div class="ah"><span class="an">03</span>Technique — USG-guided</div>
+        <p>High-frequency linear probe in the mid-axillary line between costal margin and iliac crest. Identify the three layers; advance an in-plane needle to the IO–TA plane; confirm with hydrodissection; deposit <b>15–20 mL</b> of local anaesthetic as a lens-shaped spread.</p></div>
+
+      <div class="diagram">
+        ${tapDiagram()}
+        <div class="dc"><span>Fig 1 — Abdominal wall layers &amp; needle in the TAP plane</span>
+          <span class="dz">${I.zoom}Pinch to zoom</span></div>
+      </div>
+
+      <div class="asec"><div class="ah"><span class="an">04</span>Complications</div>
+        <ul class="body">
+          <li>Local anaesthetic systemic toxicity (large volume, vascular plane).</li>
+          <li>Bowel / peritoneal puncture, intrahepatic injection.</li>
+          <li>Block failure, transient femoral nerve palsy.</li>
+        </ul></div>
+      <div class="asec"><div class="ah"><span class="an">05</span>Summary line</div>
+        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p></div>
+      <div class="rcount"><span><b>2 done</b> · 10 due</span></div>
+      <div class="tray">
+        <div class="tc">How well did you recall it?</div>
+        <div class="rate">
+          <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
+          <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
+          <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- reveal control (before) -->
+  <div class="revealwrap before-only">
+    <button class="cta reveal-btn">Reveal Answer</button>
+  </div>
+  <div class="ack"></div>
+</div>`;}
+
+/* ---- ACCOUNT ---- */
+function account(){return `
+<div class="pane" data-screen="account">
+  ${statusbar()}
+  <div class="topbar"><span class="tt">Account</span></div>
+  <div class="view">
+    <div class="acct-id">
+      <div class="avatar">A</div>
+      <div><div class="an">Dr. Ananya Rao</div><div class="ae">ananya.rao@gmail.com</div></div>
+    </div>
+    <div class="row" data-go="speciality-change" data-specrow><span class="chev">${I.target}</span>
+      <div class="gr"><div class="t1">Exam speciality</div><div class="t2">Not set</div></div>${I.chev}</div>
+    <div class="row"><span class="chev">${I.today}</span>
+      <div class="gr"><div class="t1">Daily recall reminder</div><div class="t2">On · 8:00 pm</div></div>${I.chev}</div>
+    <div class="row"><span class="chev">${I.logout}</span>
+      <div class="gr"><div class="t1">Sign out</div></div></div>
+    <div class="row danger-row" style="border-bottom:none"><span class="chev" style="color:var(--danger)">${I.trash}</span>
+      <div class="gr"><div class="t1">Delete account</div><div class="t2">Removes your data permanently</div></div>${I.chev}</div>
+  </div>
+  ${nav('account')}
+</div>`;}
+
+/* ---- PAYWALL SHEET ---- */
+function paywall(){return `
+<div class="scrim" data-close="1"></div>
+<div class="sheet">
+  <div class="grab"></div>
+  <div class="sv">
+    <div class="ovl" style="margin-bottom:6px">Unlock</div>
+    <h3>Full Anaesthesia access</h3>
+    <div class="price">₹499 <small>one-time · 18 chapters</small></div>
+    <ul class="incl">
+      <li>${I.check}<span>All <b>18 chapters</b> — every previous-year model answer, structured for recall</span></li>
+      <li>${I.check}<span>Mark-earning <b>diagrams</b> (TAP block, oxygen cascade…) offline</span></li>
+      <li>${I.check}<span>Spaced-repetition queue across the whole syllabus</span></li>
+      <li>${I.check}<span>Free updates as new papers are added</span></li>
+    </ul>
+    <div class="howto">
+      <div class="ht">How beta payment works</div>
+      <p>Pay <b>₹499 by UPI</b> to the ID on the next screen. Access activates <b>within 6 hours</b> — you’ll get a notification. In-app payment arrives later; UPI keeps beta simple.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <button class="cta">View payment instructions</button>
+    <div class="restore">Already paid? Restore access</div>
+    <div class="support">Trouble? Message support on Telegram</div>
+  </div>
+</div>`;}
+
+/* ============================================================
+   ASSEMBLE — 3 themed phones
+============================================================ */
+const dirs=[
+  {cls:'dir-b',k:'B',name:'Clinical Chart',d:'cool near-white · precise · small-caps — chosen direction'},
+];
+const rail=document.getElementById('rail');
+dirs.forEach(dir=>{
+  const slot=document.createElement('div');slot.className='slot';
+  slot.innerHTML=`<div class="slot-cap"><span class="k">${dir.k} · ${dir.name}</span></div>
+    <div class="slot-cap" style="margin-top:-8px"><span class="d">${dir.d}</span></div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen ${dir.cls}">
+        <div class="view-root" style="flex:1;min-height:0;display:flex;flex-direction:column;position:relative">
+          ${signin()}${speciality()}${today()}${syllabus()}${topics()}${reader()}${account()}
+          <div class="paywall-host"></div>
+        </div>
+      </div>
+    </div>`;
+  rail.appendChild(slot);
+});
+
+/* ============================================================
+   BEHAVIOR (event delegation per phone)
+============================================================ */
+function show(root,screen){
+  root.querySelectorAll('.pane').forEach(p=>p.classList.toggle('show',p.dataset.screen===screen));
+  const rd=root.querySelector('.reader');if(rd)setReader(rd,'before');
+  const v=root.querySelector('.pane.show .view');if(v)v.scrollTop=0;
+}
+function setReader(rd,state){
+  rd.dataset.state=state;
+  const after=state==='after';
+  rd.querySelectorAll('.after-only').forEach(e=>e.style.display=after?'':'none');
+  rd.querySelectorAll('.before-only').forEach(e=>e.style.display=after?'none':'');
+  rd.querySelectorAll('.rreveal-hide').forEach(e=>e.style.display=after?'none':'');
+}
+function openSheet(root){
+  const host=root.querySelector('.paywall-host');
+  host.innerHTML=paywall();
+  requestAnimationFrame(()=>{host.querySelector('.scrim').classList.add('show');host.querySelector('.sheet').classList.add('show');});
+}
+function closeSheet(root){
+  const host=root.querySelector('.paywall-host');
+  const s=host.querySelector('.sheet'),sc=host.querySelector('.scrim');
+  if(!s)return;s.classList.remove('show');sc.classList.remove('show');
+  setTimeout(()=>host.innerHTML='',280);
+}
+function toast(rd,msg){
+  const a=rd.querySelector('.ack');a.textContent=msg;a.classList.add('show');
+  clearTimeout(a._t);a._t=setTimeout(()=>a.classList.remove('show'),1500);
+}
+
+/* ---- speciality state & flows ---- */
+function specState(root){return root._spec||(root._spec={chosen:null,changesUsed:0,pending:null,mode:'onboard'})}
+function openSpec(root,mode,force){
+  const s=specState(root);
+  if(mode==='onboard'&&s.chosen&&!force){show(root,'today');return;}   // shown once, never again
+  s.mode=mode;s.pending=s.chosen;
+  const p=root.querySelector('[data-screen="speciality"]');
+  p.querySelector('.spec-back').style.display=mode==='change'?'':'none'; // onboarding: no back, no skip
+  p.querySelector('.spec-cta').textContent=mode==='change'?'Save change':'Continue';
+  p.querySelector('.spec-cta').disabled=!s.pending;
+  p.querySelector('.spec-note').innerHTML=mode==='change'
+    ?'You can change your speciality <b>once</b> — this is that change.'
+    :'Required to continue · you can change it <b>once</b> later in Account.';
+  p.querySelector('.spec-input').value='';
+  filterSpec(root,'');markSel(root);
+  show(root,'speciality');
+}
+function markSel(root){
+  const s=specState(root);
+  root.querySelectorAll('.spec-row').forEach(r=>{
+    const on=r.dataset.name===s.pending;
+    r.classList.toggle('sel',on);r.setAttribute('aria-checked',on);
+  });
+}
+function filterSpec(root,q){
+  q=q.trim().toLowerCase();
+  const p=root.querySelector('[data-screen="speciality"]');
+  let total=0;
+  ['dnb','drnb'].forEach(g=>{
+    let n=0;
+    p.querySelectorAll(`[data-rows="${g}"] .spec-row`).forEach(r=>{
+      const hit=!q||r.dataset.name.toLowerCase().includes(q);   // substring match on "Name (DNB/DrNB)"
+      r.style.display=hit?'':'none';
+      if(!hit)return;
+      n++;
+      const name=r.dataset.name.replace(/ \((DNB|DrNB)\)$/,'');
+      const i=q?name.toLowerCase().indexOf(q):-1;
+      r.querySelector('.t1').innerHTML=i>-1
+        ?esc(name.slice(0,i))+'<mark>'+esc(name.slice(i,i+q.length))+'</mark>'+esc(name.slice(i+q.length))
+        :esc(name);
+    });
+    p.querySelector(`[data-group="${g}"]`).style.display=n?'':'none';
+    total+=n;
+  });
+  const empty=p.querySelector('.spec-empty');
+  empty.style.display=total?'none':'';
+  if(!total)empty.querySelector('.qq').textContent=q;
+  p.querySelector('.spec-count').textContent=q?`${total} match${total===1?'':'es'}`:'30 DNB · 31 DrNB';
+}
+function commitSpec(root){
+  const s=specState(root);if(!s.pending)return;
+  if(s.mode==='change'&&s.pending!==s.chosen)s.changesUsed++;  // picking the same value doesn't burn the change
+  s.chosen=s.pending;
+  updateAcct(root);
+  show(root,s.mode==='change'?'account':'today');
+}
+function updateAcct(root){
+  const s=specState(root);
+  const row=root.querySelector('[data-specrow]');
+  row.querySelector('.t2').textContent=s.chosen
+    ?`${s.chosen}${s.changesUsed?' · one-time change used':' · can change once'}`
+    :'Not set';
+  if(s.changesUsed)row.setAttribute('aria-disabled','true');
+}
+
+document.querySelectorAll('.view-root').forEach(root=>{
+  show(root,'today');
+  root.addEventListener('click',e=>{
+    const go=e.target.closest('[data-go]');
+    const sheet=e.target.closest('[data-sheet]');
+    const close=e.target.closest('[data-close]');
+    const reveal=e.target.closest('.reveal-btn');
+    const rate=e.target.closest('[data-rate]');
+    const srow=e.target.closest('.spec-row');
+    if(srow){const s=specState(root);s.pending=srow.dataset.name;markSel(root);
+      root.querySelector('.spec-cta').disabled=false;return;}
+    if(e.target.closest('.spec-cta')){commitSpec(root);return;}
+    if(reveal){const rd=root.querySelector('.reader');setReader(rd,'after');rd.querySelector('.pane.show .view')?.scrollTo({top:0});
+      const v=rd.querySelector('.view');if(v)v.scrollTop=Math.min(v.scrollTop,40);return;}
+    if(rate){const rd=root.querySelector('.reader');toast(rd,'✓ '+rate.dataset.rate.split('·')[1].trim()+' · next answer');
+      setTimeout(()=>setReader(rd,'before'),650);const v=rd.querySelector('.view');if(v)v.scrollTop=0;return;}
+    if(sheet){openSheet(root);return;}
+    if(close){closeSheet(root);return;}
+    if(go){const t=go.dataset.go;
+      if(t==='speciality-onboard'){openSpec(root,'onboard');return;}
+      if(t==='speciality-change'){const s=specState(root);if(!s.changesUsed)openSpec(root,'change');return;}
+      show(root,t);return;}
+  });
+  root.addEventListener('input',e=>{
+    if(e.target.classList.contains('spec-input'))filterSpec(root,e.target.value);
+  });
+  root.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&e.target.classList.contains('spec-input')){
+      const first=[...root.querySelectorAll('.spec-row')].find(r=>r.style.display!=='none');
+      if(first)first.click();   // autocomplete: Enter picks top match
+    }
+  });
+});
+
+/* global switcher */
+const sw=document.getElementById('switcher');
+sw.addEventListener('click',e=>{
+  const b=e.target.closest('[data-jump]');if(!b)return;
+  sw.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const j=b.dataset.jump;
+  document.querySelectorAll('.view-root').forEach(root=>{
+    closeSheet(root);
+    if(j==='__paywall'){show(root,'syllabus');openSheet(root);}
+    else if(j==='speciality'){openSpec(root,'onboard',true);}  // force for demo even after chosen
+    else if(j==='reader'){show(root,'reader');}
+    else show(root,j);
+  });
+});
+</script>
+</body>
+</html>
