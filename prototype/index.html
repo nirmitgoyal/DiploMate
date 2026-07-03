@@ -79,23 +79,25 @@ body{
   --nav-bg:#FBF8F2; --nav-rule:#EADFCD;
 }
 /* B — Clinical Chart (cool light) */
+/* ink-3 8A97A8→5F6F84 (2.79→4.82:1) and teal 0D8F86→087A72 (white-on-teal
+   3.97→5.20:1) — D20 contrast law. teal = fills/icons only; teal-ink = text. */
 .dir-b{
   --paper:#F6F8FA; --elevated:#FFFFFF; --sunk:#EDF1F5;
-  --ink:#0E1626; --ink-2:#57657A; --ink-3:#8A97A8;
+  --ink:#0E1626; --ink-2:#57657A; --ink-3:#5F6F84;
   --rule:#E1E7EE; --rule-strong:#CFD8E2;
-  --teal:#0D8F86; --teal-soft:#0d8f8614; --teal-ink:#0A6E67;
+  --teal:#087A72; --teal-soft:#0d8f8614; --teal-ink:#0A6E67;
   --amber:#A85B10; --amber-soft:#a85b1012;
-  --danger:#B4271F; --ok:#1E7A46;
+  --danger:#B4271F; --ok:#1E7A46; --exam-red:#B4271F;
   --nav-bg:#FBFCFD; --nav-rule:#E4EAF0;
 }
-/* C — Night Desk (warm dark) */
+/* C — Night Desk (warm dark) — ink-3 6E675C→8A8275 (3.17→4.66:1, D20) */
 .dir-c{
   --paper:#19181A; --elevated:#211F22; --sunk:#141315;
-  --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#6E675C;
+  --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#8A8275;
   --rule:#302D31; --rule-strong:#3E3A3F;
   --teal:#3ED8C4; --teal-soft:#3ed8c418; --teal-ink:#8CEBDD;
   --amber:#F2B44C; --amber-soft:#f2b44c14;
-  --danger:#F08A82; --ok:#5FCF8A;
+  --danger:#F08A82; --ok:#5FCF8A; --exam-red:#F08A82;
   --nav-bg:#141315; --nav-rule:#2A282C;
 }
 
@@ -107,13 +109,17 @@ body{
 .status svg{width:15px;height:15px}
 
 /* top bar */
-.topbar{display:flex;align-items:center;gap:10px;padding:6px 18px 12px;flex-shrink:0}
-.topbar .tt{font-family:'Source Serif 4',serif;font-weight:600;font-size:22px;color:var(--ink);letter-spacing:-.01em}
-.topbar .tt.big{font-size:26px}
+.topbar{display:flex;align-items:center;gap:10px;padding:6px 18px 8px;flex-shrink:0}
+.topbar .tt{font-family:'Source Serif 4',serif;font-weight:600;font-size:24px;color:var(--ink);letter-spacing:-.01em}
+.topbar .tt.big{font-size:28px}
 .topbar .sp{flex:1}
 .iconbtn{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--ink-2)}
 .iconbtn:hover{background:var(--sunk)}
 .iconbtn svg{width:21px;height:21px}
+.iconbtn.marked{color:var(--teal)}
+.iconbtn:active{transform:scale(.92)}
+.crumb .bm-btn{margin-left:auto;width:32px;height:32px;margin-top:-6px;margin-bottom:-6px}
+.crumb .bm-btn svg{width:19px;height:19px}
 
 /* breadcrumb */
 .crumb{padding:2px 18px 10px;font-size:11.5px;color:var(--ink-3);font-weight:600;letter-spacing:.01em;display:flex;align-items:center;gap:6px;flex-shrink:0}
@@ -125,9 +131,6 @@ body{
 /* overline / small label */
 .ovl{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
 .dir-b .ovl{color:var(--teal);letter-spacing:.16em}
-
-/* section head in reader */
-.sech{font-family:'Source Serif 4',serif;font-weight:600;font-size:16.5px;color:var(--ink)}
 
 /* meta chips row */
 .meta{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-2);font-weight:600}
@@ -188,7 +191,7 @@ body{
 /* ---- SIGN IN ---- */
 .signin{flex:1;display:flex;flex-direction:column;padding:0 26px;text-align:center}
 .signin .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
-.wordmark{font-family:'Source Serif 4',serif;font-weight:600;font-size:30px;color:var(--ink);letter-spacing:-.02em}
+.wordmark{font-family:'Source Serif 4',serif;font-weight:600;font-size:28px;color:var(--ink);letter-spacing:-.02em}
 .wordmark b{color:var(--teal)}
 .signin .lede{font-family:'Source Serif 4',serif;font-size:18px;line-height:1.45;color:var(--ink-2);max-width:250px}
 .specimen{width:100%;border:1px solid var(--rule);border-radius:12px;background:var(--elevated);
@@ -234,16 +237,17 @@ body{
 
 /* ---- READER ---- */
 .reader-q{padding:4px 18px 16px}
-.reader-q .qtxt{font-family:'Source Serif 4',serif;font-size:20px;line-height:1.5;color:var(--ink);font-weight:600;letter-spacing:0;margin-bottom:14px}
-.prompt{margin:2px 18px 0;padding:13px 15px;border-radius:11px;background:var(--teal-soft);
-  border:1px solid var(--teal-soft);display:flex;gap:10px;align-items:flex-start}
+.reader-q .qtxt{font-family:'Source Serif 4',serif;font-size:24px;line-height:1.4;color:var(--ink);font-weight:600;letter-spacing:-.005em;margin-bottom:14px}
+/* attempt prompt — plain line, not a card (no-cards law) */
+.prompt{margin:10px 18px 0;display:flex;gap:10px;align-items:flex-start}
 .prompt svg{width:17px;height:17px;color:var(--teal);flex-shrink:0;margin-top:1px}
 .prompt .pt{font-size:13px;line-height:1.45;color:var(--teal-ink);font-weight:600}
 .attempt{font-size:11px;color:var(--ink-3);font-weight:600;text-align:center;padding:14px 0 6px;letter-spacing:.02em}
 .attempt b{color:var(--ink-2)}
 
-/* answer body (revealed) */
-.answer{padding:0 18px}
+/* answer body (revealed) — model answers render on elevated white:
+   the only white surface in the app IS the model answer (material code) */
+.answer{padding:14px 18px 0;background:var(--elevated);border-top:1px solid var(--rule-strong)}
 .earn{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:13px 0;margin:2px 0 16px}
 .earn .eh{display:flex;align-items:center;gap:7px;margin-bottom:9px}
 .earn .eh svg{width:15px;height:15px;color:var(--teal)}
@@ -252,43 +256,93 @@ body{
 .earn li{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);font-weight:500}
 .earn li b{color:var(--ink);font-weight:600}
 .earn li .mk{font-variant-numeric:tabular-nums;color:var(--teal-ink);font-weight:700;font-size:11.5px}
-.asec{margin-bottom:16px}
-.asec .ah{font-family:'Source Serif 4',serif;font-weight:700;font-size:14px;color:var(--ink);margin-bottom:5px;
-  display:flex;align-items:baseline;gap:8px}
-.asec .an{font-size:10px;font-weight:700;color:var(--teal);font-family:'Manrope';letter-spacing:.04em}
-.asec p{font-family:'Source Serif 4',serif;font-size:15.5px;line-height:1.6;color:var(--ink-2)}
+/* examiner's margin: 26px hanging rail; per-section mark weights sit in the
+   margin as red tabular numerals (red pen = examiner) */
+.asec{margin-bottom:16px;position:relative;padding-left:26px}
+.asec::before{content:"";position:absolute;left:19px;top:2px;bottom:-16px;width:1px;background:var(--rule)}
+.asec:last-of-type::before{bottom:0}
+.asec .mk-m{position:absolute;left:0;top:3px;width:14px;text-align:right;
+  font:700 11px 'Manrope',sans-serif;color:var(--exam-red);font-variant-numeric:tabular-nums}
+.asec .ah{font-family:'Source Serif 4',serif;font-weight:600;font-size:19px;color:var(--ink);margin-bottom:6px}
+.asec p{font-family:'Source Serif 4',serif;font-size:17px;line-height:1.6;color:var(--ink-2)}
 .asec p b{color:var(--ink);font-weight:600}
-.asec ul.body{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:5px}
-.asec ul.body li{font-family:'Source Serif 4',serif;font-size:14.5px;line-height:1.45;color:var(--ink-2);padding-left:15px;position:relative}
-.asec ul.body li::before{content:"";position:absolute;left:2px;top:9px;width:4px;height:4px;border-radius:50%;background:var(--teal)}
+.asec ul.body{list-style:none;margin-top:6px;display:flex;flex-direction:column;gap:6px}
+.asec ul.body li{font-family:'Source Serif 4',serif;font-size:17px;line-height:1.55;color:var(--ink-2);padding-left:16px;position:relative}
+.asec ul.body li::before{content:"";position:absolute;left:2px;top:11px;width:4px;height:4px;border-radius:50%;background:var(--teal)}
 
-/* diagram */
-.diagram{border:1px solid var(--rule);border-radius:12px;background:var(--elevated);padding:14px;margin:4px 0 8px}
-.diagram .dc{font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+/* diagram — a figure "plate": the one bounded content element (no-cards law) */
+.diagram{border:1px solid var(--rule);border-radius:12px;background:var(--elevated);padding:14px;margin:4px 0 8px 26px}
+.diagram .dc{font-size:11.5px;color:var(--ink-3);font-weight:600;margin-top:10px}
+.diagram .dc>span:first-child{display:block;line-height:1.45}
 .diagram .dz{display:inline-flex;align-items:center;gap:4px;color:var(--teal);font-weight:700}
 .diagram .dz svg{width:13px;height:13px}
+.diagram>svg{cursor:zoom-in}
+.diagram .dca{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.dfs{display:inline-flex;align-items:center;gap:5px;background:var(--teal-soft);color:var(--teal-ink);
+  font-size:11px;font-weight:700;padding:5px 9px;border-radius:7px;position:relative;transition:transform .12s ease}
+.dfs svg{width:12px;height:12px}
+.dfs::after{content:"";position:absolute;inset:-10px -8px}
+.dfs:active{transform:scale(.95)}
+
+/* fullscreen diagram viewer */
+.fsview{position:absolute;inset:0;z-index:50;background:var(--paper);display:flex;flex-direction:column;
+  opacity:0;transform:scale(.97);transition:opacity .2s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+.fsview.show{opacity:1;transform:none}
+.fshead{display:flex;align-items:flex-start;gap:8px;padding:46px 12px 6px 18px;flex-shrink:0}
+.fshead .ovl{margin-bottom:3px}
+.fshead .fscap{flex:1;font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.4;padding-top:2px}
+.fsclose{background:var(--sunk);border-radius:50%;flex-shrink:0}
+.fsstage{flex:1;min-height:0;overflow:hidden;touch-action:none;display:flex;align-items:center;justify-content:center;cursor:grab}
+.fsstage:active{cursor:grabbing}
+.fsz{width:100%;padding:0 8px;will-change:transform;display:flex;justify-content:center;align-items:center}
+.fsz svg{width:100%;height:auto}
+.fsr{width:100%;flex:none;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.fsview.land .fsr{transform:rotate(90deg)}
+.fsrot{position:absolute;left:50%;bottom:58px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;
+  background:var(--elevated);border:1px solid var(--rule-strong);color:var(--teal-ink);font-size:11.5px;font-weight:700;
+  padding:8px 13px;border-radius:999px;box-shadow:0 6px 16px -8px #00000040;transition:transform .12s ease;white-space:nowrap}
+.fsrot svg{width:14px;height:14px;color:var(--teal)}
+.fsrot:active{transform:translateX(-50%) scale(.96)}
+.fsfoot{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 16px calc(18px + env(safe-area-inset-bottom));font-size:11px;font-weight:700;color:var(--ink-3);
+  border-top:1px solid var(--rule)}
+.fsfoot svg{width:13px;height:13px;color:var(--teal)}
 
 /* reveal control (before) */
 .revealwrap{margin-top:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule);background:var(--paper)}
-/* rating tray (after) — in-flow at the bottom of the answer, not pinned */
-.tray{padding:16px 0 26px;margin-top:14px;border-top:1px solid var(--rule)}
-.tray .tc{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);text-align:center;margin-bottom:10px}
+/* rating tray (after) — pinned bottom (D15): rating never requires scrolling
+   back through the answer */
+.traywrap{flex-shrink:0;padding:10px 18px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--rule-strong);background:var(--elevated)}
+.tray .tc{display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);margin-bottom:9px}
+.tray .tc b{color:var(--teal-ink);font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .rate{display:flex;gap:9px;align-items:stretch}
 .rate button{flex:1;min-height:64px;padding:9px 5px;border-radius:12px;border:1.5px solid var(--rule-strong);background:var(--elevated);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:all .12s ease}
 .rate button:active{transform:scale(.96)}
 .rate .rl{font-weight:700;font-size:13.5px;line-height:1.15;text-align:center;color:var(--ink)}
 .rate .ri{font-size:10.5px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.rate .again{border-color:#b4271f30}.rate .again .rl{color:var(--danger)}
+.rate .again{border-color:var(--danger)}.rate .again .rl{color:var(--danger)}
 .rate .hard{border-color:var(--amber)}.rate .hard .rl{color:var(--amber)}
 .rate .good{border-color:var(--teal)}.rate .good .rl{color:var(--teal-ink)}
 .rate svg{width:16px;height:16px;margin-bottom:1px}
 
-/* progress counter under reader */
-.rcount{display:flex;align-items:center;justify-content:center;gap:7px;font-size:11.5px;font-weight:600;
-  color:var(--ink-3);padding:9px 0 2px;font-variant-numeric:tabular-nums}
-.rcount b{color:var(--teal-ink)}
+/* ---- in-answer search (reader, after reveal) ---- */
+.srch{display:flex;align-items:center;gap:6px;padding:0 12px 9px 18px;flex-shrink:0}
+.srch .swrap{flex:1;position:relative;display:flex;align-items:center;min-width:0}
+.srch input{width:100%;height:38px;border-radius:10px;border:1.5px solid var(--rule-strong);background:var(--elevated);
+  color:var(--ink);font:600 14px 'Manrope',sans-serif;padding:0 52px 0 12px;outline:none;transition:border-color .12s ease;
+  -webkit-appearance:none;appearance:none}
+.srch input::placeholder{color:var(--ink-3);font-weight:500}
+.srch input:focus{border-color:var(--teal)}
+.srch .cnt{position:absolute;right:11px;font-size:11px;font-weight:700;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;pointer-events:none}
+.srch .iconbtn{width:34px;height:34px;flex-shrink:0}
+.srch .iconbtn svg{width:18px;height:18px}
+mark.hl{background:var(--teal-soft);color:var(--teal-ink);border-radius:3px;padding:0 1px}
+mark.hl.cur{background:var(--amber-soft);color:var(--amber);box-shadow:0 0 0 1.5px var(--amber)}
 
 /* toast ack */
 .ack{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);
@@ -298,8 +352,12 @@ body{
 
 /* ---- TODAY ---- */
 .agenda{padding:8px 18px 4px}
-.agenda .big{font-family:'Source Serif 4',serif;font-size:34px;font-weight:600;color:var(--ink);letter-spacing:-.02em;line-height:1.05}
-.agenda .big b{color:var(--teal)}
+/* exam countdown — the finalist's real dashboard, typeset like a chart header */
+.count{font-family:'Source Serif 4',serif;font-size:19px;line-height:1.4;color:var(--ink-2);
+  font-weight:500;letter-spacing:-.005em;margin-bottom:9px}
+.count b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.count .od{color:var(--amber)}
+.count .dot{display:inline-block;width:3px;height:3px;border-radius:50%;background:var(--ink-3);vertical-align:middle;margin:0 7px 3px}
 .agenda .hello{font-family:'Source Serif 4',serif;font-size:16px;font-weight:500;color:var(--ink-2);letter-spacing:-.01em;margin-bottom:7px}
 .agenda .hello b{color:var(--teal-ink);font-weight:600}
 .resume-sec{flex-shrink:0;background:var(--paper);border-top:1px solid var(--rule)}
@@ -341,10 +399,6 @@ body{
 .incl li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13.5px;color:var(--ink-2);font-weight:500;line-height:1.4}
 .incl li svg{width:16px;height:16px;color:var(--teal);flex-shrink:0;margin-top:2px}
 .incl li b{color:var(--ink);font-weight:600}
-.howto{background:var(--sunk);border-radius:11px;padding:13px 15px;margin-bottom:14px}
-.howto .ht{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
-.howto p{font-size:13px;line-height:1.5;color:var(--ink-2);font-weight:500}
-.howto p b{color:var(--ink)}
 .sheet .foot{padding:12px 20px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--rule);background:var(--paper)}
 .sheet .restore{text-align:center;font-size:13px;font-weight:600;color:var(--teal-ink);padding:12px 0 2px}
 .sheet .support{text-align:center;font-size:11.5px;color:var(--ink-3);padding-bottom:6px;font-weight:500}
@@ -363,14 +417,14 @@ body{
 
 <div class="masthead">
   <h1>DiploMate — end-to-end prototype</h1>
-  <p class="sub"><b>Direction B · Clinical Chart</b> — chosen. Clinical-editorial study desk for DNB Anaesthesia theory prep: <b>no cards</b>, Source Serif 4 reading body + Manrope UI, medical-teal accent, queue-first Today, soft reveal gate. Tap through all screens — <b>Sign-in → Speciality → Today → Syllabus → Topics → Reader</b>. The <b>recall reveal + rating</b> flow is live. New: <b>unskippable speciality onboarding</b> after sign-in (61 DNB/DrNB options, substring search) — changeable <b>once</b> from Account.</p>
+  <p class="sub"><b>Direction B · Clinical Chart</b> — chosen. Clinical-editorial study desk for DNB Anaesthesia theory prep: <b>no cards</b>, Source Serif 4 reading body + Manrope UI, medical-teal accent, queue-first Home, soft reveal gate. Tap through all screens — <b>Sign-in → Speciality → Home → Syllabus → Topics → Reader</b>. The <b>recall reveal + rating</b> flow is live. New: <b>unskippable speciality onboarding</b> after sign-in (61 DNB/DrNB options, substring search) — changeable <b>once</b> from Account.</p>
 </div>
 
 <div class="switcher" id="switcher">
   <span class="sw-label">Go to screen</span>
   <button data-jump="signin" class="on">Sign-in</button>
   <button data-jump="speciality">Speciality</button>
-  <button data-jump="today">Today</button>
+  <button data-jump="today">Home</button>
   <button data-jump="syllabus">Syllabus</button>
   <button data-jump="topics">Topics</button>
   <button data-jump="reader">Reader / Recall</button>
@@ -397,6 +451,9 @@ const I = {
   mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4"/></svg>',
   target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
   zoom:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></svg>',
+  expand:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  rotate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="13" height="10" rx="2"/><path d="M13 4h2a6 6 0 0 1 6 6v2"/><path d="m18.5 9.5 2.5 2.5 2.5-2.5"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
   lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
   again:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
@@ -411,6 +468,9 @@ const I = {
   batt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/><rect x="4" y="9" width="12" height="6" rx="1" fill="currentColor" stroke="none"/></svg>',
   fail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  bookmark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  bookmarkOn:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
 };
 
 /* TAP-block schematic diagram (mark-earning content is the product) */
@@ -448,7 +508,7 @@ function statusbar(){
   return `<div class="status"><span>7:14</span><span class="r">${I.wifi}${I.batt}</span></div>`;
 }
 function nav(active){
-  const items=[['today',I.today,'Today'],['syllabus',I.book,'Syllabus'],['account',I.user,'Ananya']];
+  const items=[['today',I.today,'Home'],['syllabus',I.book,'Syllabus'],['account',I.user,'Account']];
   return `<div class="nav">${items.map(([k,ic,l])=>
     `<button data-go="${k}" class="${active===k?'on':''}">${ic}<span>${l}</span></button>`).join('')}</div>`;
 }
@@ -461,8 +521,15 @@ function signin(){return `
     <div class="top">
       <div class="wordmark">Diplo<b>Mate</b></div>
       <p class="lede">Master DNB theory answers by recalling them — not rereading them.</p>
+      <div class="specimen">
+        <div class="sq">Define TAP block. Describe the anatomical basis, technique and complications.</div>
+        <div class="so">What earns marks</div>
+        <div class="sl">The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the internal oblique and transversus abdominis muscles, blocking T6–L1…</div>
+        <div class="fade"></div>
+      </div>
     </div>
-    <button class="gbtn" data-go="speciality-onboard" style="margin-bottom:40px">${I.google}<span>Continue with Google</span></button>
+    <button class="gbtn" data-go="speciality-onboard">${I.google}<span>Continue with Google</span></button>
+    <p class="util">Your recall progress syncs with your Google account.<br>Terms of Service · Privacy Policy</p>
   </div>
 </div>`;}
 
@@ -505,24 +572,20 @@ function speciality(){
 function today(){return `
 <div class="pane" data-screen="today">
   ${statusbar()}
-  <div class="topbar"><span class="tt big">Today</span><span class="sp"></span>
-    <button class="iconbtn" data-go="account">${I.user}</button></div>
+  <div class="topbar"><span class="tt big">Home</span></div>
   <div class="view">
-    <div style="padding:6px 18px 16px;text-align:center">
-      <p class="serif" style="font-style:italic;font-size:15px;line-height:1.45;color:var(--ink-2)">“What you can recall, you truly know.”</p>
-    </div>
-    <div class="agenda">
+    <div class="agenda" style="padding-top:10px">
+      <div class="count"><b>12</b> due<span class="dot"></span><b class="od">3</b> <span class="od">overdue</span><span class="dot"></span>exam in <b>148</b> days</div>
       <div class="hello">Good morning, <b>Ananya</b></div>
-      <div class="big"><b>12</b> answers due today</div>
     </div>
     <div style="padding:14px 18px 4px">
-      <button class="cta" data-go="reader">${I.play}<span>Start recall</span></button>
+      <button class="cta" data-go="reader">${I.play}<span>View 12 suggested answers</span></button>
+      <button class="cta ghost" data-go="bookmarks" style="margin-top:10px">${I.bookmark}<span>View your bookmarks</span></button>
     </div>
     <div class="blk">
-      <div class="kh"><span class="ovl2">Recall this week</span></div>
+      <div class="kh"><span class="ovl2">This Week</span></div>
       <div style="display:flex;gap:22px">
-        <div class="mini"><span class="num">38</span><span class="ml">answers<br>recalled</span></div>
-        <div class="mini"><span class="num">6</span><span class="ml">day<br>streak-free</span></div>
+        <div class="mini"><span class="num">41</span><span class="ml">answers<br>recalled</span></div>
         <div class="mini"><span class="num" style="color:var(--ok)">71%</span><span class="ml">rated<br>Good</span></div>
       </div>
     </div>
@@ -541,7 +604,7 @@ function today(){return `
 /* ---- SYLLABUS ---- */
 function syllabus(){
   const rows=[
-    ['Airway Management','14 topics · 8 recalled','done','57%'],
+    ['Airway Management','14 topics · offline ✓','done','57%'],
     ['General Anaesthesia — Pharmacology','18 topics','lock',''],
     ['Regional Anaesthesia','16 topics','lock',''],
     ['Monitoring &amp; Equipment','11 topics','lock',''],
@@ -554,13 +617,13 @@ function syllabus(){
 <div class="pane" data-screen="syllabus">
   ${statusbar()}
   <div class="topbar"><span class="tt">Anaesthesia</span></div>
-  <div class="crumb">Syllabus ${I.chevR} <span style="color:var(--ink-2)">18 chapters</span></div>
+  <div class="crumb">Syllabus ${I.chevR} <span style="color:var(--ink-2)">8 chapters</span></div>
   <div class="view">
     ${rows.map(([t,s,st,pv])=>{
       if(st==='done') return `<div class="row" data-go="topics">
         <div class="gr"><div class="t1">${t}</div><div class="t2">${s}</div>
           <div class="bar" style="max-width:180px"><i style="width:${pv}"></i></div></div>
-        <span class="lz done">${I.check}Offline</span>${I.chev}</div>`;
+        <span class="rt" style="color:var(--teal-ink)">8/14<br><span style="color:var(--ink-3);font-weight:600">recalled</span></span>${I.chev}</div>`;
       return `<div class="row locked" data-sheet="1">
         <div class="gr"><div class="t1" style="display:flex;align-items:center;gap:7px"><span class="lockicon">${I.lock}</span>${t}</div>
           <div class="t2">${s}</div></div>
@@ -606,7 +669,7 @@ function topics(){
         ${I.chev}</div>`;
     }).join('')}
     <div style="padding:16px 18px 8px;font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.5">
-      Each topic is one recall unit — open it to hide, attempt, then reveal the model answer. Due topics surface automatically in <b>Today</b>.</div>
+      Each topic is one recall unit — open it to hide, attempt, then reveal the model answer. Due topics surface automatically in <b>Home</b>.</div>
   </div>
   ${nav('syllabus')}
 </div>`;}
@@ -617,8 +680,21 @@ function reader(){return `
   ${statusbar()}
   <div class="topbar" style="padding-bottom:6px">
     <button class="iconbtn" data-go="topics">${I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"')}</button>
-    <span class="sp"></span><span class="ovl">Recall · 3 of 12</span></div>
-  <div class="crumb"><button data-go="topics">Airway</button> ${I.chevR} <button data-go="topics">Difficult airway</button> ${I.chevR} <span style="color:var(--ink-2)">TAP block</span></div>
+    <span class="sp"></span><span class="ovl">Suggestion · 3 of 12</span>
+    <button class="iconbtn after-only" data-srch aria-label="Search this answer" style="display:none">${I.search}</button></div>
+  <div class="crumb"><button data-go="topics">Regional Anaesthesia</button> ${I.chevR} <button data-go="topics">Truncal blocks</button> ${I.chevR} <span style="color:var(--ink-2)">TAP block</span>
+    <button class="iconbtn bm-btn" data-bm aria-pressed="false" aria-label="Bookmark this question">${I.bookmark}</button></div>
+
+  <div class="srch" style="display:none">
+    <div class="swrap">
+      <input class="srch-input" type="text" placeholder="Search this answer" aria-label="Search this answer"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <span class="cnt">0/0</span>
+    </div>
+    <button class="iconbtn srch-prev" aria-label="Previous match">${I.chev.replace('class="chev"','style="width:18px;height:18px;transform:rotate(-90deg)"')}</button>
+    <button class="iconbtn srch-next" aria-label="Next match">${I.chev.replace('class="chev"','style="width:18px;height:18px;transform:rotate(90deg)"')}</button>
+    <button class="iconbtn srch-x" aria-label="Close search">${I.close}</button>
+  </div>
 
   <div class="view">
     <div class="reader-q">
@@ -630,7 +706,7 @@ function reader(){return `
 
     <!-- BEFORE reveal -->
     <div class="before-only">
-      <div class="prompt">${I.mic}<div class="pt">Outline your answer aloud or on paper. Then reveal to check what earns marks.</div></div>
+      <div class="prompt">${I.pen}<div class="pt">Outline your answer aloud or on paper. Then reveal to check what earns marks.</div></div>
       <div class="attempt"><b>Attempting…</b> &nbsp;take your time — nothing’s timing you.</div>
     </div>
 
@@ -647,46 +723,50 @@ function reader(){return `
           <li><b>Labelled diagram</b><span class="mk">1</span></li>
         </ul>
       </div>
-      <div class="asec"><div class="ah"><span class="an">01</span>Definition</div>
+      <div class="asec"><span class="mk-m">1</span><div class="ah">Definition</div>
         <p>The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the <b>internal oblique</b> and <b>transversus abdominis</b> muscles, blocking the anterior rami of <b>T6–L1</b> to provide somatic analgesia to the anterior abdominal wall.</p></div>
-      <div class="asec"><div class="ah"><span class="an">02</span>Anatomical basis</div>
+      <div class="asec"><span class="mk-m">2</span><div class="ah">Anatomical basis</div>
         <ul class="body">
           <li>Three muscle layers: external oblique → internal oblique → transversus abdominis.</li>
           <li>Thoracolumbar nerves (T6–L1) run in the plane deep to internal oblique.</li>
           <li>Landmark (Petit’s triangle) vs USG approach — USG is now standard.</li>
         </ul></div>
-      <div class="asec"><div class="ah"><span class="an">03</span>Technique — USG-guided</div>
+      <div class="asec"><span class="mk-m">3</span><div class="ah">Technique — USG-guided</div>
         <p>High-frequency linear probe in the mid-axillary line between costal margin and iliac crest. Identify the three layers; advance an in-plane needle to the IO–TA plane; confirm with hydrodissection; deposit <b>15–20 mL</b> of local anaesthetic as a lens-shaped spread.</p></div>
 
       <div class="diagram">
         ${tapDiagram()}
         <div class="dc"><span>Fig 1 — Abdominal wall layers &amp; needle in the TAP plane</span>
-          <span class="dz">${I.zoom}Pinch to zoom</span></div>
+          <span class="dca"><span class="dz">${I.zoom}Tap to enlarge</span>
+            <button class="dfs" data-fs aria-label="View diagram full screen">${I.expand}<span>Full screen</span></button></span></div>
       </div>
 
-      <div class="asec"><div class="ah"><span class="an">04</span>Complications</div>
+      <div class="asec"><span class="mk-m">2</span><div class="ah">Complications</div>
         <ul class="body">
           <li>Local anaesthetic systemic toxicity (large volume, vascular plane).</li>
           <li>Bowel / peritoneal puncture, intrahepatic injection.</li>
           <li>Block failure, transient femoral nerve palsy.</li>
         </ul></div>
-      <div class="asec"><div class="ah"><span class="an">05</span>Summary line</div>
-        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p></div>
-      <div class="rcount"><span><b>2 done</b> · 10 due</span></div>
-      <div class="tray">
-        <div class="tc">How well did you recall it?</div>
-        <div class="rate">
-          <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
-          <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
-          <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
-        </div>
-      </div>
+      <div class="asec"><span class="mk-m">1</span><div class="ah">Summary line</div>
+        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p>
+        <div style="height:18px"></div></div>
     </div>
   </div>
 
   <!-- reveal control (before) -->
   <div class="revealwrap before-only">
     <button class="cta reveal-btn">Reveal Answer</button>
+  </div>
+  <!-- rating tray (after) — pinned per D15: rate without scrolling back -->
+  <div class="traywrap after-only" style="display:none">
+    <div class="tray">
+      <div class="tc"><span>How well did you recall it?</span><b>2 done · 10 due</b></div>
+      <div class="rate">
+        <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
+        <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
+        <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
+      </div>
+    </div>
   </div>
   <div class="ack"></div>
 </div>`;}
@@ -713,6 +793,34 @@ function account(){return `
   ${nav('account')}
 </div>`;}
 
+/* ---- BOOKMARKS (saved questions — reached from Home) ---- */
+function bookmarks(){
+  const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
+  // [question, source]
+  const rows=[
+    ['TAP block — anatomy, technique &amp; complications','Airway · Difficult airway'],
+    ['Rapid sequence induction — steps &amp; drug doses','Airway Management'],
+    ['Difficult airway algorithm (DAS 2015)','Airway · Difficult airway'],
+    ['Cricothyroidotomy — front-of-neck access','Airway Management'],
+  ];
+  return `
+<div class="pane" data-screen="bookmarks">
+  ${statusbar()}
+  <div class="topbar" style="padding-bottom:6px">
+    <button class="iconbtn" data-go="today">${back}</button>
+    <span class="tt">Bookmarks</span></div>
+  <div class="crumb"><button data-go="today">Home</button> ${I.chevR} <span style="color:var(--ink-2)">Saved · ${rows.length} questions</span></div>
+  <div class="view">
+    ${rows.map(([q,src])=>`<div class="row" data-go="reader">
+      <span class="rbadge">${I.bookmarkOn}</span>
+      <div class="gr"><div class="t1">${q}</div><div class="t2">${src}</div></div>
+      ${I.chev}</div>`).join('')}
+    <div style="padding:16px 18px 8px;font-size:12px;color:var(--ink-3);font-weight:500;line-height:1.5">
+      Questions you bookmark while revising are saved here for quick recall. Tap any to reopen the answer.</div>
+  </div>
+  ${nav('today')}
+</div>`;}
+
 /* ---- PAYWALL SHEET ---- */
 function paywall(){return `
 <div class="scrim" data-close="1"></div>
@@ -728,15 +836,10 @@ function paywall(){return `
       <li>${I.check}<span>Spaced-repetition queue across the whole syllabus</span></li>
       <li>${I.check}<span>Free updates as new papers are added</span></li>
     </ul>
-    <div class="howto">
-      <div class="ht">How beta payment works</div>
-      <p>Pay <b>₹499 by UPI</b> to the ID on the next screen. Access activates <b>within 6 hours</b> — you’ll get a notification. In-app payment arrives later; UPI keeps beta simple.</p>
-    </div>
   </div>
   <div class="foot">
-    <button class="cta">View payment instructions</button>
-    <div class="restore">Already paid? Restore access</div>
-    <div class="support">Trouble? Message support on Telegram</div>
+    <button class="cta">Purchase</button>
+    <div class="restore">Trouble? Mail us</div>
   </div>
 </div>`;}
 
@@ -755,8 +858,9 @@ dirs.forEach(dir=>{
       <div class="notch"></div>
       <div class="screen ${dir.cls}">
         <div class="view-root" style="flex:1;min-height:0;display:flex;flex-direction:column;position:relative">
-          ${signin()}${speciality()}${today()}${syllabus()}${topics()}${reader()}${account()}
+          ${signin()}${speciality()}${today()}${syllabus()}${topics()}${reader()}${account()}${bookmarks()}
           <div class="paywall-host"></div>
+          <div class="fs-host"></div>
         </div>
       </div>
     </div>`;
@@ -767,11 +871,13 @@ dirs.forEach(dir=>{
    BEHAVIOR (event delegation per phone)
 ============================================================ */
 function show(root,screen){
+  closeFS(root);
   root.querySelectorAll('.pane').forEach(p=>p.classList.toggle('show',p.dataset.screen===screen));
   const rd=root.querySelector('.reader');if(rd)setReader(rd,'before');
   const v=root.querySelector('.pane.show .view');if(v)v.scrollTop=0;
 }
 function setReader(rd,state){
+  closeSrch(rd);
   rd.dataset.state=state;
   const after=state==='after';
   rd.querySelectorAll('.after-only').forEach(e=>e.style.display=after?'':'none');
@@ -789,9 +895,157 @@ function closeSheet(root){
   if(!s)return;s.classList.remove('show');sc.classList.remove('show');
   setTimeout(()=>host.innerHTML='',280);
 }
+function setBookmark(rd,on){
+  const btn=rd.querySelector('.bm-btn');if(!btn)return;
+  rd.dataset.bookmarked=on?'1':'';
+  btn.classList.toggle('marked',on);
+  btn.setAttribute('aria-pressed',on);
+  btn.setAttribute('aria-label',on?'Remove bookmark':'Bookmark this answer');
+  btn.innerHTML=on?I.bookmarkOn:I.bookmark;
+}
 function toast(rd,msg){
   const a=rd.querySelector('.ack');a.textContent=msg;a.classList.add('show');
   clearTimeout(a._t);a._t=setTimeout(()=>a.classList.remove('show'),1500);
+}
+
+/* ---- fullscreen diagram viewer ---- */
+function openFS(root,diagram){
+  const host=root.querySelector('.fs-host');
+  const cap=diagram.querySelector('.dc span')?.textContent||'Diagram';
+  host.innerHTML=`<div class="fsview" role="dialog" aria-modal="true" aria-label="${esc(cap)}">
+    <div class="fshead"><div class="fscap"><div class="ovl">Diagram</div>${esc(cap)}</div>
+      <button class="iconbtn fsclose" data-fsclose aria-label="Close full screen">${I.close}</button></div>
+    <div class="fsstage"><div class="fsz"><div class="fsr">${diagram.querySelector('svg').outerHTML}</div></div></div>
+    <button class="fsrot">${I.rotate}<span>Rotate for a larger view</span></button>
+    <div class="fsfoot">${I.zoom}<span>Pinch, double-tap or scroll to zoom · drag to pan</span></div>
+  </div>`;
+  const fv=host.querySelector('.fsview');
+  const zc=fsZoom(fv.querySelector('.fsstage'),fv.querySelector('.fsz'));
+  fv.querySelector('.fsrot').addEventListener('click',()=>{
+    const land=fv.classList.toggle('land');
+    fv.querySelector('.fsr').style.width=land?fv.querySelector('.fsstage').clientHeight-20+'px':'';
+    zc.reset();
+    fv.querySelector('.fsrot span').textContent=land?'Back to portrait':'Rotate for a larger view';
+  });
+  fv._esc=e=>{if(e.key==='Escape')closeFS(root)};
+  document.addEventListener('keydown',fv._esc);
+  requestAnimationFrame(()=>{fv.classList.add('show');fv.querySelector('.fsclose').focus();});
+}
+function closeFS(root){
+  const host=root.querySelector('.fs-host');const fv=host.querySelector('.fsview');
+  if(!fv)return;
+  document.removeEventListener('keydown',fv._esc);
+  fv.classList.remove('show');
+  setTimeout(()=>host.innerHTML='',200);
+}
+function fsZoom(stage,z){
+  let s=1,tx=0,ty=0,lastTap=0,g=null;const pts=new Map();
+  const apply=()=>{
+    const r=stage.getBoundingClientRect();
+    const mx=r.width*(s-1)/2+40,my=r.height*(s-1)/2+40;
+    tx=Math.max(-mx,Math.min(mx,tx));ty=Math.max(-my,Math.min(my,ty));
+    z.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;
+  };
+  const setS=v=>{s=Math.min(5,Math.max(1,v));if(s===1){tx=0;ty=0}apply();};
+  const mid=()=>{const p=[...pts.values()];return{d:Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)}};
+  stage.addEventListener('pointerdown',e=>{
+    stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===1){
+      const now=performance.now();
+      if(now-lastTap<300)setS(s>1?1:2.5);   // double-tap toggles zoom
+      lastTap=now;g={x:e.clientX,y:e.clientY,tx,ty};
+    }else if(pts.size===2)g={d:mid().d,s};
+  });
+  stage.addEventListener('pointermove',e=>{
+    if(!pts.has(e.pointerId))return;
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===1&&g&&'tx'in g){tx=g.tx+(e.clientX-g.x);ty=g.ty+(e.clientY-g.y);apply();}
+    else if(pts.size===2&&g&&'d'in g){s=Math.min(5,Math.max(1,g.s*mid().d/g.d));apply();}
+  });
+  const up=e=>{pts.delete(e.pointerId);g=null;};
+  stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
+  stage.addEventListener('wheel',e=>{e.preventDefault();setS(s*(e.deltaY<0?1.12:0.89));},{passive:false});
+  return{reset:()=>setS(1)};
+}
+
+/* ---- in-answer search (fuzzy, one QnA at a time) ---- */
+function lev(a,b,max){                       // banded Levenshtein, early exit past max
+  if(Math.abs(a.length-b.length)>max)return max+1;
+  let prev=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    const cur=[i];let best=i;
+    for(let j=1;j<=b.length;j++){
+      cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      if(cur[j]<best)best=cur[j];
+    }
+    if(best>max)return max+1;
+    prev=cur;
+  }
+  return prev[b.length];
+}
+function wordHit(qw,tw){                     // substring OR typo within tolerance
+  if(tw.includes(qw))return true;
+  const tol=tw.length>=7?2:tw.length>=4?1:0;
+  return !!tol&&lev(qw,tw,tol)<=tol;
+}
+const WORD_RE=/[A-Za-z0-9'’\-–]+/g;
+function srchState(rd){
+  if(rd._srch)return rd._srch;
+  const els=[...rd.querySelectorAll('.answer .earn li,.answer .asec')];
+  return rd._srch={snaps:els.map(el=>[el,el.innerHTML]),marks:[],cur:-1};
+}
+function runSearch(rd,q){
+  const st=srchState(rd);
+  st.snaps.forEach(([el,h])=>el.innerHTML=h);
+  st.marks=[];st.cur=-1;
+  const qw=q.toLowerCase().match(WORD_RE)||[];
+  if(qw.length)st.snaps.forEach(([el])=>{
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    const nodes=[];let n;while(n=walker.nextNode())nodes.push(n);
+    nodes.forEach(node=>{
+      const words=[...node.data.matchAll(WORD_RE)];
+      const ranges=[];
+      for(let i=0;i<=words.length-qw.length;){
+        let ok=true;
+        for(let k=0;k<qw.length;k++)if(!wordHit(qw[k],words[i+k][0].toLowerCase())){ok=false;break}
+        if(ok){ranges.push([words[i].index,words[i+qw.length-1].index+words[i+qw.length-1][0].length]);i+=qw.length}
+        else i++;
+      }
+      if(!ranges.length)return;
+      const frag=document.createDocumentFragment();let pos=0;
+      ranges.forEach(([a,b])=>{
+        if(a>pos)frag.appendChild(document.createTextNode(node.data.slice(pos,a)));
+        const m=document.createElement('mark');m.className='hl';m.textContent=node.data.slice(a,b);
+        frag.appendChild(m);st.marks.push(m);pos=b;
+      });
+      if(pos<node.data.length)frag.appendChild(document.createTextNode(node.data.slice(pos)));
+      node.parentNode.replaceChild(frag,node);
+    });
+  });
+  setSrchCur(rd,st.marks.length?0:-1);
+}
+function setSrchCur(rd,i){
+  const st=rd._srch;if(!st)return;
+  st.marks.forEach(m=>m.classList.remove('cur'));
+  st.cur=i;
+  rd.querySelector('.srch .cnt').textContent=st.marks.length?`${i+1}/${st.marks.length}`:'0/0';
+  if(i>-1){st.marks[i].classList.add('cur');st.marks[i].scrollIntoView({block:'center',behavior:'smooth'});}
+}
+function stepSrch(rd,d){
+  const st=rd._srch;if(!st||!st.marks.length)return;
+  setSrchCur(rd,(st.cur+d+st.marks.length)%st.marks.length);
+}
+function openSrch(rd){
+  srchState(rd);
+  rd.querySelector('.srch').style.display='';
+  rd.querySelector('.srch-input').focus();
+}
+function closeSrch(rd){
+  const bar=rd.querySelector('.srch');if(!bar)return;
+  if(rd._srch){rd._srch.snaps.forEach(([el,h])=>el.innerHTML=h);delete rd._srch;}
+  bar.style.display='none';
+  bar.querySelector('.srch-input').value='';
+  bar.querySelector('.cnt').textContent='0/0';
 }
 
 /* ---- speciality state & flows ---- */
@@ -868,13 +1122,22 @@ document.querySelectorAll('.view-root').forEach(root=>{
     const reveal=e.target.closest('.reveal-btn');
     const rate=e.target.closest('[data-rate]');
     const srow=e.target.closest('.spec-row');
+    if(e.target.closest('[data-srch]')){openSrch(root.querySelector('.reader'));return;}
+    if(e.target.closest('.srch-x')){closeSrch(root.querySelector('.reader'));return;}
+    if(e.target.closest('.srch-prev')){stepSrch(root.querySelector('.reader'),-1);return;}
+    if(e.target.closest('.srch-next')){stepSrch(root.querySelector('.reader'),1);return;}
+    if(e.target.closest('[data-fsclose]')){closeFS(root);return;}
+    if(e.target.closest('[data-fs]')||e.target.closest('.diagram>svg')){
+      openFS(root,e.target.closest('.diagram'));return;}
     if(srow){const s=specState(root);s.pending=srow.dataset.name;markSel(root);
       root.querySelector('.spec-cta').disabled=false;return;}
     if(e.target.closest('.spec-cta')){commitSpec(root);return;}
     if(reveal){const rd=root.querySelector('.reader');setReader(rd,'after');rd.querySelector('.pane.show .view')?.scrollTo({top:0});
       const v=rd.querySelector('.view');if(v)v.scrollTop=Math.min(v.scrollTop,40);return;}
+    if(e.target.closest('[data-bm]')){const rd=root.querySelector('.reader');const on=rd.dataset.bookmarked!=='1';
+      setBookmark(rd,on);toast(rd,on?'✓ Bookmarked':'Bookmark removed');return;}
     if(rate){const rd=root.querySelector('.reader');toast(rd,'✓ '+rate.dataset.rate.split('·')[1].trim()+' · next answer');
-      setTimeout(()=>setReader(rd,'before'),650);const v=rd.querySelector('.view');if(v)v.scrollTop=0;return;}
+      setTimeout(()=>{setReader(rd,'before');setBookmark(rd,false);},650);const v=rd.querySelector('.view');if(v)v.scrollTop=0;return;}
     if(sheet){openSheet(root);return;}
     if(close){closeSheet(root);return;}
     if(go){const t=go.dataset.go;
@@ -884,11 +1147,16 @@ document.querySelectorAll('.view-root').forEach(root=>{
   });
   root.addEventListener('input',e=>{
     if(e.target.classList.contains('spec-input'))filterSpec(root,e.target.value);
+    if(e.target.classList.contains('srch-input'))runSearch(root.querySelector('.reader'),e.target.value);
   });
   root.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&e.target.classList.contains('spec-input')){
       const first=[...root.querySelectorAll('.spec-row')].find(r=>r.style.display!=='none');
       if(first)first.click();   // autocomplete: Enter picks top match
+    }
+    if(e.target.classList.contains('srch-input')){
+      if(e.key==='Enter')stepSrch(root.querySelector('.reader'),e.shiftKey?-1:1);
+      if(e.key==='Escape')closeSrch(root.querySelector('.reader'));
     }
   });
 });
