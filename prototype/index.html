@@ -368,9 +368,9 @@ body{
 
 <div class="switcher" id="switcher">
   <span class="sw-label">Go to screen</span>
-  <button data-jump="signin">Sign-in</button>
+  <button data-jump="signin" class="on">Sign-in</button>
   <button data-jump="speciality">Speciality</button>
-  <button data-jump="today" class="on">Today</button>
+  <button data-jump="today">Today</button>
   <button data-jump="syllabus">Syllabus</button>
   <button data-jump="topics">Topics</button>
   <button data-jump="reader">Reader / Recall</button>
@@ -860,7 +860,7 @@ function updateAcct(root){
 }
 
 document.querySelectorAll('.view-root').forEach(root=>{
-  show(root,'today');
+  show(root,'signin');   // boot at sign-in so onboarding is mandatorily reached via Continue-with-Google
   root.addEventListener('click',e=>{
     const go=e.target.closest('[data-go]');
     const sheet=e.target.closest('[data-sheet]');

@@ -1,0 +1,15 @@
+# env
+.env
+.env.*
+!.env.example
+
+# os
+.DS_Store
+
+# tool state / caches (regenerate via cli or mcp, don't commit)
+.neon
+.claude/skills/
+.serena/
+.playwright-mcp/
+graphify-out/
+.gstack/
