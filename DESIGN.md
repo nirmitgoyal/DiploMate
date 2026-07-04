@@ -103,7 +103,8 @@ Two families, loaded via `google_fonts` (Flutter) / Google Fonts CDN (web).
 - **Data / counts — Manrope with `tabular-nums`.** All numerals that change
   (due counts, mark weights, intervals, `n/N` search matches)
   render tabular so they don't jitter. `font-variant-numeric: tabular-nums` is
-  the default for every count in the app.
+  the default for every count in the app. The Home "This Week" stat numerals
+  are the one large-count slot: Manrope 700 at 24px (data voice, not serif).
 - **Code:** none in-product. If ever needed (debug), JetBrains Mono.
 
 ### Type scale (fixed — do not add sizes)
@@ -195,8 +196,12 @@ gradient fills, no decorative color.
    "Due today" is amber _and_ says "Due today."
 5. **Red is reserved.** `--exam-red` annotates mark weights and flags errors.
    It never decorates, never themes a section, never marks "danger" on
-   non-error content. The `Again` (unable-to-recall) rating uses a full-strength
-   red border — because failing to recall _is_ the signal, not a muted footnote.
+   non-error content. Two sanctioned exceptions, both failure/destruction
+   signals: the **"Unable to recall"** rating (Anki's _Again_) uses a
+   full-strength red border — because failing to recall _is_ the signal, not a
+   muted footnote — and the Account **"Delete account"** row (irreversible
+   destructive action, platform convention; `--danger` aliases `--exam-red`,
+   one red, one source).
 6. **No purple, no gradient fills, no decorative shadows.** (Anti-slop + D20.)
 
 ---
@@ -228,7 +233,10 @@ gradient fills, no decorative color.
     rows, sections, and prose — never in a floating rounded container.
   - **Allowed (named exceptions):** **buttons** (bounded by definition),
     **diagram plates** (`.diagram` — a framed figure is a plate, like a textbook
-    plate), the **paywall sheet** (a modal surface, not content), and **inputs**.
+    plate), the **paywall sheet** (a modal surface, not content), **inputs**,
+    the **sign-in content specimen** (`.specimen` — a cropped model answer;
+    white is its material code and the frame is a plate, per anatomy #1), and
+    the **transient toast** (`.ack` — feedback, not content).
     Nothing else gets a border + radius + fill.
   - The old tinted `.prompt` callout was a card in disguise — it is now a plain
     icon + line, no fill, no border.
@@ -296,10 +304,12 @@ it with app-speak or motivational filler.
 - **Empty states carry direction, not apology** (D13 first-run funnel):
   "Nothing scheduled yet. Study one answer to start your recall queue." /
   "Today's recall is complete. 8 reviewed; next due tomorrow."
-- **Store-compliance copy is exact.** The paywall restore affordance is
-  **"Restore purchase"** (store requirement), a distinct slot from any support
-  contact. Delete/Privacy/Terms lines present where policy requires (sign-in,
-  Account).
+- **Store-compliance copy is exact.** On Play with Google-only sign-in (D5),
+  purchase restore is implicit — entitlements re-attach on sign-in, so the
+  sheet carries **no Restore row**, only the support line ("Trouble? Mail us").
+  **If iOS ever ships, an explicit "Restore purchase" affordance becomes
+  mandatory in the sheet** (App Store rule). Delete/Privacy/Terms lines present
+  where policy requires (sign-in, Account).
 
 ---
 
@@ -326,8 +336,8 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 4. **Syllabus** — chapter rows: title, topic count, offline note in the subtitle,
    and **recall progress as the loud right-side signal** ("8/14 recalled" in
    `--teal-ink`) — recall is the data, offline is a footnote. Locked chapters
-   stay visible (title + count, never answer previews); one lock signal, not
-   three.
+   stay visible (title + count, never answer previews); the lock signal is
+   lock icon + `Locked` lozenge, nothing else (no third signal, no preview).
 5. **Topics** — chapter → topic rows, each with an aggregate recall pip
    (Due today / in N days / New — label + color, never color alone). Chapter
    recall progress bar at top. Lights the **Syllabus** tab (stack child).
@@ -339,7 +349,8 @@ Nine screens + one sheet. Reference `prototype/index.html`.
      (per-section mark weights). Anatomy: "What earns marks" outline → numbered
      serif sections → full-width diagram plate (with fullscreen viewer) →
      summary → rating tray. **Rating tray is in-flow**, last thing in the
-     answer (Again · Hard · Good, fixed order, interval hints, icon+label)
+     answer (Unable to recall · Hard · Good — Anki's Again/Hard/Good mechanic
+     with the honest label — fixed order, interval hints, icon+label)
      with a "N done · M due" counter (D15 reversed — see Decisions Log).
      In-answer fuzzy search appears
      **only after reveal** (never leaks answers). Diagram reproduction practice
@@ -349,8 +360,10 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 8. **Bookmarks** — saved questions as rows (question + `Chapter · Topic` source),
    reached from Home, lights the Home tab.
 9. **Paywall sheet** — locked contents (titles + counts, never previews) →
-   exact price (₹499 one-time) → what's included → **Purchase** → **Restore
-   purchase** (compliance) + one support line. No UPI explainer in the sheet
+   exact price (₹499 one-time) → what's included → **Purchase** → one support
+   line ("Trouble? Mail us"). **No Restore row** — restore is implicit under
+   Google-only sign-in (D5) on Play; an explicit "Restore purchase" slot
+   becomes mandatory if iOS ever ships. No UPI explainer in the sheet
    (beta payment mechanics live in the ops runbook, not the design).
 
 ---
@@ -383,3 +396,6 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 | 2026-07-03 | Copy fixes: "streak-free"→"answers recalled"; "QnAs"→"answers"; nav "Ananya"→"Account"; false "Pinch to zoom"→"Tap to enlarge"; TAP block filed under Regional Anaesthesia (not Airway) | Register discipline + a content-taxonomy credibility bug in the demo data                                                                 |
 | 2026-07-03 | D15 reversed: rating tray back to in-flow (was pinned bottom)                                                                                                                           | Explicit user call, made aware of the reread tradeoff D15 documented                                                                      |
 | 2026-07-03 | Struck: Home exam-countdown top matter (Home opens at the greeting) and Account "Downloads & storage" row (no Downloads surface; offline state stays inline on syllabus rows)           | Founder call — prototype stands as built; all five sync-3 flagged items discarded                                                         |
+| 2026-07-04 | /design-review pass: touch targets ≥44px; teal-as-text → `--teal-ink` at all 6 call sites; type scale enforced (7 steps, zero drift); overline tracking one value (.14em); 18px gutter + 8px topbar restored; CTA glow removed; radii snapped to 8/12; tabular-nums on every count; reveal motion implemented (200ms uncover); dark `--ink-3` → `#908878` (AA on both dark surfaces); `--teal-soft` rebuilt from corrected teal; `--danger` aliases `--exam-red` | Prototype brought into full compliance with this document; spec's "now fixed" claims made true in code                                    |
+| 2026-07-04 | Demo data one-truth pass: syllabus lists all 18 chapters (matches paywall pitch + "see the full syllabus" promise); resume row "Topic 3 of 14"; bookmarks re-filed TAP under Regional Anaesthesia; examiner-margin weights reconciled to the earn table (added Indications section, diagram plate carries its 1 mark, Summary unnumbered) | Counts that disagree read as sloppiness to an examiner-trained audience; the earn table is authoritative                                  |
+| 2026-07-04 | Codified: no Restore row on Play (restore implicit under Google-only D5; mandatory if iOS ships); rating label "Unable to recall" (Anki's Again); red also sanctioned for the destructive Delete-account row; specimen + toast added to no-cards exceptions; lock signal = icon + lozenge | Doc–spec–prototype contradictions resolved in the direction the specs and prototype had already locked                                    |
