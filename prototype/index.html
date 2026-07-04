@@ -85,19 +85,19 @@ body{
   --paper:#F6F8FA; --elevated:#FFFFFF; --sunk:#EDF1F5;
   --ink:#0E1626; --ink-2:#57657A; --ink-3:#5F6F84;
   --rule:#E1E7EE; --rule-strong:#CFD8E2;
-  --teal:#087A72; --teal-soft:#0d8f8614; --teal-ink:#0A6E67;
+  --teal:#087A72; --teal-soft:#087a7214; --teal-ink:#0A6E67;
   --amber:#A85B10; --amber-soft:#a85b1012;
-  --danger:#B4271F; --ok:#1E7A46; --exam-red:#B4271F;
+  --danger:var(--exam-red); --ok:#1E7A46; --exam-red:#B4271F;
   --nav-bg:#FBFCFD; --nav-rule:#E4EAF0;
 }
-/* C — Night Desk (warm dark) — ink-3 6E675C→8A8275 (3.17→4.66:1, D20) */
+/* C — Night Desk (warm dark) — ink-3 6E675C→908878 (AA on paper AND elevated, D20) */
 .dir-c{
   --paper:#19181A; --elevated:#211F22; --sunk:#141315;
-  --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#8A8275;
+  --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#908878;
   --rule:#302D31; --rule-strong:#3E3A3F;
   --teal:#3ED8C4; --teal-soft:#3ed8c418; --teal-ink:#8CEBDD;
   --amber:#F2B44C; --amber-soft:#f2b44c14;
-  --danger:#F08A82; --ok:#5FCF8A; --exam-red:#F08A82;
+  --danger:var(--exam-red); --ok:#5FCF8A; --exam-red:#F08A82;
   --nav-bg:#141315; --nav-rule:#2A282C;
 }
 
@@ -348,7 +348,7 @@ body{
 .srch .iconbtn{width:44px;height:44px;flex-shrink:0}
 .srch .iconbtn svg{width:18px;height:18px}
 mark.hl{background:var(--teal-soft);color:var(--teal-ink);border-radius:3px;padding:0 1px}
-mark.hl.cur{background:var(--amber-soft);color:var(--amber);box-shadow:0 0 0 1.5px var(--amber)}
+mark.hl.cur{background:var(--amber-soft);color:var(--ink);box-shadow:0 0 0 1.5px var(--amber)}
 
 /* toast ack */
 .ack{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);

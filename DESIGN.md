@@ -167,17 +167,17 @@ gradient fills, no decorative color.
 
 ### Dark — Night Desk (`.dir-c`)
 
-| Token        | Hex       | Role                                                   |
-| ------------ | --------- | ------------------------------------------------------ |
-| `--paper`    | `#19181A` | App background (warm near-black)                       |
-| `--elevated` | `#211F22` | Answer / plate surface                                 |
-| `--ink`      | `#ECE6DC` | Primary text (14:1)                                    |
-| `--ink-2`    | `#9C9488` | Secondary / prose (5.9:1)                              |
-| `--ink-3`    | `#8A8275` | Muted (**4.7:1** — was `#6E675C`, failed)              |
-| `--teal`     | `#3ED8C4` | Fills & icons (dark CTA text `#0C1413` on it = 10.5:1) |
-| `--teal-ink` | `#8CEBDD` | Teal-as-text (12.7:1)                                  |
-| `--amber`    | `#F2B44C` | Due / overdue (9.6:1)                                  |
-| `--exam-red` | `#F08A82` | Examiner marks / errors                                |
+| Token        | Hex       | Role                                                                                 |
+| ------------ | --------- | ------------------------------------------------------------------------------------ |
+| `--paper`    | `#19181A` | App background (warm near-black)                                                     |
+| `--elevated` | `#211F22` | Answer / plate surface                                                               |
+| `--ink`      | `#ECE6DC` | Primary text (14:1)                                                                  |
+| `--ink-2`    | `#9C9488` | Secondary / prose (5.9:1)                                                            |
+| `--ink-3`    | `#908878` | Muted (**5.0:1 paper / 4.7:1 elevated** — `#8A8275` failed AA on the answer surface) |
+| `--teal`     | `#3ED8C4` | Fills & icons (dark CTA text `#0C1413` on it = 10.5:1)                               |
+| `--teal-ink` | `#8CEBDD` | Teal-as-text (12.7:1)                                                                |
+| `--amber`    | `#F2B44C` | Due / overdue (9.6:1)                                                                |
+| `--exam-red` | `#F08A82` | Examiner marks / errors                                                              |
 
 ### Color laws (enforced — these are the D20 lock, corrected)
 
