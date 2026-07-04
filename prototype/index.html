@@ -280,10 +280,8 @@ body{
 .asec>.diagram{margin-left:0} /* inside an .asec the 26px indent comes from the section */
 .diagram .dc{font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:10px}
 .diagram .dc>span:first-child{display:block;line-height:1.45}
-.diagram .dz{display:inline-flex;align-items:center;gap:4px;color:var(--teal-ink);font-weight:700}
-.diagram .dz svg{width:13px;height:13px}
 .diagram>svg{cursor:zoom-in}
-.diagram .dca{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.diagram .dca{display:flex;align-items:center;justify-content:flex-end;margin-top:8px}
 .dfs{display:inline-flex;align-items:center;gap:5px;background:var(--teal-soft);color:var(--teal-ink);
   font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;position:relative;transition:transform .12s ease}
 .dfs svg{width:12px;height:12px}
@@ -749,8 +747,7 @@ function reader(){return `
       <div class="diagram">
         ${tapDiagram()}
         <div class="dc"><span>Fig 1 — Abdominal wall layers &amp; needle in the TAP plane</span>
-          <span class="dca"><span class="dz">${I.zoom}Tap to enlarge</span>
-            <button class="dfs" data-fs aria-label="View diagram full screen">${I.expand}<span>Full screen</span></button></span></div>
+          <span class="dca"><button class="dfs" data-fs aria-label="Open diagram full screen">${I.zoom}<span>Tap to enlarge</span></button></span></div>
       </div></div>
 
       <div class="asec"><span class="mk-m">1</span><div class="ah">Indications</div>
@@ -935,7 +932,7 @@ function openFS(root,diagram){
       <button class="iconbtn fsclose" data-fsclose aria-label="Close full screen">${I.close}</button></div>
     <div class="fsstage"><div class="fsz"><div class="fsr">${diagram.querySelector('svg').outerHTML}</div></div></div>
     <button class="fsrot">${I.rotate}<span>Rotate for a larger view</span></button>
-    <div class="fsfoot">${I.zoom}<span>Pinch, double-tap or scroll to zoom · drag to pan</span></div>
+    <div class="fsfoot">${I.zoom}<span>Pinch or double-tap to zoom · drag to pan</span></div>
   </div>`;
   const fv=host.querySelector('.fsview');
   const zc=fsZoom(fv.querySelector('.fsstage'),fv.querySelector('.fsz'));
