@@ -33,7 +33,7 @@ Source plan: `~/.gstack/projects/nirmitgoyal-DiploMate/nirmit-main-design-202607
 
 ## 4. Cohort recruiting plan (≥30 activated users)
 
-- **What:** A written plan to recruit ≥30 activated beta users (opened ≥1 topic) from Telegram/Instagram/WhatsApp channels where DNB Anaesthesia PYQ PDFs already circulate.
+- **What:** A written plan to recruit ≥30 activated beta users (opened ≥1 topic) from Telegram/Instagram/WhatsApp channels where DNB Anaesthesia PYQ PDFs already circulate. **Recruiting target = 45-50 installs (2026-07-04 eng review, outside voice #1):** activation is <100% and empty-track picks are cohort-excluded, so a 30-install recruit cannot start TD4's decision clock ("4 weeks after the 30th activated user"). Name a channel owner per channel.
 - **Why:** Codex (adopted, D11): the 40% recall / D7≥30% success metrics are statistically meaningless on 5 users. Below 30 activated users, numbers are qualitative only - the experiment needs a real cohort to conclude anything.
 - **Pros:** Makes the ONE experiment v1 runs actually decidable; forces the go-to-market channel work early (it's the distribution plan anyway); tester list doubles as the pre-sale pipeline.
 - **Cons:** Founder time in channels (~days, not delegable to CC); risks exposing the product to content-dump communities pre-launch; Play closed-beta tester list management overhead.
