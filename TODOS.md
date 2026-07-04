@@ -48,3 +48,34 @@ Source plan: `~/.gstack/projects/nirmitgoyal-DiploMate/nirmit-main-design-202607
 - **Cons:** Reintroduces a second storage system + a signed-URL/entitlement check component (Neon Function or CF Worker); migration script for existing content; two delivery paths during transition.
 - **Context:** Design doc D3 (revised) carries the `ponytail:` ceiling note. Trigger: monthly Neon egress or storage line item becomes noticeable, OR speciality count × pack size makes bundle fetches slow. Client repository pattern isolates the change — only the bundle-fetch implementation swaps.
 - **Depends on / blocked by:** Real scale signal (do NOT do this during beta); Neon Object Storage GA status check at that time.
+
+## 6. Design-review deferrals (2026-07-04 /design-review pass)
+
+Fixed in that pass (14 commits, `58bad81`…`3c5070c`): touch targets ≥44px,
+teal-as-text law, type scale (7 steps, zero drift), overline tracking, 18px
+gutter + 8px topbar, CTA glow removal, 8/12 radii, tabular-nums coverage,
+200ms reveal motion, dark `--ink-3` AA (`#908878`), marks reconciliation,
+18-chapter one-truth data, one diagram affordance, DESIGN.md↔spec alignment.
+Full report: `~/.gstack/projects/nirmitgoyal-DiploMate/designs/design-audit-20260703/`.
+
+Deferred, in priority order:
+
+- **Night Desk demo surface** (medium, color): `.dir-c` tokens are defined and
+  now AA-verified but unreachable in the prototype (founder-descoped: "ships
+  via D20 tokens"). When Flutter lands the theme toggle, re-run contrast QA on
+  the real dark surfaces.
+- **Flutter a11y: rows must be real focusable widgets** (medium, interaction):
+  prototype syllabus/topics/bookmarks rows are `div.row` with cursor:pointer —
+  no keyboard/TalkBack path. Speciality rows (`button role="radio"`) model the
+  correct pattern. D20 TalkBack order is non-negotiable in the build.
+- **Second authored QnA for the demo loop** (polish, content): rating "Good"
+  toasts "next answer" then reloads the same TAP-block question still marked
+  "Due today" (counter stuck at 3 of 12). One more authored answer makes the
+  recall loop demo honest end-to-end.
+- **Internal-padding regrid to the 4px scale** (polish, spacing): census still
+  has 6/9/10/13/14px internal paddings. Named-law violations are fixed; do the
+  blanket regrid in Flutter where the spacing scale is enforced at widget level.
+- **Dead code sweep in prototype** (polish): `.dir-a` theme (lacks
+  `--exam-red`), `.lz.done/.upd/.fail` lozenges (`.lz.upd` amber-on-amber =
+  4.32:1 — fails AA if ever used), `.sheet .support`, `.agenda .sub`, unused
+  icons (down/mic/sync/hd/fail). Flagged, not deleted (pre-existing).
