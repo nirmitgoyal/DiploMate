@@ -68,6 +68,12 @@ Deferred, in priority order:
   prototype syllabus/topics/bookmarks rows are `div.row` with cursor:pointer —
   no keyboard/TalkBack path. Speciality rows (`button role="radio"`) model the
   correct pattern. D20 TalkBack order is non-negotiable in the build.
+  _Expanded by /autoplan design review (2026-07-04) into the executable pack:_
+  visible focus styles; roving radio focus + arrow keys on the speciality
+  list; `aria-current` on nav; toast + auto-advance announcements; diagram
+  content descriptions; fullscreen-viewer focus trap + restore; per-screen
+  TalkBack semantic order; keyboard acceptance tests; **48dp is the build
+  floor** (44px was the HTML-demo compromise).
 - **Second authored QnA for the demo loop** (polish, content): rating "Good"
   toasts "next answer" then reloads the same TAP-block question still marked
   "Due today" (counter stuck at 3 of 12). One more authored answer makes the
@@ -79,3 +85,27 @@ Deferred, in priority order:
   `--exam-red`), `.lz.done/.upd/.fail` lozenges (`.lz.upd` amber-on-amber =
   4.32:1 — fails AA if ever used), `.sheet .support`, `.agenda .sub`, unused
   icons (down/mic/sync/hd/fail). Flagged, not deleted (pre-existing).
+
+## 7. Strategy work from /autoplan CEO review (2026-07-04)
+
+Cross-model CEO findings the founder must feed with data no model has. All
+are plan-doc additions, not code. Source: autoplan Phase 1 (subagent
+F5/F8/F12/F14 + Codex #7/#9); tasks-ceo-review JSONL T6–T9.
+
+- **Market-math table** (P3, founder ~2h): finalists/cycle × current PDF price
+  × realistic attach, for Anaesthesia and expansion axis-2 (incl. the MD/MS
+  university-exam cohort question). Both models: "people pay" is category
+  evidence, not a number; the 61-track intent (PG2) makes per-track economics
+  the roadmap's denominator.
+- **Exam-calendar back-schedule** (P3, founder ~1h): name the target DNB
+  session; back-schedule beta-live, cohort recruiting (TODO 4), and the
+  experiment decision date from it. Persona is countdown-defined; missing the
+  session resets the cohort ~6 months.
+- **B2B2C channel one-pager** (P3, founder ~2h): hospital coordinators /
+  coaching brands as cohort-scale distribution; one friendly pilot could
+  satisfy TODO 4's ≥30-user floor outright. Decide alongside the licensing
+  term sheet (brand architecture: DiploMate vs co-brand).
+- **NExT regulatory watch + incumbent response note** (P3, ~15min): any NExT
+  progress pulls Marrow/PrepLadder into exit-exam prep wholesale; strategy =
+  speed + exclusivity (PG1) + recall-history switching cost (PG4). One
+  paragraph in the plan; revisit quarterly.
