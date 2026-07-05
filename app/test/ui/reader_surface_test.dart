@@ -1,3 +1,8 @@
+import 'dart:typed_data';
+
+import 'package:diplomate/app_providers.dart';
+import 'package:diplomate/data/repos/content_repository.dart';
+import 'package:diplomate/domain/models.dart';
 import 'package:diplomate/theme/app_theme.dart';
 import 'package:diplomate/ui/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
@@ -7,11 +12,45 @@ import 'package:flutter_test/flutter_test.dart';
 const _tapQna = '01J0QNATAPBLOCK00000000001';
 const _tapTopic = '01J0TOPICTAPBLOCK000000001';
 
-Widget host() => ProviderScope(
+Widget host({ContentRepository? repo}) => ProviderScope(
+      overrides: [
+        if (repo != null) contentRepositoryProvider.overrideWithValue(repo),
+      ],
       child: MaterialApp(
           theme: dmLightTheme(),
           home: ReaderScreen.browse(qnaId: _tapQna, topicId: _tapTopic)),
     );
+
+/// qna() always returns null - exercises a successful fetch that finds no
+/// row (e.g. a stale/deleted deep-linked bookmark), which must render the
+/// retry state, not spin forever.
+class _NullQnaContentRepository implements ContentRepository {
+  int qnaCalls = 0;
+
+  @override
+  Future<List<SpecialityRow>> specialities() async => const [];
+
+  @override
+  Future<List<ChapterRow>> chapters(String specialityId) async => const [];
+
+  @override
+  Future<void> ensureChapterCached(String chapterId) async {}
+
+  @override
+  Future<List<TopicRow>> topics(String chapterId) async => const [];
+
+  @override
+  Future<List<QnaRow>> qnas(String topicId) async => const [];
+
+  @override
+  Future<QnaRow?> qna(String qnaId) async {
+    qnaCalls++;
+    return null;
+  }
+
+  @override
+  Future<Uint8List> imageBytes(String imageId) async => Uint8List(0);
+}
 
 void main() {
   // The revealed answer is long-form exam content (7 sections); the default
@@ -76,5 +115,22 @@ void main() {
     await t.pumpAndSettle();
     // the section heading is on screen after the jump
     expect(find.text('Complications'), findsWidgets);
+  });
+
+  testWidgets(
+      'a successful fetch that finds no qna (stale/deleted deep link) renders retry, not an infinite spinner',
+      (t) async {
+    final repo = _NullQnaContentRepository();
+    await t.pumpWidget(host(repo: repo));
+    await t.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing,
+        reason: 'must not spin forever on a successful-but-empty fetch');
+    expect(find.text("Couldn't load this - retry"), findsOneWidget);
+    expect(find.widgetWithText(TextButton, 'Retry'), findsOneWidget);
+
+    await t.tap(find.widgetWithText(TextButton, 'Retry'));
+    await t.pumpAndSettle();
+    expect(repo.qnaCalls, 2, reason: 'Retry re-invokes the fetch');
+    expect(find.text("Couldn't load this - retry"), findsOneWidget);
   });
 }

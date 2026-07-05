@@ -85,6 +85,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       }
       setState(() {
         _qna = qna;
+        // A fetch that completes with no error but no qna (id not found -
+        // e.g. a stale/deleted deep-linked bookmark) must not fall through
+        // to the loading spinner forever - route it into the same retry UI.
+        _error = qna == null ? StateError('qna not found') : null;
         _topicQnas = topicQnas;
         _topicTitle = topicTitle;
         _chapterTitle = chapterTitle;

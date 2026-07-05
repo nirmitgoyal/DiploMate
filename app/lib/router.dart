@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,9 +13,21 @@ import 'ui/speciality/speciality_screen.dart';
 import 'ui/syllabus/syllabus_screen.dart';
 import 'ui/topics/topics_screen.dart';
 
+/// GoRouter only reruns `redirect` on navigation events, not on Riverpod
+/// state changes - this bridges sessionUserProvider changes (sign-in,
+/// sign-out, delete) into a re-run so live auth transitions navigate.
+class _RouterRefresh extends ChangeNotifier {
+  _RouterRefresh(Ref ref) {
+    ref.listen(sessionUserProvider, (_, __) => notifyListeners());
+  }
+}
+
 GoRouter buildRouter(Ref ref) {
+  final refresh = _RouterRefresh(ref);
+  ref.onDispose(refresh.dispose);
   return GoRouter(
     initialLocation: '/signin',
+    refreshListenable: refresh,
     redirect: (context, state) {
       final user = ref.read(sessionUserProvider);
       final loc = state.matchedLocation;
