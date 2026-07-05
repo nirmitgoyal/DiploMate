@@ -54,10 +54,22 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text("You're offline - connect and retry."), findsOneWidget);
 
-    auth.failWith = SignInCancelled();
+    auth.failWith = Exception('boom');
     await t.tap(find.text('Continue with Google'));
     await t.pumpAndSettle();
     expect(find.text('Sign-in failed - try again.'), findsOneWidget);
+  });
+
+  testWidgets('cancel returns to idle with no error (DESIGN.md State Spec 2)',
+      (t) async {
+    final auth = FakeAuthRepository()..failWith = SignInCancelled();
+    await t.pumpWidget(host(auth));
+    await t.tap(find.text('Continue with Google'));
+    await t.pumpAndSettle();
+    expect(find.text('Sign-in failed - try again.'), findsNothing);
+    expect(find.text("You're offline - connect and retry."), findsNothing);
+    final btn = t.widget<FilledButton>(find.byType(FilledButton));
+    expect(btn.onPressed, isNotNull);
   });
 
   testWidgets('in-flight disables the CTA', (t) async {

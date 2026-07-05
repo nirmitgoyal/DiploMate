@@ -26,6 +26,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       ref.read(sessionUserProvider.notifier).state = user;
     } on AuthOffline {
       setState(() => _error = "You're offline - connect and retry.");
+    } on SignInCancelled {
+      // DESIGN.md State Spec 2: cancel returns to idle, no error shown.
     } catch (_) {
       setState(() => _error = 'Sign-in failed - try again.');
     } finally {
