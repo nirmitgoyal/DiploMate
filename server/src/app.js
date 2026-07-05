@@ -26,6 +26,7 @@ function createApp({
   app.use(require("./routes/manifest"));
   app.use(require("./routes/chapters"));
   app.use(require("./routes/images"));
+  app.use(require("./routes/sync"));
 
   // Terminal 404 for every non-inventory path.
   app.use((req, res) => res.status(404).json({ error: "not_found" }));
