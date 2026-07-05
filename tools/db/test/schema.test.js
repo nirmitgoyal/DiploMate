@@ -90,3 +90,51 @@ test("beta_active row is true", async () => {
   assert.equal(r.rows.length, 1);
   assert.equal(r.rows[0].value, "true");
 });
+
+test("invalid exam_type is rejected by specialities_exam_type_check", async () => {
+  await client.query("BEGIN");
+  const err = await client
+    .query(
+      `INSERT INTO specialities (id, name, exam_type, slug)
+       VALUES ('0000000000000000000000TEST', 'Test', 'MD', 'test-exam-type')`,
+    )
+    .then(
+      () => null,
+      (e) => e,
+    );
+  await client.query("ROLLBACK");
+  assert.ok(err, "insert with exam_type MD must fail");
+  assert.equal(err.constraint, "specialities_exam_type_check");
+});
+
+test("images byte_size over 204800 is rejected by images_byte_size_check", async () => {
+  await client.query("BEGIN");
+  await client.query(
+    `INSERT INTO specialities (id, name, exam_type, slug)
+     VALUES ('0000000000000000000000TSPC', 'Tmp', 'DNB', 'tmp-spec')`,
+  );
+  await client.query(
+    `INSERT INTO chapters (id, speciality_id, title, slug)
+     VALUES ('0000000000000000000000TCHP', '0000000000000000000000TSPC', 'Tmp', 'tmp-ch')`,
+  );
+  await client.query(
+    `INSERT INTO topics (id, chapter_id, title, slug)
+     VALUES ('0000000000000000000000TTPC', '0000000000000000000000TCHP', 'Tmp', 'tmp-tp')`,
+  );
+  await client.query(
+    `INSERT INTO qnas (id, topic_id, question, sections)
+     VALUES ('0000000000000000000000TQNA', '0000000000000000000000TTPC', 'Q?', '[]')`,
+  );
+  const err = await client
+    .query(
+      `INSERT INTO images (id, qna_id, caption, content_description, webp, byte_size, sha256)
+       VALUES ('0000000000000000000000TIMG', '0000000000000000000000TQNA', 'c', 'd', '\\x00', 204801, 'deadbeef')`,
+    )
+    .then(
+      () => null,
+      (e) => e,
+    );
+  await client.query("ROLLBACK");
+  assert.ok(err, "insert with byte_size 204801 must fail");
+  assert.equal(err.constraint, "images_byte_size_check");
+});
