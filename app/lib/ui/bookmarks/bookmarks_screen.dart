@@ -71,7 +71,8 @@ class BookmarksScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: DmSpace.sm),
-              Text('Saved · ${list.length} questions',
+              Text(
+                  'Saved · ${list.length} ${list.length == 1 ? 'question' : 'questions'}',
                   style: DmType.meta.copyWith(color: dm.ink3)),
               const SizedBox(height: DmSpace.sm),
               Expanded(

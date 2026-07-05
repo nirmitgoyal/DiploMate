@@ -30,6 +30,6 @@ void main() {
     await t.pumpAndSettle();
     expect(find.textContaining('transversus abdominis plane'), findsOneWidget);
     expect(find.text('Regional Anaesthesia · Truncal blocks'), findsOneWidget);
-    expect(find.text('Saved · 1 questions'), findsOneWidget);
+    expect(find.text('Saved · 1 question'), findsOneWidget);
   });
 }
