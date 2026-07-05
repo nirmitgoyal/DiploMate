@@ -74,6 +74,8 @@ Deferred, in priority order:
   content descriptions; fullscreen-viewer focus trap + restore; per-screen
   TalkBack semantic order; keyboard acceptance tests; **48dp is the build
   floor** (44px was the HTML-demo compromise).
+  _Landed as DESIGN.md "A11y Executable Pack" + lane-B test suite
+  (2026-07-04 plan `2026-07-04-flutter-shell-screens.md`)._
 - **Second authored QnA for the demo loop** (polish, content): rating "Easy"
   toasts "next answer" then reloads the same TAP-block question (overline
   stuck at "Suggestion · 3 of 12"). One more authored answer makes the recall

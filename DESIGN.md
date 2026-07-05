@@ -152,35 +152,49 @@ gradient fills, no decorative color.
 
 ### Light - Clinical Chart (`.dir-b`, default)
 
-| Token           | Hex       | Role                                                       |
-| --------------- | --------- | ---------------------------------------------------------- |
-| `--paper`       | `#F6F8FA` | App background (grey chart-paper - the worksheet surface)  |
-| `--elevated`    | `#FFFFFF` | **Model-answer surface only** + diagram plates + inputs    |
-| `--sunk`        | `#EDF1F5` | Row hover, inset chips                                     |
-| `--ink`         | `#0E1626` | Primary text (17:1 on paper)                               |
-| `--ink-2`       | `#57657A` | Secondary text / answer prose (5.6:1)                      |
-| `--ink-3`       | `#5F6F84` | Muted labels, metadata (**4.8:1** - was `#8A97A8`, failed) |
-| `--rule`        | `#E1E7EE` | Hairline dividers                                          |
-| `--rule-strong` | `#CFD8E2` | Answer seam, input borders, tray top                       |
-| `--teal`        | `#087A72` | **Fills & icons only** (white-on-teal CTA = 5.2:1)         |
-| `--teal-ink`    | `#0A6E67` | **Teal used as text** (overlines, active nav) - 5.7:1      |
-| `--amber`       | `#A85B10` | Medium rating tier + "Due" status (4.7:1)                  |
-| `--exam-red`    | `#B4271F` | Examiner marks, errors, + Hard tier (6.1:1)                |
-| `--ok`          | `#1E7A46` | Easy tier + "rated Easy" stat (5.0:1)                      |
+| Token           | Hex                                      | Role                                                       |
+| --------------- | ---------------------------------------- | ---------------------------------------------------------- |
+| `--paper`       | `#F6F8FA`                                | App background (grey chart-paper - the worksheet surface)  |
+| `--elevated`    | `#FFFFFF`                                | **Model-answer surface only** + diagram plates + inputs    |
+| `--sunk`        | `#EDF1F5`                                | Row hover, inset chips                                     |
+| `--ink`         | `#0E1626`                                | Primary text (17:1 on paper)                               |
+| `--ink-2`       | `#57657A`                                | Secondary text / answer prose (5.6:1)                      |
+| `--ink-3`       | `#5F6F84`                                | Muted labels, metadata (**4.8:1** - was `#8A97A8`, failed) |
+| `--rule`        | `#E1E7EE`                                | Hairline dividers                                          |
+| `--rule-strong` | `#CFD8E2`                                | Answer seam, input borders, tray top                       |
+| `--teal`        | `#087A72`                                | **Fills & icons only** (white-on-teal CTA = 5.2:1)         |
+| `--teal-ink`    | `#0A6E67`                                | **Teal used as text** (overlines, active nav) - 5.7:1      |
+| `--amber`       | `#A85B10`                                | Medium rating tier + "Due" status (4.7:1)                  |
+| `--exam-red`    | `#B4271F`                                | Examiner marks, errors, + Hard tier (6.1:1)                |
+| `--ok`          | `#1E7A46`                                | Easy tier + "rated Easy" stat (5.0:1)                      |
+| `--teal-soft`   | `#087A72` at 8% alpha (`#14087A72` ARGB) | Tint fills behind teal chips/marks (never text)            |
+| `--amber-soft`  | `#A85B10` at 7% alpha (`#12A85B10` ARGB) | Tint fill behind the active search match                   |
+| `--nav-bg`      | `#FBFCFD`                                | Bottom-nav surface                                         |
+| `--nav-rule`    | `#E4EAF0`                                | Bottom-nav top hairline                                    |
+| `--danger`      | alias of `--exam-red`                    | One red, one source                                        |
 
 ### Dark - Night Desk (`.dir-c`)
 
-| Token        | Hex       | Role                                                                                 |
-| ------------ | --------- | ------------------------------------------------------------------------------------ |
-| `--paper`    | `#19181A` | App background (warm near-black)                                                     |
-| `--elevated` | `#211F22` | Answer / plate surface                                                               |
-| `--ink`      | `#ECE6DC` | Primary text (14:1)                                                                  |
-| `--ink-2`    | `#9C9488` | Secondary / prose (5.9:1)                                                            |
-| `--ink-3`    | `#908878` | Muted (**5.0:1 paper / 4.7:1 elevated** - `#8A8275` failed AA on the answer surface) |
-| `--teal`     | `#3ED8C4` | Fills & icons (dark CTA text `#0C1413` on it = 10.5:1)                               |
-| `--teal-ink` | `#8CEBDD` | Teal-as-text (12.7:1)                                                                |
-| `--amber`    | `#F2B44C` | Medium rating tier + "Due" status (9.6:1)                                            |
-| `--exam-red` | `#F08A82` | Examiner marks / errors + Hard tier                                                  |
+| Token           | Hex                                      | Role                                                                                 |
+| --------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `--paper`       | `#19181A`                                | App background (warm near-black)                                                     |
+| `--elevated`    | `#211F22`                                | Answer / plate surface                                                               |
+| `--ink`         | `#ECE6DC`                                | Primary text (14:1)                                                                  |
+| `--ink-2`       | `#9C9488`                                | Secondary / prose (5.9:1)                                                            |
+| `--ink-3`       | `#908878`                                | Muted (**5.0:1 paper / 4.7:1 elevated** - `#8A8275` failed AA on the answer surface) |
+| `--teal`        | `#3ED8C4`                                | Fills & icons (dark CTA text `#0C1413` on it = 10.5:1)                               |
+| `--teal-ink`    | `#8CEBDD`                                | Teal-as-text (12.7:1)                                                                |
+| `--amber`       | `#F2B44C`                                | Medium rating tier + "Due" status (9.6:1)                                            |
+| `--exam-red`    | `#F08A82`                                | Examiner marks / errors + Hard tier                                                  |
+| `--sunk`        | `#141315`                                | Row hover, inset chips                                                               |
+| `--rule`        | `#302D31`                                | Hairline dividers                                                                    |
+| `--rule-strong` | `#3E3A3F`                                | Answer seam, input borders                                                           |
+| `--ok`          | `#5FCF8A`                                | Easy tier + "rated Easy" stat                                                        |
+| `--teal-soft`   | `#3ED8C4` at 9% alpha (`#183ED8C4` ARGB) | Tint fills (never text)                                                              |
+| `--amber-soft`  | `#F2B44C` at 8% alpha (`#14F2B44C` ARGB) | Active search match tint                                                             |
+| `--nav-bg`      | `#141315`                                | Bottom-nav surface                                                                   |
+| `--nav-rule`    | `#2A282C`                                | Bottom-nav top hairline                                                              |
+| `--danger`      | alias of `--exam-red`                    | One red, one source                                                                  |
 
 ### Color laws (enforced - these are the D20 lock, corrected)
 
@@ -270,7 +284,10 @@ gradient fills, no decorative color.
   playful bounce. (D20 motion budget.)
 - **The three sanctioned motions (D20):**
   1. **Answer reveal** - brief vertical uncover, 150-220ms, scroll position
-     preserved. This is the one "event" motion; it earns its keep by making the
+     preserved.
+     (Law. The prototype clamps scroll-to-top on reveal - a demo limitation,
+     not the spec; the app preserves the reading position.)
+     This is the one "event" motion; it earns its keep by making the
      grey→white material change feel physical.
   2. **Rating acknowledgement** - the "Rated Easy · next answer" toast, then
      auto-advance to the next QnA.
@@ -491,6 +508,52 @@ are deleted immediately. You would start again from zero.`, actions
 1 day ago`, `Last synced N days ago`. Renders `--amber` when 3 or more
     days stale, `--ink-3` otherwise.
 
+## Responsive Rules (2026-07-04, design T5)
+
+The prototype is a fixed 344x720 frame; the app is not. One set of rules:
+
+- **320dp compact floor:** every screen lays out at 320dp width with no
+  horizontal overflow. Long titles (speciality, chapter, topic) ellipsize on
+  one line in rows; the Reader question never truncates (it wraps).
+- **Short landscape:** all screens scroll vertically; nothing is pinned that
+  makes content unreachable at 360dp height. The Reader pre-reveal state is
+  one scrollable column so `Reveal Answer` is always reachable.
+- **600dp+ (tablet) reading measure:** the Reader content column is centered
+  with `max-width 560dp`. Never full-bleed 17px serif across a tablet width.
+  Other screens keep list rows full-width (rows are scannable, prose is not).
+- **Keyboard-visible search:** the speciality screen's search field and
+  result list stay visible above the soft keyboard (the list shrinks; the
+  CTA may scroll below the fold while the keyboard is up).
+- **Safe areas:** all screens render inside SafeArea; the bottom nav and the
+  pinned Home resume row respect the gesture inset.
+- **textScale 1.3:** every screen survives system textScale 1.3 with no
+  layout breakage (test-enforced). Body text is already 17sp minimum.
+
+## A11y Executable Pack (2026-07-04, design T6 - build floor, test-enforced)
+
+- **48dp is the build floor** for every interactive target (44px was the
+  HTML-demo compromise). Android tap-target guideline tests run per screen.
+- **Visible focus:** every focusable control shows the Material focus
+  highlight; keyboard traversal reaches every interactive element.
+- **Roving radio focus (speciality list):** the grouped list is a
+  radiogroup; ArrowDown/ArrowUp move selection to the next/previous visible
+  row (selection follows focus); Enter in the search field picks the top
+  visible match. Keyboard acceptance test required.
+- **aria-current on nav:** the active bottom-nav tab is exposed as selected
+  to accessibility services.
+- **Announcements:** the toast (`.ack` equivalent) is a live region; rating
+  acknowledgement and auto-advance are announced.
+- **Diagram content descriptions:** every figure carries its
+  `content_description` from the content DDL as its semantic label.
+- **Fullscreen-viewer focus trap:** the diagram viewer is a modal dialog
+  that traps focus while open and restores focus to the opening control on
+  close; Escape closes it.
+- **TalkBack semantic order per screen:** reading order matches visual
+  order top-to-bottom (Home: greeting -> primary CTA -> ghost CTA -> stats
+  -> resume row -> nav). Traversal-order tests run on Home and Reader.
+- **Reduced motion:** all three sanctioned motions become instant swaps
+  under the system reduce-motion setting.
+
 ## Decisions Log
 
 | Date       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Rationale                                                                                                                                                                                             |
@@ -514,3 +577,4 @@ are deleted immediately. You would start again from zero.`, actions
 | 2026-07-04 | User-directed prototype pass: rating tray Unable/Hard/Good -> **Easy/Medium/Hard** (green/amber/red traffic-light, smile/meh/frown icons, no interval hints, no "done/due" counter); SRS de-surfaced (Reader "Due today" badge + Topics date pips removed -> pip now bare status Recalled/Due/New); "rated Good" -> "rated Easy"; sign-in tagline "Written by Doctors. Solved for Success!" added, util trimmed to legal links; "What earns marks" rows anchor-scroll to sections; Account avatar -> Google profile image; all em/en-dashes -> hyphen product-wide | Founder call - product shifts from a visible spaced-repetition scheduler toward a plain difficulty-rating study tool; Law 5 (red) relaxed to admit the Hard tier; DESIGN.md synced to prototype truth |
 | 2026-07-04 | **No offline Downloads feature**: no download/offline state anywhere (no syllabus lozenges, no downloading %, no "Available offline"/"Update available"/"Download failed" copy, no remove-download); content loads on demand with a transparent device cache; failed fetch = inline "Couldn't load this - retry"                                                                                                                                                                                                                                                   | Founder call (evening) - kills bundle-install/storage complexity in v1; online-first accepted; prototype's download lozenges are display-only legacy with no build obligation                         |
 | 2026-07-04 | Free-Beta UI Contract + State Specs sections added (design T1/T2/T3/T8): no monetization UI in beta, syllabus rows = title + count + recall progress, chapter tap -> Topics, empty-track first-class screen, exact copy for all D6 edge states incl. one-way-door confirmations                                                                                                                                                                                                                                                                                    | /autoplan design review P1 tasks; lane B builds against written truth                                                                                                                                 |
+| 2026-07-04 | Responsive Rules + A11y Executable Pack sections added (design T5/T6); token tables completed from built CSS (teal-soft/amber-soft/nav-\* both themes, dark sunk/rule/rule-strong/ok); reveal scroll-preserve noted as law vs prototype clamp (T7)                                                                                                                                                                                                                                                                                                                 | /autoplan design review; lane B builds against written truth                                                                                                                                          |
