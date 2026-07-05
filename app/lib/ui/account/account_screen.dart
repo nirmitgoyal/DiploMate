@@ -76,7 +76,7 @@ class AccountScreen extends ConsumerWidget {
     final specName = ref.watch(_specialityNameProvider).valueOrNull;
     final changeUsed = (user?.specialityChangeCount ?? 0) >= 1;
     final stale =
-        syncedAt == null || DateTime.now().difference(syncedAt).inDays > 7;
+        syncedAt == null || DateTime.now().difference(syncedAt).inDays >= 3;
 
     return Scaffold(
       body: SafeArea(
