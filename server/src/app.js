@@ -24,12 +24,22 @@ function createApp({
   // (Task 11) pins the exact final set.
   app.use(require("./routes/auth"));
   app.use(require("./routes/manifest"));
+  app.use(require("./routes/chapters"));
+  app.use(require("./routes/images"));
 
   // Terminal 404 for every non-inventory path.
   app.use((req, res) => res.status(404).json({ error: "not_found" }));
 
-  // Error mapper - Task 7 extends it with constraint_violation handling.
+  // pg constraint violations -> 400 with the constraint name (ENG-T16).
+  // sql/ DDL owns the enums; the API never re-validates membership.
   app.use((err, req, res, next) => {
+    if (err && err.constraint) {
+      return res.status(400).json({
+        error: "constraint_violation",
+        constraint: err.constraint,
+      });
+    }
+    console.error(err);
     res.status(500).json({ error: "internal" });
   });
 
