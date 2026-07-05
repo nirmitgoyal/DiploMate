@@ -224,7 +224,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         online: online,
         onSend: (message) async {
           await ref.read(reportErrorProvider)(qna.id, message);
-          if (context.mounted) showDmToast(context, '✓ Report sent');
+          if (context.mounted) showDmToast(context, '✓ Report sent - thank you');
         },
       ),
       imageBuilder: (context, img) => DiagramPlate(
@@ -345,8 +345,11 @@ class _ReportRow extends StatelessWidget {
                     color: dm.ink3.withValues(alpha: online ? 1 : 0.5))),
             const Spacer(),
             if (!online)
-              Text('Connect to report',
-                  style: DmType.meta.copyWith(color: dm.ink3)),
+              Flexible(
+                child: Text('Connect to the internet to report an error.',
+                    textAlign: TextAlign.right,
+                    style: DmType.meta.copyWith(color: dm.ink3)),
+              ),
           ],
         ),
       ),

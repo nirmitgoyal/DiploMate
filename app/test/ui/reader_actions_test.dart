@@ -70,14 +70,14 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Send'));
     await t.pump();
-    expect(find.text('✓ Report sent'), findsOneWidget);
+    expect(find.text('✓ Report sent - thank you'), findsOneWidget);
     await t.pump(const Duration(seconds: 2));
 
     await t.pumpWidget(host(online: false));
     await t.pumpAndSettle();
     await t.tap(find.text('Reveal model answer'));
     await t.pumpAndSettle();
-    expect(find.text('Connect to report'), findsOneWidget);
+    expect(find.text('Connect to the internet to report an error.'), findsOneWidget);
     await t.tap(find.text('Report an answer error'));
     await t.pumpAndSettle();
     expect(find.text('Send'), findsNothing, reason: 'disabled offline - no dialog');
