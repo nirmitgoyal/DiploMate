@@ -1,6 +1,7 @@
 const express = require("express");
 const { requireAuth } = require("../middleware/auth");
 const { requireEntitlement } = require("../middleware/entitlement");
+const { quotaGuard } = require("../middleware/quota");
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ async function imageSpeciality(req, pool) {
 router.get(
   "/images/:id",
   requireAuth,
+  quotaGuard,
   requireEntitlement(imageSpeciality),
   async (req, res, next) => {
     try {

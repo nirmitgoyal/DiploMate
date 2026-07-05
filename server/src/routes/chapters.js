@@ -1,6 +1,7 @@
 const express = require("express");
 const { requireAuth } = require("../middleware/auth");
 const { requireEntitlement } = require("../middleware/entitlement");
+const { quotaGuard } = require("../middleware/quota");
 const { PAGE_SIZE } = require("../lib/constants");
 
 const router = express.Router();
@@ -18,6 +19,7 @@ async function chapterSpeciality(req, pool) {
 router.get(
   "/chapters/:chapterId/qnas",
   requireAuth,
+  quotaGuard,
   requireEntitlement(chapterSpeciality),
   async (req, res, next) => {
     try {
