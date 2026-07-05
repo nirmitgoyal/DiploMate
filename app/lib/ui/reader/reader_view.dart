@@ -17,6 +17,9 @@ class ReaderView extends StatefulWidget {
     this.belowAnswer,
     this.rated = false,
     this.imageBuilder,
+    this.belowCrumb,
+    this.sectionSpans,
+    this.activeSearchSection,
   });
 
   final QnaRow qna;
@@ -30,6 +33,19 @@ class ReaderView extends StatefulWidget {
   final VoidCallback? onNextInTopic;
   final Widget? belowAnswer;
   final Widget Function(BuildContext, ImageRow)? imageBuilder;
+
+  /// The search bar slot, rendered under the crumb row.
+  final Widget? belowCrumb;
+
+  /// When non-null, renders a section's heading+body via this in place of
+  /// plain Text (in-answer search highlighting). Task 14.
+  final List<InlineSpan> Function(AnswerSection)? sectionSpans;
+
+  /// The AnswerSection.key of the current active search match (Task 14) -
+  /// scrolled into view via the same anchor mechanism as earn-row jumps
+  /// whenever this changes. Null / an 'earn:' key (outline row, already
+  /// visible above the fold) triggers no scroll.
+  final String? activeSearchSection;
 
   @override
   State<ReaderView> createState() => _ReaderViewState();
@@ -45,6 +61,66 @@ class _ReaderViewState extends State<ReaderView> {
       Scrollable.ensureVisible(key!.currentContext!,
           duration: DmMotion.reveal, alignment: 0.05);
     }
+  }
+
+  @override
+  void didUpdateWidget(ReaderView old) {
+    super.didUpdateWidget(old);
+    final target = widget.activeSearchSection;
+    if (target != null &&
+        target != old.activeSearchSection &&
+        !target.startsWith('earn:')) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpTo(target));
+    }
+  }
+
+  /// Heading + body for one section, either plain (default) or highlighted
+  /// via [ReaderView.sectionSpans] (Task 14 search). The spans function is
+  /// fed the same 'heading\nbody' string search offsets are computed
+  /// against, then split at the first newline so heading/body render from
+  /// that shared source and offsets stay honest.
+  List<Widget> _sectionText(AnswerSection s, DmColors dm) {
+    final spans = widget.sectionSpans;
+    if (spans == null) {
+      return [
+        Text(s.heading, style: DmType.section.copyWith(color: dm.ink)),
+        const SizedBox(height: DmSpace.xs),
+        if (s.bodyMd.isNotEmpty)
+          Text(s.bodyMd, style: DmType.body.copyWith(color: dm.ink)),
+      ];
+    }
+    final combined = spans(s);
+    final splitAt = s.heading.length;
+    final headingSpans = <InlineSpan>[];
+    final bodySpans = <InlineSpan>[];
+    var consumed = 0;
+    for (final span in combined) {
+      final text = (span as TextSpan).text ?? '';
+      final start = consumed;
+      final end = consumed + text.length;
+      consumed = end;
+      if (end <= splitAt) {
+        headingSpans.add(span);
+      } else if (start >= splitAt + 1) {
+        bodySpans.add(TextSpan(text: text, style: span.style));
+      } else {
+        // straddles the '\n' boundary: split this span in two.
+        final headingPart = text.substring(0, (splitAt - start).clamp(0, text.length));
+        final bodyStart = (splitAt + 1 - start).clamp(0, text.length);
+        final bodyPart = text.substring(bodyStart);
+        if (headingPart.isNotEmpty) {
+          headingSpans.add(TextSpan(text: headingPart, style: span.style));
+        }
+        if (bodyPart.isNotEmpty) {
+          bodySpans.add(TextSpan(text: bodyPart, style: span.style));
+        }
+      }
+    }
+    return [
+      Text.rich(TextSpan(children: headingSpans)),
+      const SizedBox(height: DmSpace.xs),
+      if (s.bodyMd.isNotEmpty) Text.rich(TextSpan(children: bodySpans)),
+    ];
   }
 
   @override
@@ -90,6 +166,7 @@ class _ReaderViewState extends State<ReaderView> {
                 ],
               ),
             ),
+            if (widget.belowCrumb != null) widget.belowCrumb!,
             if (widget.overline != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: DmSpace.gutter),
@@ -250,23 +327,7 @@ class _ReaderViewState extends State<ReaderView> {
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                        Text(s.heading,
-                                                            style: DmType
-                                                                .section
-                                                                .copyWith(
-                                                                    color: dm
-                                                                        .ink)),
-                                                        const SizedBox(
-                                                            height:
-                                                                DmSpace.xs),
-                                                        if (s.bodyMd
-                                                            .isNotEmpty)
-                                                          Text(s.bodyMd,
-                                                              style: DmType
-                                                                  .body
-                                                                  .copyWith(
-                                                                      color: dm
-                                                                          .ink)),
+                                                        ..._sectionText(s, dm),
                                                         if (s.key ==
                                                                 'diagram' &&
                                                             widget.imageBuilder !=
