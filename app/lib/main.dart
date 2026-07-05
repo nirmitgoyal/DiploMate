@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-void main() {
-  runApp(const MainApp());
-}
+import 'router.dart';
+import 'theme/app_theme.dart';
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+void main() => runApp(const ProviderScope(child: DiplomateApp()));
+
+class DiplomateApp extends ConsumerWidget {
+  const DiplomateApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MaterialApp.router(
+      title: 'DiploMate',
+      theme: dmLightTheme(),
+      darkTheme: dmDarkTheme(),
+      routerConfig: ref.watch(routerProvider),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
