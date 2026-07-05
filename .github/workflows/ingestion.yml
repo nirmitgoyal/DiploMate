@@ -1,0 +1,41 @@
+name: ingestion
+on:
+  push:
+    paths:
+      - "ingestion/**"
+      - "sql/**"
+      - ".github/workflows/ingestion.yml"
+  pull_request:
+    paths:
+      - "ingestion/**"
+      - "sql/**"
+      - ".github/workflows/ingestion.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: diplomate_ingestion_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/diplomate_ingestion_test
+    defaults:
+      run:
+        working-directory: ingestion
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: node src/validate.js fixtures/canonical/sample-chapter
