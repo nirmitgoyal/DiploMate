@@ -1,4 +1,6 @@
-# Paywall sheet — design
+# Paywall sheet - design
+
+Billing slice only - NOT rendered in free beta (PG3, 2026-07-04); kept for the billing slice.
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo). Tokens, type, color per
@@ -17,10 +19,13 @@ one support line. No UPI explainer, no activation-time promise, no restore row
 - Overline: `Unlock`. Heading: `Full Anaesthesia access`.
 - Price line: `₹499` + `one-time · 18 chapters`.
 - Included list (check icons):
-  - `All 18 chapters — every previous-year model answer, structured for recall`
-  - `Mark-earning diagrams (TAP block, oxygen cascade…) offline`
+  - `All 18 chapters - every previous-year model answer, structured for recall`
+  - `Mark-earning diagrams (TAP block, oxygen cascade…)`
   - `Spaced-repetition queue across the whole syllabus`
   - `Free updates as new papers are added`
+  - Downloads/offline feature removed 2026-07-04 (founder); prototype lozenges
+    are display-only legacy. The diagrams bullet drops its trailing "offline"
+    (still present in the prototype's demo copy - no build obligation).
 - Footer CTA: `Purchase`. Sub-link: `Trouble? Mail us`.
 
 ## Behaviors
@@ -28,12 +33,12 @@ one support line. No UPI explainer, no activation-time promise, no restore row
 - Opened by locked Syllabus rows (`data-sheet`) or the demo `__paywall` chip
   (shows Syllabus first, then the sheet).
 - Scrim tap closes; sheet animates in/out.
-- `Purchase` is inert — what it does in beta is an **open decision** (plan
+- `Purchase` is inert - what it does in beta is an **open decision** (plan
   D18 refinement; beta is manual UPI + hand-set entitlements).
 
 ## Verify (manual, preview server)
 
 1. Any locked Syllabus row opens the sheet; scrim tap closes it.
 2. Copy shows exactly one action (`Purchase`) and one support route
-   (`Trouble? Mail us`) — no restore row, no payment-instructions CTA.
+   (`Trouble? Mail us`) - no restore row, no payment-instructions CTA.
 3. No answer content is visible behind or inside the sheet.

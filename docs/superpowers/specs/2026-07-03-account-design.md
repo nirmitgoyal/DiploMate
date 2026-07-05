@@ -1,4 +1,4 @@
-# Account — design
+# Account - design
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo). Tokens, type, color per
@@ -13,17 +13,20 @@ topbar). Hosts the one-time speciality change.
 ## UI (top → bottom)
 
 - Topbar title: `Account`.
-- Identity block: avatar `A` · `Dr. Ananya Rao` · `ananya.rao@gmail.com`.
+- Identity block: avatar = Google profile photo (46px circle, cover-fit;
+  placeholder `<img>` with `onerror` fallback to the letter monogram `A` until
+  real auth lands - 2026-07-04 founder pass) · `Dr. Ananya Rao` ·
+  `ananya.rao@gmail.com`.
 - **Rows:**
-  1. `Exam speciality` (target icon) — subtitle is dynamic: starts `Not set`;
+  1. `Exam speciality` (target icon) - subtitle is dynamic: starts `Not set`;
      after onboarding `<Speciality> · can change once`; after the one change
      `<Speciality> · one-time change used`. Tap opens the Speciality screen in
-     change mode — **only while the change is unused**; after that the row is
+     change mode - **only while the change is unused**; after that the row is
      `aria-disabled` and inert.
-  2. `Daily recall reminder` — subtitle `On · 8:00 pm` (inert; opt-out slot,
+  2. `Daily recall reminder` - subtitle `On · 8:00 pm` (inert; opt-out slot,
      D19).
   3. `Sign out` (inert).
-  4. `Delete account` (danger red, trash icon) — subtitle `Removes your data
+  4. `Delete account` (danger red, trash icon) - subtitle `Removes your data
 permanently` (inert; Play-mandate slot).
 - Bottom nav: Account active.
 

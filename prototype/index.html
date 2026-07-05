@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DiploMate — Prototype (3 directions)</title>
+<title>DiploMate - Prototype (3 directions)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -68,7 +68,7 @@ body{
 .pane.show{display:flex;flex:1;min-height:0}
 
 /* ============ THEME TOKENS ============ */
-/* A — Paper Ledger (warm light) */
+/* A - Paper Ledger (warm light) */
 .dir-a{
   --paper:#FAF6EF; --elevated:#FFFFFF; --sunk:#F3ECE0;
   --ink:#1E1B17; --ink-2:#6E655A; --ink-3:#9A9081;
@@ -78,9 +78,9 @@ body{
   --danger:#B4271F; --ok:#1E7A46;
   --nav-bg:#FBF8F2; --nav-rule:#EADFCD;
 }
-/* B — Clinical Chart (cool light) */
+/* B - Clinical Chart (cool light) */
 /* ink-3 8A97A8→5F6F84 (2.79→4.82:1) and teal 0D8F86→087A72 (white-on-teal
-   3.97→5.20:1) — D20 contrast law. teal = fills/icons only; teal-ink = text. */
+   3.97→5.20:1) - D20 contrast law. teal = fills/icons only; teal-ink = text. */
 .dir-b{
   --paper:#F6F8FA; --elevated:#FFFFFF; --sunk:#EDF1F5;
   --ink:#0E1626; --ink-2:#57657A; --ink-3:#5F6F84;
@@ -90,7 +90,7 @@ body{
   --danger:var(--exam-red); --ok:#1E7A46; --exam-red:#B4271F;
   --nav-bg:#FBFCFD; --nav-rule:#E4EAF0;
 }
-/* C — Night Desk (warm dark) — ink-3 6E675C→908878 (AA on paper AND elevated, D20) */
+/* C - Night Desk (warm dark) - ink-3 6E675C→908878 (AA on paper AND elevated, D20) */
 .dir-c{
   --paper:#19181A; --elevated:#211F22; --sunk:#141315;
   --ink:#ECE6DC; --ink-2:#9C9488; --ink-3:#908878;
@@ -166,7 +166,7 @@ body{
 .cta.ghost{background:transparent;color:var(--teal-ink);box-shadow:none;border:1.5px solid var(--rule-strong)}
 .dir-c .cta.ghost{color:var(--teal-ink)}
 
-/* generic row (no cards — rows + rules) */
+/* generic row (no cards - rows + rules) */
 .row{display:flex;align-items:center;gap:13px;padding:15px 18px;border-bottom:1px solid var(--rule);
   cursor:pointer;transition:background .12s ease}
 .row:hover{background:var(--sunk)}
@@ -194,6 +194,8 @@ body{
 .signin .top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 .wordmark{font-family:'Source Serif 4',serif;font-weight:600;font-size:28px;color:var(--ink);letter-spacing:-.02em}
 .wordmark b{color:var(--teal-ink)}
+.brandmark{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tagline{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink)}
 .signin .lede{font-family:'Source Serif 4',serif;font-size:19px;line-height:1.45;color:var(--ink-2);max-width:250px}
 .specimen{width:100%;border:1px solid var(--rule);border-radius:12px;background:var(--elevated);
   padding:15px 16px;text-align:left;position:relative;overflow:hidden;margin-top:4px}
@@ -239,14 +241,14 @@ body{
 /* ---- READER ---- */
 .reader-q{padding:4px 18px 16px}
 .reader-q .qtxt{font-family:'Source Serif 4',serif;font-size:24px;line-height:1.4;color:var(--ink);font-weight:600;letter-spacing:-.005em;margin-bottom:14px}
-/* attempt prompt — plain line, not a card (no-cards law) */
+/* attempt prompt - plain line, not a card (no-cards law) */
 .prompt{margin:10px 18px 0;display:flex;gap:10px;align-items:flex-start}
 .prompt svg{width:17px;height:17px;color:var(--teal);flex-shrink:0;margin-top:1px}
 .prompt .pt{font-size:12.5px;line-height:1.45;color:var(--teal-ink);font-weight:600}
 .attempt{font-size:11px;color:var(--ink-3);font-weight:600;text-align:center;padding:14px 0 6px;letter-spacing:.02em}
 .attempt b{color:var(--ink-2)}
 
-/* answer body (revealed) — model answers render on elevated white:
+/* answer body (revealed) - model answers render on elevated white:
    the only white surface in the app IS the model answer (material code) */
 .answer{padding:14px 18px 0;background:var(--elevated);border-top:1px solid var(--rule-strong);
   animation:unveil .2s ease-out}
@@ -261,6 +263,9 @@ body{
 .earn li{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);font-weight:500}
 .earn li b{color:var(--ink);font-weight:600}
 .earn li .mk{font-variant-numeric:tabular-nums;color:var(--teal-ink);font-weight:700;font-size:11px}
+.earn-link{width:100%;display:flex;justify-content:space-between;align-items:baseline;gap:12px;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:1px 0;transition:color .12s ease}
+.earn-link:hover b{color:var(--teal-ink)}
+.earn-link:active{opacity:.6}
 /* examiner's margin: 26px hanging rail; per-section mark weights sit in the
    margin as red tabular numerals (red pen = examiner) */
 .asec{margin-bottom:16px;position:relative;padding-left:26px}
@@ -275,7 +280,7 @@ body{
 .asec ul.body li{font-family:'Source Serif 4',serif;font-size:17px;line-height:1.55;color:var(--ink-2);padding-left:16px;position:relative}
 .asec ul.body li::before{content:"";position:absolute;left:2px;top:11px;width:4px;height:4px;border-radius:50%;background:var(--teal)}
 
-/* diagram — a figure "plate": the one bounded content element (no-cards law) */
+/* diagram - a figure "plate": the one bounded content element (no-cards law) */
 .diagram{border:1px solid var(--rule);border-radius:12px;background:var(--elevated);padding:14px;margin:4px 0 8px 26px}
 .asec>.diagram{margin-left:0} /* inside an .asec the 26px indent comes from the section */
 .diagram .dc{font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:10px}
@@ -316,7 +321,7 @@ body{
 /* reveal control (before) */
 .revealwrap{margin-top:auto;padding:14px 18px calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule);background:var(--paper)}
-/* rating tray (after) — in-flow at bottom of answer content; scrolls with it */
+/* rating tray (after) - in-flow at bottom of answer content; scrolls with it */
 .traywrap{padding:10px 18px calc(12px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule-strong);background:var(--elevated)}
 .tray .tc{display:flex;align-items:center;justify-content:space-between;
@@ -328,9 +333,9 @@ body{
 .rate button:active{transform:scale(.96)}
 .rate .rl{font-weight:700;font-size:15px;line-height:1.15;text-align:center;color:var(--ink)}
 .rate .ri{font-size:11px;font-weight:600;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.rate .again{border-color:var(--danger)}.rate .again .rl{color:var(--danger)}
-.rate .hard{border-color:var(--amber)}.rate .hard .rl{color:var(--amber)}
-.rate .good{border-color:var(--teal)}.rate .good .rl{color:var(--teal-ink)}
+.rate .easy{border-color:var(--ok);color:var(--ok)}.rate .easy .rl{color:var(--ok)}
+.rate .med{border-color:var(--amber);color:var(--amber)}.rate .med .rl{color:var(--amber)}
+.rate .hard{border-color:var(--danger);color:var(--danger)}.rate .hard .rl{color:var(--danger)}
 .rate svg{width:16px;height:16px;margin-bottom:1px}
 
 /* ---- in-answer search (reader, after reveal) ---- */
@@ -366,7 +371,7 @@ mark.hl.cur{background:var(--amber-soft);color:var(--ink);box-shadow:0 0 0 1.5px
 .blk{padding:16px 18px;border-bottom:1px solid var(--rule)}
 .blk .kh{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
 .kh .ovl2{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
-.mini{display:flex;align-items:center;gap:11px}
+.mini{display:flex;align-items:baseline;gap:8px}
 .mini .num{font-family:'Manrope',sans-serif;font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .mini .ml{font-size:12.5px;color:var(--ink-2);font-weight:500;line-height:1.3}
 .prog-line{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
@@ -375,7 +380,7 @@ mark.hl.cur{background:var(--amber-soft);color:var(--ink);box-shadow:0 0 0 1.5px
 /* ---- ACCOUNT ---- */
 .acct-id{display:flex;align-items:center;gap:13px;padding:18px;border-bottom:1px solid var(--rule)}
 .avatar{width:46px;height:46px;border-radius:50%;background:var(--teal-soft);color:var(--teal-ink);
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;font-family:'Source Serif 4',serif}
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;font-family:'Source Serif 4',serif;object-fit:cover;overflow:hidden}
 .acct-id .an{font-weight:700;color:var(--ink);font-size:15px}
 .acct-id .ae{font-size:12.5px;color:var(--ink-2);margin-top:2px}
 .danger-row .t1{color:var(--danger)!important}
@@ -414,8 +419,8 @@ mark.hl.cur{background:var(--amber-soft);color:var(--ink);box-shadow:0 0 0 1.5px
 <body>
 
 <div class="masthead">
-  <h1>DiploMate — end-to-end prototype</h1>
-  <p class="sub"><b>Direction B · Clinical Chart</b> — chosen. Clinical-editorial study desk for DNB Anaesthesia theory prep: <b>no cards</b>, Source Serif 4 reading body + Manrope UI, medical-teal accent, queue-first Home, soft reveal gate. Tap through all screens — <b>Sign-in → Speciality → Home → Syllabus → Topics → Reader</b>. The <b>recall reveal + rating</b> flow is live. New: <b>unskippable speciality onboarding</b> after sign-in (61 DNB/DrNB options, substring search) — changeable <b>once</b> from Account.</p>
+  <h1>DiploMate - end-to-end prototype</h1>
+  <p class="sub"><b>Direction B · Clinical Chart</b> - chosen. Clinical-editorial study desk for DNB Anaesthesia theory prep: <b>no cards</b>, Source Serif 4 reading body + Manrope UI, medical-teal accent, queue-first Home, soft reveal gate. Tap through all screens - <b>Sign-in → Speciality → Home → Syllabus → Topics → Reader</b>. The <b>recall reveal + rating</b> flow is live. New: <b>unskippable speciality onboarding</b> after sign-in (61 DNB/DrNB options, substring search) - changeable <b>once</b> from Account.</p>
 </div>
 
 <div class="switcher" id="switcher">
@@ -432,11 +437,11 @@ mark.hl.cur{background:var(--amber-soft);color:var(--ink);box-shadow:0 0 0 1.5px
 
 <div class="rail" id="rail"></div>
 
-<p class="footnote">Navigate via the bottom nav, the rows, or the “Go to screen” chips above. The <b>recall reveal → rate</b> loop is live. Fonts load from Google Fonts CDN.<br><b>Direction B · Clinical Chart</b> locked — cool near-white, precise, small-caps labels. Dark mode (former Direction C) ships as this same product’s night theme via the D20 tokens.</p>
+<p class="footnote">Navigate via the bottom nav, the rows, or the “Go to screen” chips above. The <b>recall reveal → rate</b> loop is live. Fonts load from Google Fonts CDN.<br><b>Direction B · Clinical Chart</b> locked - cool near-white, precise, small-caps labels. Dark mode (former Direction C) ships as this same product’s night theme via the D20 tokens.</p>
 
 <script>
 /* ============================================================
-   ICONS (inline, single stroke set — Lucide-style 1.75px)
+   ICONS (inline, single stroke set - Lucide-style 1.75px)
 ============================================================ */
 const I = {
   play:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>',
@@ -457,6 +462,9 @@ const I = {
   again:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
   hard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5"/></svg>',
   good:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9M2 13v6a1 1 0 0 0 1 1h3V11H3a1 1 0 0 0-1 1zM7 11l4-8a2 2 0 0 1 3 1.7V9h4.5a2 2 0 0 1 2 2.3l-1.3 7a2 2 0 0 1-2 1.7H7"/></svg>',
+  smile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+  meh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M9 9h.01M15 9h.01"/></svg>',
+  frown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><path d="M9 9h.01M15 9h.01"/></svg>',
   sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9c-2.5 0-4.7-1-6.3-2.6M3 12a9 9 0 0 1 9-9c2.5 0 4.7 1 6.3 2.6"/><path d="M21 3v6h-6M3 21v-6h6"/></svg>',
   hd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
@@ -494,13 +502,13 @@ function tapDiagram(){
     <line x1="232" y1="18" x2="150" y2="86" stroke="var(--teal)" stroke-width="2.4" stroke-linecap="round"/>
     <circle cx="150" cy="86" r="4.5" fill="var(--teal)"/>
     <circle cx="150" cy="86" r="10" fill="none" stroke="var(--teal)" stroke-width="1.2" opacity=".5"/>
-    <text class="lblk" x="158" y="83">LA deposit — TAP plane</text>
+    <text class="lblk" x="158" y="83">LA deposit - TAP plane</text>
     <text class="lblk" x="200" y="16">Needle (in-plane USG)</text>
   </svg>`;
 }
 
 /* ============================================================
-   ONE STRUCTURE — themed 3× by wrapper class
+   ONE STRUCTURE - themed 3× by wrapper class
 ============================================================ */
 function statusbar(){
   return `<div class="status"><span>7:14</span><span class="r">${I.wifi}${I.batt}</span></div>`;
@@ -517,17 +525,18 @@ function signin(){return `
   ${statusbar()}
   <div class="signin">
     <div class="top">
-      <div class="wordmark">Diplo<b>Mate</b></div>
-      <p class="lede">Master DNB theory answers by recalling them — not rereading them.</p>
+      <div class="brandmark"><div class="wordmark">Diplo<b>Mate</b></div>
+      <div class="tagline">Written by Doctors. Solved for Success!</div></div>
+      <p class="lede">Master DNB theory answers by recalling them - not rereading them.</p>
       <div class="specimen">
         <div class="sq">Define TAP block. Describe the anatomical basis, technique and complications.</div>
         <div class="so">What earns marks</div>
-        <div class="sl">The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the internal oblique and transversus abdominis muscles, blocking T6–L1…</div>
+        <div class="sl">The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the internal oblique and transversus abdominis muscles, blocking T6-L1…</div>
         <div class="fade"></div>
       </div>
     </div>
     <button class="gbtn" data-go="speciality-onboard">${I.google}<span>Continue with Google</span></button>
-    <p class="util">Your recall progress syncs with your Google account.<br>Terms of Service · Privacy Policy</p>
+    <p class="util">Terms of Service · Privacy Policy</p>
   </div>
 </div>`;}
 
@@ -549,16 +558,15 @@ function speciality(){
     <button class="iconbtn spec-back" data-go="account" style="display:none">${back}</button>
     <span class="tt">Your speciality</span></div>
   <div class="spec-head">
-    <p class="spec-lede">Model answers, syllabus and your recall queue are built for one exam. Pick yours.</p>
-    <div class="searchwrap">${I.search}<input class="spec-input" type="search" placeholder="Search — e.g. cardio, ENT, DrNB…" aria-label="Search specialities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="searchwrap">${I.search}<input class="spec-input" type="search" placeholder="Search - e.g. cardio, ENT, DrNB…" aria-label="Search specialities" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
     <div class="spec-count" aria-live="polite">30 DNB · 31 DrNB</div>
   </div>
   <div class="view" role="radiogroup" aria-label="Speciality">
-    <div class="spec-group ovl" data-group="dnb">DNB — Broad Specialities</div>
+    <div class="spec-group ovl" data-group="dnb">DNB - Broad Specialities</div>
     <div data-rows="dnb">${specRows(SPEC_DNB,'DNB')}</div>
-    <div class="spec-group ovl" data-group="drnb">DrNB — Super Specialities</div>
+    <div class="spec-group ovl" data-group="drnb">DrNB - Super Specialities</div>
     <div data-rows="drnb">${specRows(SPEC_DRNB,'DrNB')}</div>
-    <div class="spec-empty">No speciality matches &ldquo;<b class="qq"></b>&rdquo;.<br>Try a shorter term — e.g. &ldquo;cardio&rdquo; or &ldquo;paediatric&rdquo;.</div>
+    <div class="spec-empty">No speciality matches &ldquo;<b class="qq"></b>&rdquo;.<br>Try a shorter term - e.g. &ldquo;cardio&rdquo; or &ldquo;paediatric&rdquo;.</div>
   </div>
   <div class="revealwrap">
     <button class="cta spec-cta" disabled>Continue</button>
@@ -583,9 +591,9 @@ function today(){
     </div>
     <div class="blk">
       <div class="kh"><span class="ovl2">This Week</span></div>
-      <div style="display:flex;gap:22px">
+      <div style="display:flex;gap:28px">
         <div class="mini"><span class="num">41</span><span class="ml">answers<br>recalled</span></div>
-        <div class="mini"><span class="num" style="color:var(--ok)">71%</span><span class="ml">rated<br>Good</span></div>
+        <div class="mini"><span class="num" style="color:var(--ok)">71%</span><span class="ml">rated<br>Easy</span></div>
       </div>
     </div>
   </div>
@@ -604,7 +612,7 @@ function today(){
 function syllabus(){
   const rows=[
     ['Airway Management','14 topics · offline ✓','done','57%'],
-    ['General Anaesthesia — Pharmacology','18 topics','lock',''],
+    ['General Anaesthesia - Pharmacology','18 topics','lock',''],
     ['Regional Anaesthesia','16 topics','lock',''],
     ['Monitoring &amp; Equipment','11 topics','lock',''],
     ['Obstetric Anaesthesia','13 topics','lock',''],
@@ -615,7 +623,7 @@ function syllabus(){
     ['Pain Medicine','9 topics','lock',''],
     ['Trauma, Burns &amp; Resuscitation','10 topics','lock',''],
     ['Blood, Fluids &amp; Transfusion','8 topics','lock',''],
-    ['Acid–Base &amp; Electrolytes','7 topics','lock',''],
+    ['Acid-Base &amp; Electrolytes','7 topics','lock',''],
     ['Anaesthesia for Comorbid Disease','14 topics','lock',''],
     ['Day-care &amp; Remote-location Anaesthesia','6 topics','lock',''],
     ['Physics, Equipment &amp; Machines','12 topics','lock',''],
@@ -639,24 +647,24 @@ function syllabus(){
         <span class="lz lock">Locked</span>${I.chev}</div>`;
     }).join('')}
     <div style="padding:16px 18px 8px;font-size:12.5px;color:var(--ink-3);font-weight:500;line-height:1.5">
-      Locked chapters unlock with Anaesthesia access. Titles shown so you can see the full syllabus — answers stay hidden until unlock.</div>
+      Locked chapters unlock with Anaesthesia access. Titles shown so you can see the full syllabus - answers stay hidden until unlock.</div>
   </div>
   ${nav('syllabus')}
 </div>`;}
 
-/* ---- TOPICS (chapter → topics — the browse level between Syllabus and Reader) ---- */
+/* ---- TOPICS (chapter → topics - the browse level between Syllabus and Reader) ---- */
 function topics(){
   const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
-  // [topic, meta, recall-state, when]  state: good | due | '' (new/unseen)
+  // [topic, meta, recall-state]  state: good | due | '' (new/unseen)
   const rows=[
-    ['Airway anatomy &amp; landmarks','3 model answers · 14 marks','good','in 6 days'],
-    ['Assessing the difficult airway','2 answers · 10 marks','good','in 4 days'],
-    ['Rapid sequence induction','2 answers · 10 marks','due','Due today'],
-    ['Difficult airway algorithm (DAS)','1 answer · 10 marks','due','Due today'],
-    ['Supraglottic airway devices','2 answers · 8 marks','good','in 3 days'],
-    ['Videolaryngoscopy','1 answer · 6 marks','good','in 5 days'],
-    ['Awake fibreoptic intubation','1 answer · 10 marks','','New'],
-    ['Cricothyroidotomy / front-of-neck','1 answer · 8 marks','','New'],
+    ['Airway anatomy &amp; landmarks','3 model answers · 14 marks','good'],
+    ['Assessing the difficult airway','2 answers · 10 marks','good'],
+    ['Rapid sequence induction','2 answers · 10 marks','due'],
+    ['Difficult airway algorithm (DAS)','1 answer · 10 marks','due'],
+    ['Supraglottic airway devices','2 answers · 8 marks','good'],
+    ['Videolaryngoscopy','1 answer · 6 marks','good'],
+    ['Awake fibreoptic intubation','1 answer · 10 marks',''],
+    ['Cricothyroidotomy / front-of-neck','1 answer · 8 marks',''],
   ];
   return `
 <div class="pane" data-screen="topics">
@@ -670,15 +678,16 @@ function topics(){
       <div class="prog-line"><span>Chapter recall</span><span class="pv">8 of 14 recalled</span></div>
       <div class="bar"><i style="width:57%"></i></div>
     </div>
-    ${rows.map(([t,m,st,w])=>{
+    ${rows.map(([t,m,st])=>{
       const cls=st?` ${st}`:'';
+      const label=st==='good'?'Recalled':st==='due'?'Due':'New';
       return `<div class="row" data-go="reader">
         <div class="gr"><div class="t1">${t}</div><div class="t2">${m}</div></div>
-        <span class="pip${cls}"><span class="b"></span>${w}</span>
+        <span class="pip${cls}"><span class="b"></span>${label}</span>
         ${I.chev}</div>`;
     }).join('')}
     <div style="padding:16px 18px 8px;font-size:12.5px;color:var(--ink-3);font-weight:500;line-height:1.5">
-      Each topic is one recall unit — open it to hide, attempt, then reveal the model answer. Due topics surface automatically in <b>Home</b>.</div>
+      Each topic is one recall unit - open it to hide, attempt, then reveal the model answer. Due topics surface automatically in <b>Home</b>.</div>
   </div>
   ${nav('syllabus')}
 </div>`;}
@@ -696,7 +705,7 @@ function reader(){return `
 
   <div class="srch" style="display:none">
     <div class="swrap">
-      <input class="srch-input" type="text" placeholder="Search this answer" aria-label="Search this answer"
+      <input class="srch-input" type="text" placeholder="Search..." aria-label="Search this answer"
         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
       <span class="cnt">0/0</span>
     </div>
@@ -708,15 +717,14 @@ function reader(){return `
   <div class="view">
     <div class="reader-q">
       <div class="meta" style="margin-bottom:10px">
-        <span class="tag year">2022 Paper II</span><span class="tag marks">10 marks</span>
-        <span class="dot"></span><span class="rreveal-hide" style="color:var(--amber)">Due today</span></div>
+        <span class="tag year">2022 Paper II</span><span class="tag marks">10 marks</span></div>
       <div class="qtxt">Define TAP block. Describe the anatomical basis, technique, and complications of an ultrasound-guided Transversus Abdominis Plane block.</div>
     </div>
 
     <!-- BEFORE reveal -->
     <div class="before-only">
       <div class="prompt">${I.pen}<div class="pt">Outline your answer aloud or on paper. Then reveal to check what earns marks.</div></div>
-      <div class="attempt"><b>Attempting…</b> &nbsp;take your time — nothing’s timing you.</div>
+      <div class="attempt"><b>Attempting…</b> &nbsp;take your time - nothing’s timing you.</div>
     </div>
 
     <!-- AFTER reveal -->
@@ -724,55 +732,55 @@ function reader(){return `
       <div class="earn">
         <div class="eh">${I.target}<span>What earns marks</span></div>
         <ul>
-          <li><b>Definition</b><span class="mk">1</span></li>
-          <li><b>Anatomy — 3 muscle layers, plane</b><span class="mk">2</span></li>
-          <li><b>USG-guided technique</b><span class="mk">3</span></li>
-          <li><b>Indications</b><span class="mk">1</span></li>
-          <li><b>Complications</b><span class="mk">2</span></li>
-          <li><b>Labelled diagram</b><span class="mk">1</span></li>
+          <li><button class="earn-link" data-seek="definition"><b>Definition</b><span class="mk">1</span></button></li>
+          <li><button class="earn-link" data-seek="anatomy"><b>Anatomy - 3 muscle layers, plane</b><span class="mk">2</span></button></li>
+          <li><button class="earn-link" data-seek="technique"><b>USG-guided technique</b><span class="mk">3</span></button></li>
+          <li><button class="earn-link" data-seek="indications"><b>Indications</b><span class="mk">1</span></button></li>
+          <li><button class="earn-link" data-seek="complications"><b>Complications</b><span class="mk">2</span></button></li>
+          <li><button class="earn-link" data-seek="diagram"><b>Labelled diagram</b><span class="mk">1</span></button></li>
         </ul>
       </div>
-      <div class="asec"><span class="mk-m">1</span><div class="ah">Definition</div>
-        <p>The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the <b>internal oblique</b> and <b>transversus abdominis</b> muscles, blocking the anterior rami of <b>T6–L1</b> to provide somatic analgesia to the anterior abdominal wall.</p></div>
-      <div class="asec"><span class="mk-m">2</span><div class="ah">Anatomical basis</div>
+      <div class="asec" data-sec="definition"><span class="mk-m">1</span><div class="ah">Definition</div>
+        <p>The <b>TAP block</b> is a peripheral nerve block that deposits local anaesthetic in the neurofascial plane between the <b>internal oblique</b> and <b>transversus abdominis</b> muscles, blocking the anterior rami of <b>T6-L1</b> to provide somatic analgesia to the anterior abdominal wall.</p></div>
+      <div class="asec" data-sec="anatomy"><span class="mk-m">2</span><div class="ah">Anatomical basis</div>
         <ul class="body">
           <li>Three muscle layers: external oblique → internal oblique → transversus abdominis.</li>
-          <li>Thoracolumbar nerves (T6–L1) run in the plane deep to internal oblique.</li>
-          <li>Landmark (Petit’s triangle) vs USG approach — USG is now standard.</li>
+          <li>Thoracolumbar nerves (T6-L1) run in the plane deep to internal oblique.</li>
+          <li>Landmark (Petit’s triangle) vs USG approach - USG is now standard.</li>
         </ul></div>
-      <div class="asec"><span class="mk-m">3</span><div class="ah">Technique — USG-guided</div>
-        <p>High-frequency linear probe in the mid-axillary line between costal margin and iliac crest. Identify the three layers; advance an in-plane needle to the IO–TA plane; confirm with hydrodissection; deposit <b>15–20 mL</b> of local anaesthetic as a lens-shaped spread.</p></div>
+      <div class="asec" data-sec="technique"><span class="mk-m">3</span><div class="ah">Technique - USG-guided</div>
+        <p>High-frequency linear probe in the mid-axillary line between costal margin and iliac crest. Identify the three layers; advance an in-plane needle to the IO-TA plane; confirm with hydrodissection; deposit <b>15-20 mL</b> of local anaesthetic as a lens-shaped spread.</p></div>
 
-      <div class="asec"><span class="mk-m">1</span>
+      <div class="asec" data-sec="diagram"><span class="mk-m">1</span>
       <div class="diagram">
         ${tapDiagram()}
-        <div class="dc"><span>Fig 1 — Abdominal wall layers &amp; needle in the TAP plane</span>
+        <div class="dc"><span>Fig 1 - Abdominal wall layers &amp; needle in the TAP plane</span>
           <span class="dca"><button class="dfs" data-fs aria-label="Open diagram full screen">${I.zoom}<span>Tap to enlarge</span></button></span></div>
       </div></div>
 
-      <div class="asec"><span class="mk-m">1</span><div class="ah">Indications</div>
+      <div class="asec" data-sec="indications"><span class="mk-m">1</span><div class="ah">Indications</div>
         <ul class="body">
-          <li>Somatic analgesia for anterior abdominal wall surgery — laparotomy, caesarean section, inguinal hernia repair, laparoscopic port sites.</li>
+          <li>Somatic analgesia for anterior abdominal wall surgery - laparotomy, caesarean section, inguinal hernia repair, laparoscopic port sites.</li>
           <li>Opioid-sparing multimodal analgesia when neuraxial blockade is contraindicated or refused.</li>
         </ul></div>
 
-      <div class="asec"><span class="mk-m">2</span><div class="ah">Complications</div>
+      <div class="asec" data-sec="complications"><span class="mk-m">2</span><div class="ah">Complications</div>
         <ul class="body">
           <li>Local anaesthetic systemic toxicity (large volume, vascular plane).</li>
           <li>Bowel / peritoneal puncture, intrahepatic injection.</li>
           <li>Block failure, transient femoral nerve palsy.</li>
         </ul></div>
       <div class="asec"><div class="ah">Summary line</div>
-        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair — <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p></div>
+        <p>Reliable somatic wall analgesia for laparotomy, C-section and hernia repair - <b>not</b> visceral pain; always calculate the maximum safe LA dose.</p></div>
 
-      <!-- rating tray (after) — in-flow at bottom of answer; scrolls with content -->
+      <!-- rating tray (after) - in-flow at bottom of answer; scrolls with content -->
       <div class="traywrap after-only" style="display:none">
         <div class="tray">
-          <div class="tc"><span>How well did you recall it?</span><b>2 done · 10 due</b></div>
+          <div class="tc"><span>How well did you recall it?</span></div>
           <div class="rate">
-            <button class="again" data-rate="Unable to recall · back today">${I.again}<span class="rl">Unable to recall</span><span class="ri">today</span></button>
-            <button class="hard" data-rate="Hard · in 2 days">${I.hard}<span class="rl">Hard</span><span class="ri">2 days</span></button>
-            <button class="good" data-rate="Good · in 3 days">${I.good}<span class="rl">Good</span><span class="ri">3 days</span></button>
+            <button class="easy" data-rate="Easy">${I.smile}<span class="rl">Easy</span></button>
+            <button class="med" data-rate="Medium">${I.meh}<span class="rl">Medium</span></button>
+            <button class="hard" data-rate="Hard">${I.frown}<span class="rl">Hard</span></button>
           </div>
         </div>
       </div>
@@ -793,7 +801,7 @@ function account(){return `
   <div class="topbar"><span class="tt">Account</span></div>
   <div class="view">
     <div class="acct-id">
-      <div class="avatar">A</div>
+      <img class="avatar" src="https://i.pravatar.cc/160?img=47" alt="Dr. Ananya Rao" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'avatar',textContent:'A'}))">
       <div><div class="an">Dr. Ananya Rao</div><div class="ae">ananya.rao@gmail.com</div></div>
     </div>
     <div class="row" data-go="speciality-change" data-specrow><span class="chev">${I.target}</span>
@@ -808,15 +816,15 @@ function account(){return `
   ${nav('account')}
 </div>`;}
 
-/* ---- BOOKMARKS (saved questions — reached from Home) ---- */
+/* ---- BOOKMARKS (saved questions - reached from Home) ---- */
 function bookmarks(){
   const back=I.chev.replace('class="chev"','style="width:21px;height:21px;transform:rotate(180deg)"');
   // [question, source]
   const rows=[
-    ['TAP block — anatomy, technique &amp; complications','Regional Anaesthesia · Truncal blocks'],
-    ['Rapid sequence induction — steps &amp; drug doses','Airway Management · Rapid sequence induction'],
+    ['TAP block - anatomy, technique &amp; complications','Regional Anaesthesia · Truncal blocks'],
+    ['Rapid sequence induction - steps &amp; drug doses','Airway Management · Rapid sequence induction'],
     ['Difficult airway algorithm (DAS 2015)','Airway Management · Difficult airway algorithm'],
-    ['Cricothyroidotomy — front-of-neck access','Airway Management · Cricothyroidotomy / front-of-neck'],
+    ['Cricothyroidotomy - front-of-neck access','Airway Management · Cricothyroidotomy / front-of-neck'],
   ];
   return `
 <div class="pane" data-screen="bookmarks">
@@ -846,7 +854,7 @@ function paywall(){return `
     <h3>Full Anaesthesia access</h3>
     <div class="price">₹499 <small>one-time · 18 chapters</small></div>
     <ul class="incl">
-      <li>${I.check}<span>All <b>18 chapters</b> — every previous-year model answer, structured for recall</span></li>
+      <li>${I.check}<span>All <b>18 chapters</b> - every previous-year model answer, structured for recall</span></li>
       <li>${I.check}<span>Mark-earning <b>diagrams</b> (TAP block, oxygen cascade…) offline</span></li>
       <li>${I.check}<span>Spaced-repetition queue across the whole syllabus</span></li>
       <li>${I.check}<span>Free updates as new papers are added</span></li>
@@ -859,10 +867,10 @@ function paywall(){return `
 </div>`;}
 
 /* ============================================================
-   ASSEMBLE — 3 themed phones
+   ASSEMBLE - 3 themed phones
 ============================================================ */
 const dirs=[
-  {cls:'dir-b',k:'B',name:'Clinical Chart',d:'cool near-white · precise · small-caps — chosen direction'},
+  {cls:'dir-b',k:'B',name:'Clinical Chart',d:'cool near-white · precise · small-caps - chosen direction'},
 ];
 const rail=document.getElementById('rail');
 dirs.forEach(dir=>{
@@ -1003,7 +1011,7 @@ function wordHit(qw,tw){                     // substring OR typo within toleran
   const tol=tw.length>=7?2:tw.length>=4?1:0;
   return !!tol&&lev(qw,tw,tol)<=tol;
 }
-const WORD_RE=/[A-Za-z0-9'’\-–]+/g;
+const WORD_RE=/[A-Za-z0-9'’\--]+/g;
 function srchState(rd){
   if(rd._srch)return rd._srch;
   const els=[...rd.querySelectorAll('.answer .earn li,.answer .asec')];
@@ -1074,7 +1082,7 @@ function openSpec(root,mode,force){
   p.querySelector('.spec-cta').textContent=mode==='change'?'Save change':'Continue';
   p.querySelector('.spec-cta').disabled=!s.pending;
   p.querySelector('.spec-note').innerHTML=mode==='change'
-    ?'You can change your speciality <b>once</b> — this is that change.'
+    ?'You can change your speciality <b>once</b> - this is that change.'
     :'Required to continue · you can change it <b>once</b> later in Account.';
   p.querySelector('.spec-input').value='';
   filterSpec(root,'');markSel(root);
@@ -1144,6 +1152,8 @@ document.querySelectorAll('.view-root').forEach(root=>{
     if(e.target.closest('[data-fsclose]')){closeFS(root);return;}
     if(e.target.closest('[data-fs]')||e.target.closest('.diagram>svg')){
       openFS(root,e.target.closest('.diagram'));return;}
+    const seek=e.target.closest('[data-seek]');
+    if(seek){root.querySelector('.reader [data-sec="'+seek.dataset.seek+'"]')?.scrollIntoView({block:'start'});return;}
     if(srow){const s=specState(root);s.pending=srow.dataset.name;markSel(root);
       root.querySelector('.spec-cta').disabled=false;return;}
     if(e.target.closest('.spec-cta')){commitSpec(root);return;}
@@ -1151,7 +1161,7 @@ document.querySelectorAll('.view-root').forEach(root=>{
       const v=rd.querySelector('.view');if(v)v.scrollTop=Math.min(v.scrollTop,40);return;}
     if(e.target.closest('[data-bm]')){const rd=root.querySelector('.reader');const on=rd.dataset.bookmarked!=='1';
       setBookmark(rd,on);toast(rd,on?'✓ Bookmarked':'Bookmark removed');return;}
-    if(rate){const rd=root.querySelector('.reader');toast(rd,'✓ '+rate.dataset.rate.split('·')[1].trim()+' · next answer');
+    if(rate){const rd=root.querySelector('.reader');toast(rd,'✓ Rated '+rate.dataset.rate+' · next answer');
       setTimeout(()=>{setReader(rd,'before');setBookmark(rd,false);},650);const v=rd.querySelector('.view');if(v)v.scrollTop=0;return;}
     if(sheet){openSheet(root);return;}
     if(close){closeSheet(root);return;}

@@ -1,4 +1,4 @@
-# App shell & navigation — design
+# App shell & navigation - design
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo). Tokens, type, color,
@@ -15,7 +15,7 @@ step, no dependencies; fonts from Google Fonts CDN.
 
 - **Status bar** on every pane (`statusbar()`): time `7:14` (demo), wifi +
   battery icons.
-- **Bottom nav** (`nav(active)`) — three tabs, in order:
+- **Bottom nav** (`nav(active)`) - three tabs, in order:
   `Home` → `today` · `Syllabus` → `syllabus` · `Account` → `account`.
 - **Active-tab mapping:** today → Home; syllabus **and** topics → Syllabus;
   **bookmarks → Home** (stack child); account → Account. Sign-in, Speciality,
@@ -27,16 +27,16 @@ step, no dependencies; fonts from Google Fonts CDN.
 
 ## Behaviors
 
-- `show(root,screen)` — the router. Closes the fullscreen viewer, toggles
+- `show(root,screen)` - the router. Closes the fullscreen viewer, toggles
   `.pane.show` by `data-screen`, **resets any reader to `before`** (recall gate
   survives re-entry), closes in-answer search, scrolls the view to top.
 - All in-app nav is event delegation on `data-go`. Special targets:
   `speciality-onboard` → `openSpec('onboard')`;
   `speciality-change` → `openSpec('change')`, gated on the one-time change
   being unused.
-- **Boot:** every root starts at `signin` — onboarding is only reachable
+- **Boot:** every root starts at `signin` - onboarding is only reachable
   through "Continue with Google".
-- `toast(rd,msg)` — bottom ack pill, auto-hides after 1500 ms.
+- `toast(rd,msg)` - bottom ack pill, auto-hides after 1500 ms.
 
 ## Non-goals
 

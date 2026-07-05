@@ -1,4 +1,4 @@
-# Reader in-answer search — design
+# Reader in-answer search - design
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo).
@@ -10,14 +10,15 @@ SVG sits outside the searched elements, so its labels are excluded as specified)
 ## What
 
 Ctrl-F-like search inside the currently open QnA's revealed answer. Typo-tolerant
-substring search. One QnA at a time — no cross-answer corpus. No autocomplete
+substring search. One QnA at a time - no cross-answer corpus. No autocomplete
 (explicitly cut by user).
 
 ## UI
 
-- Search icon (`I.search`) in reader topbar, wrapped `after-only` — visible only
+- Search icon (`I.search`) in reader topbar, wrapped `after-only` - visible only
   once the answer is revealed (preserves recall gate; approved).
-- Tap → search bar pinned below the crumb: text input · match counter `n/N` ·
+- Tap → search bar pinned below the crumb: text input (placeholder
+  `Search...`, per the 2026-07-04 founder pass) · match counter `n/N` ·
   prev/next arrow buttons · close (✕).
 - All matches wrapped in teal `<mark>`; active match styled amber; active match
   auto-scrolled into view.
@@ -25,8 +26,10 @@ substring search. One QnA at a time — no cross-answer corpus. No autocomplete
 
 ## Matching
 
-- Scope: text nodes under `.answer` — marks-scheme list (`.earn`), sections
-  (`.asec`), summary. Excluded: diagram SVG text, `.rcount`, `.tray`.
+- Scope: text nodes under `.answer` - marks-scheme list (`.earn`, whose rows
+  are now `data-seek` anchor-link buttons), sections (`.asec`), summary.
+  Excluded: diagram SVG text, `.tray` (the `.rcount` done/due counter was
+  removed 2026-07-04 with SRS de-surfacing, so it is no longer an exclusion).
 - Case-insensitive. Query split on whitespace into words.
 - A query word matches a target word if:
   - substring of it (covers partial words: `transv` → transversus), OR
@@ -40,7 +43,8 @@ substring search. One QnA at a time — no cross-answer corpus. No autocomplete
 
 - Opening search snapshots each searchable element's original `innerHTML`.
 - Clearing query / closing / rating a card / `setReader('before')` / leaving the
-  screen restores snapshots — `<b>` formatting preserved.
+  screen restores snapshots - `<b>` formatting (and the `.earn` anchor-link
+  buttons) preserved.
 - State is per-phone (one phone rendered, but code follows existing per-root
   event-delegation pattern).
 

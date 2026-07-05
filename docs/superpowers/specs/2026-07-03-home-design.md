@@ -1,4 +1,4 @@
-# Home — design
+# Home - design
 
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo). Tokens, type, color per
@@ -9,25 +9,29 @@ Status: **Implemented in the prototype (2026-07-03).**
 
 Queue-first home. The suggested-answers CTA is the day's work; everything else
 is quiet context. "Suggested," never "due," on this screen (founder-locked
-framing — guidance, not homework).
+framing - guidance, not homework).
 
 ## UI (top → bottom)
 
 - Topbar title: `Home` (28 px serif display).
 - Greeting: `Good morning, Ananya` (name bold, `--teal-ink`).
 - **Primary CTA** (play icon, → Reader): `View 12 suggested answers`.
-  - Count from `const suggested = 12` — placeholder; wire to real recall-queue
+  - Count from `const suggested = 12` - placeholder; wire to real recall-queue
     length when backend lands.
   - Label pluralizes: `answer` when count = 1, else `answers`.
-  - **Hidden entirely when count = 0** — no empty or disabled button; the
+  - **Hidden entirely when count = 0** - no empty or disabled button; the
     ghost CTA below drops its top margin to close the gap.
 - **Ghost CTA** (bookmark icon, → Bookmarks): `View your bookmarks`.
 - Stats block, overline `This Week`, two honest figures:
-  `41` / `answers recalled` and `71%` (ok-green) / `rated Good`.
-  Never a streak (DESIGN.md ban).
+  `41` / `answers recalled` and `71%` (ok-green) / `rated Easy`.
+  Pair baseline-aligned (number-to-caption baseline, 8px gap, 28px between
+  the pair). Never a streak (DESIGN.md ban).
 - **Pinned resume row**, overline `Pick up where you left off`: play badge,
-  `Airway Management` / `Topic 6 of 8 · Rapid sequence induction`, → Reader.
+  `Airway Management` / `Topic 3 of 14 · Rapid sequence induction`, → Reader.
   Sticky above the bottom nav, outside the scroll area.
+  - First run (no starter-chapter auto-download; downloads/offline feature
+    removed 2026-07-04, founder): the pinned slot shows `Start here`, routing
+    into the highest-exam-weight chapter's first topic.
 - Bottom nav: Home active.
 
 ## Verify (manual, preview server)
