@@ -6,6 +6,7 @@ import '../../app_providers.dart';
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
 import '../shell/dm_toast.dart';
+import 'diagram_viewer.dart';
 import 'reader_view.dart';
 
 /// Browse-mode Reader. Plan 5 Task 8 replaces the fixture state below with
@@ -130,6 +131,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ),
         if (_topicTitle != null) (label: _topicTitle!, onTap: () {}),
       ],
+      imageBuilder: (context, img) => DiagramPlate(
+        image: img,
+        bytesLoader: () => ref.read(contentRepositoryProvider).imageBytes(img.id),
+      ),
     );
   }
 }
