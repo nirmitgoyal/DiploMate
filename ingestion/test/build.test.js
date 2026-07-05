@@ -4,6 +4,8 @@ import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { buildChapter } from "../src/build.js";
+import sharp from "sharp";
+import { randomBytes, createHash } from "node:crypto";
 
 const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
@@ -156,4 +158,85 @@ test("a qna without a key fails the build", async () => {
   delete source.topics[0].qnas[0].key;
   const dir = await makeChapterDir(source);
   await assert.rejects(() => buildChapter(dir, ""), /missing "key"/);
+});
+
+function sourceChapterWithImage(fileName) {
+  const source = sourceChapter();
+  source.topics[0].qnas[0].images = [
+    {
+      file: fileName,
+      caption: "Sample diagram",
+      content_description:
+        "A plain sample panel used as a placeholder diagram.",
+      sort_order: 1,
+    },
+  ];
+  return source;
+}
+
+test("images are converted to capped WebP with sha256 and byte_size", async () => {
+  const dir = await makeChapterDir(sourceChapterWithImage("big.png"));
+  const png = await sharp({
+    create: {
+      width: 2400,
+      height: 1800,
+      channels: 3,
+      background: { r: 200, g: 220, b: 230 },
+    },
+  })
+    .png()
+    .toBuffer();
+  await writeFile(path.join(dir, "images", "big.png"), png);
+  const outDir = await makeOutDir();
+  const canonical = await buildChapter(dir, outDir);
+
+  assert.equal(canonical.images.length, 1);
+  const img = canonical.images[0];
+  assert.match(img.id, ULID_RE);
+  assert.equal(img.qna_id, canonical.qnas[0].id);
+  assert.equal(img.file, `images/${img.id}.webp`);
+  const bytes = await readFile(path.join(outDir, img.file));
+  assert.equal(bytes.toString("ascii", 0, 4), "RIFF");
+  assert.equal(bytes.toString("ascii", 8, 12), "WEBP");
+  assert.equal(img.byte_size, bytes.length);
+  assert.ok(bytes.length <= 204800, `image is ${bytes.length} bytes`);
+  assert.equal(img.sha256, createHash("sha256").update(bytes).digest("hex"));
+  const meta = await sharp(bytes).metadata();
+  assert.ok(
+    meta.width <= 1600 && meta.height <= 1600,
+    `resized to ${meta.width}x${meta.height}`,
+  );
+});
+
+test("image ULID is stable across rebuilds", async () => {
+  const dir = await makeChapterDir(sourceChapterWithImage("big.png"));
+  const png = await sharp({
+    create: {
+      width: 800,
+      height: 600,
+      channels: 3,
+      background: { r: 210, g: 210, b: 210 },
+    },
+  })
+    .png()
+    .toBuffer();
+  await writeFile(path.join(dir, "images", "big.png"), png);
+  const first = await buildChapter(dir, await makeOutDir());
+  const second = await buildChapter(dir, await makeOutDir());
+  assert.equal(second.images[0].id, first.images[0].id);
+});
+
+test("an incompressible image over the cap fails the build", async () => {
+  const dir = await makeChapterDir(sourceChapterWithImage("noise.png"));
+  // Random noise is incompressible; at 1600x1600 even quality 40 WebP stays over 200KB.
+  const noise = await sharp(randomBytes(1600 * 1600 * 3), {
+    raw: { width: 1600, height: 1600, channels: 3 },
+  })
+    .png()
+    .toBuffer();
+  await writeFile(path.join(dir, "images", "noise.png"), noise);
+  await assert.rejects(
+    async () => buildChapter(dir, await makeOutDir()),
+    /exceeds 204800 bytes at lowest quality/,
+  );
 });

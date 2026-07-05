@@ -2,6 +2,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ulid } from "ulid";
+import { createHash } from "node:crypto";
+import sharp from "sharp";
+
+export const MAX_IMAGE_BYTES = 204800;
+export const MAX_IMAGE_EDGE = 1600;
+const WEBP_QUALITIES = [80, 60, 40];
 
 export async function buildChapter(chapterDir, outDir) {
   const source = JSON.parse(
@@ -65,7 +71,27 @@ export async function buildChapter(chapterDir, outDir) {
         sections: qna.sections,
         sort_order: qna.sort_order,
       });
-      // Task 3 wires image processing into this loop.
+      for (const img of qna.images ?? []) {
+        const imageId = mint(lock.images, `${qna.key}/${img.file}`);
+        const processed = await processImage(
+          path.join(chapterDir, "images", img.file),
+        );
+        await mkdir(path.join(outDir, "images"), { recursive: true });
+        await writeFile(
+          path.join(outDir, "images", `${imageId}.webp`),
+          processed,
+        );
+        canonical.images.push({
+          id: imageId,
+          qna_id: qnaId,
+          caption: img.caption,
+          content_description: img.content_description,
+          file: `images/${imageId}.webp`,
+          byte_size: processed.length,
+          sha256: createHash("sha256").update(processed).digest("hex"),
+          sort_order: img.sort_order,
+        });
+      }
     }
   }
 
@@ -76,6 +102,25 @@ export async function buildChapter(chapterDir, outDir) {
     JSON.stringify(canonical, null, 2) + "\n",
   );
   return canonical;
+}
+
+export async function processImage(sourcePath) {
+  for (const quality of WEBP_QUALITIES) {
+    const buf = await sharp(sourcePath)
+      .rotate()
+      .resize({
+        width: MAX_IMAGE_EDGE,
+        height: MAX_IMAGE_EDGE,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality })
+      .toBuffer();
+    if (buf.length <= MAX_IMAGE_BYTES) return buf;
+  }
+  throw new Error(
+    `image ${sourcePath} exceeds ${MAX_IMAGE_BYTES} bytes at lowest quality`,
+  );
 }
 
 const sortKeys = (obj) =>
