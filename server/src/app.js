@@ -22,6 +22,7 @@ function createApp({
   // Later tasks mount routers here (auth, manifest, chapters, images, sync,
   // me, reports, legal) - keep this comment; the route-inventory test
   // (Task 11) pins the exact final set.
+  app.use(require("./routes/auth"));
 
   // Terminal 404 for every non-inventory path.
   app.use((req, res) => res.status(404).json({ error: "not_found" }));
