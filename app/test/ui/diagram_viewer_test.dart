@@ -27,6 +27,11 @@ Widget host() => MaterialApp(
         body: DiagramPlate(image: _img, bytesLoader: () async => _bytes)));
 
 void main() {
+  // Image.memory decodes go into the global imageCache, which otherwise
+  // survives across testWidgets blocks in this file and corrupts DiagramPlate's
+  // layout on repeated mounts (unrelated to focus restoration itself).
+  tearDown(() => imageCache.clear());
+
   testWidgets('plate shows caption + single Tap to enlarge affordance', (t) async {
     await t.pumpWidget(host());
     await t.pumpAndSettle();
@@ -52,5 +57,34 @@ void main() {
     await t.sendKeyEvent(LogicalKeyboardKey.escape);
     await t.pumpAndSettle();
     expect(find.byType(InteractiveViewer), findsNothing);
+  });
+
+  testWidgets('Escape close restores focus to the plate (a11y pack law)', (t) async {
+    await t.pumpWidget(host());
+    await t.pumpAndSettle();
+
+    // The plate's InkWell owns a Focus node; grab it from a context inside
+    // the plate so we can assert on it directly, deterministically.
+    final plateFocus =
+        Focus.of(t.element(find.text('Tap to enlarge')), scopeOk: true);
+    plateFocus.requestFocus();
+    await t.pumpAndSettle();
+    expect(plateFocus.hasFocus, isTrue);
+
+    await t.tap(find.text('Tap to enlarge'));
+    await t.pumpAndSettle();
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    expect(plateFocus.hasFocus, isFalse,
+        reason: 'the dialog is a new focus scope while open');
+
+    await t.sendKeyEvent(LogicalKeyboardKey.escape);
+    await t.pumpAndSettle();
+
+    expect(find.byType(InteractiveViewer), findsNothing);
+    expect(find.byType(DiagramPlate), findsOneWidget,
+        reason: 'the opener survives the dialog closing');
+    expect(plateFocus.hasFocus, isTrue,
+        reason: 'closing the dialog must restore focus to the plate');
+    expect(t.binding.focusManager.primaryFocus, same(plateFocus));
   });
 }
