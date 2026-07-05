@@ -6,6 +6,9 @@
 # os
 .DS_Store
 
+# deps (regenerate from lockfiles, don't commit)
+node_modules/
+
 # tool state / caches (regenerate via cli or mcp, don't commit)
 .neon
 .claude/skills/
