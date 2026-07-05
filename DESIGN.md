@@ -285,8 +285,9 @@ gradient fills, no decorative color.
 - **The three sanctioned motions (D20):**
   1. **Answer reveal** - brief vertical uncover, 150-220ms, scroll position
      preserved.
-     (Law. The prototype clamps scroll-to-top on reveal - a demo limitation,
-     not the spec; the app preserves the reading position.)
+     (Law, landed + test-enforced 2026-07-05 (design T7). The prototype
+     clamps scroll-to-top on reveal - a demo limitation, not the spec; the
+     app preserves the reading position.)
      This is the one "event" motion; it earns its keep by making the
      grey→white material change feel physical.
   2. **Rating acknowledgement** - the "Rated Easy · next answer" toast, then
@@ -508,7 +509,7 @@ are deleted immediately. You would start again from zero.`, actions
 1 day ago`, `Last synced N days ago`. Renders `--amber` when 3 or more
     days stale, `--ink-3` otherwise.
 
-## Responsive Rules (2026-07-04, design T5)
+## Responsive Rules (2026-07-04, design T5 - landed, test-enforced 2026-07-05)
 
 The prototype is a fixed 344x720 frame; the app is not. One set of rules:
 
@@ -529,7 +530,7 @@ The prototype is a fixed 344x720 frame; the app is not. One set of rules:
 - **textScale 1.3:** every screen survives system textScale 1.3 with no
   layout breakage (test-enforced). Body text is already 17sp minimum.
 
-## A11y Executable Pack (2026-07-04, design T6 - build floor, test-enforced)
+## A11y Executable Pack (2026-07-04, design T6 - build floor, landed + test-enforced 2026-07-05)
 
 - **48dp is the build floor** for every interactive target (44px was the
   HTML-demo compromise). Android tap-target guideline tests run per screen.
@@ -578,3 +579,5 @@ The prototype is a fixed 344x720 frame; the app is not. One set of rules:
 | 2026-07-04 | **No offline Downloads feature**: no download/offline state anywhere (no syllabus lozenges, no downloading %, no "Available offline"/"Update available"/"Download failed" copy, no remove-download); content loads on demand with a transparent device cache; failed fetch = inline "Couldn't load this - retry"                                                                                                                                                                                                                                                   | Founder call (evening) - kills bundle-install/storage complexity in v1; online-first accepted; prototype's download lozenges are display-only legacy with no build obligation                         |
 | 2026-07-04 | Free-Beta UI Contract + State Specs sections added (design T1/T2/T3/T8): no monetization UI in beta, syllabus rows = title + count + recall progress, chapter tap -> Topics, empty-track first-class screen, exact copy for all D6 edge states incl. one-way-door confirmations                                                                                                                                                                                                                                                                                    | /autoplan design review P1 tasks; lane B builds against written truth                                                                                                                                 |
 | 2026-07-04 | Responsive Rules + A11y Executable Pack sections added (design T5/T6); token tables completed from built CSS (teal-soft/amber-soft/nav-\* both themes, dark sunk/rule/rule-strong/ok); reveal scroll-preserve noted as law vs prototype clamp (T7)                                                                                                                                                                                                                                                                                                                 | /autoplan design review; lane B builds against written truth                                                                                                                                          |
+| 2026-07-04 | Flutter build (lane B) landed against this document: tokens transcribed to app/lib/theme/tokens.dart, 9 screens + shell built on fixtures, free-beta UI contract + no-downloads enforced by widget tests                                                                                                                                                                                                                                                                                                                                                           | Plan 2026-07-04-flutter-shell-screens.md; per-screen specs are the copy source of truth                                                                                                               |
+| 2026-07-05 | Responsive Rules (T5) + A11y Executable Pack (T6) closed out by the acceptance sweep: 320dp/short-landscape/textScale 1.3/600dp+ max-width, 48dp tap-target guideline, roving-radio ArrowDown/ArrowUp keyboard nav, TalkBack labels, reduced-motion instant swap, reveal scroll-preserve (T7) all test-enforced in `app/test/acceptance/`                                                                                                                                                                                                                          | Task 17, plan 2026-07-04-flutter-shell-screens.md; sweep found and fixed two real gaps: rating-tray semantics label collision and missing roving-radio keyboard handler                               |

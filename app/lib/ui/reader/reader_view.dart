@@ -447,6 +447,9 @@ class _RateButton extends StatelessWidget {
       child: Semantics(
         button: true,
         label: 'Rate $word',
+        // Without this the child Text's own semantics merges in too,
+        // announcing "Rate Easy, Easy" instead of the clean label.
+        excludeSemantics: true,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(DmRadius.sm),

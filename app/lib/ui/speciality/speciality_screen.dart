@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -43,6 +44,18 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
     if (_query.isEmpty) return _all;
     final q = _query.toLowerCase();
     return [for (final s in _all) if (_label(s).toLowerCase().contains(q)) s];
+  }
+
+  /// Roving radio focus: selection follows focus, moving by [delta] through
+  /// [visible] (the rows in their actual on-screen order). With nothing
+  /// selected yet, ArrowDown starts at the first row and ArrowUp at the last.
+  void _moveSelection(int delta, List<SpecialityRow> visible) {
+    if (visible.isEmpty) return;
+    final current = visible.indexWhere((s) => s.id == _selectedId);
+    final next = current < 0
+        ? (delta > 0 ? 0 : visible.length - 1)
+        : (current + delta) % visible.length;
+    setState(() => _selectedId = visible[(next + visible.length) % visible.length].id);
   }
 
   Future<void> _commit() async {
@@ -141,14 +154,26 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
                 ? Center(
                     child: Text('No matches. Try a shorter term - e.g. "cardio".',
                         style: DmType.bodyUi.copyWith(color: dm.ink2)))
-                : FocusTraversalGroup(
-                    child: ListView(
-                      children: [
-                        if (dnb.isNotEmpty) const _GroupHeader('DNB - Broad Specialities'),
-                        for (final s in dnb) _row(s, dm),
-                        if (drnb.isNotEmpty) const _GroupHeader('DrNB - Super Specialities'),
-                        for (final s in drnb) _row(s, dm),
-                      ],
+                // Roving radio focus (DESIGN.md A11y Executable Pack):
+                // ArrowDown/ArrowUp move the selection to the next/previous
+                // visible row, in the same DNB-then-DrNB order the rows
+                // render in below.
+                : CallbackShortcuts(
+                    bindings: {
+                      const SingleActivator(LogicalKeyboardKey.arrowDown):
+                          () => _moveSelection(1, [...dnb, ...drnb]),
+                      const SingleActivator(LogicalKeyboardKey.arrowUp):
+                          () => _moveSelection(-1, [...dnb, ...drnb]),
+                    },
+                    child: FocusTraversalGroup(
+                      child: ListView(
+                        children: [
+                          if (dnb.isNotEmpty) const _GroupHeader('DNB - Broad Specialities'),
+                          for (final s in dnb) _row(s, dm),
+                          if (drnb.isNotEmpty) const _GroupHeader('DrNB - Super Specialities'),
+                          for (final s in drnb) _row(s, dm),
+                        ],
+                      ),
                     ),
                   ),
           ),
