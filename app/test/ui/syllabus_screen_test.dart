@@ -56,43 +56,10 @@ class _ThrowingContentRepository implements ContentRepository {
   Future<Uint8List> imageBytes(String imageId) async => Uint8List(0);
 }
 
-/// Hermetic stub returning canned data - avoids the real asset bundle so a
-/// bundle-loading test cannot poison a later test's pumpAndSettle in the same
-/// isolate (cross-test contamination that hung the empty-track test).
-class _StubContentRepository implements ContentRepository {
-  @override
-  Future<List<SpecialityRow>> specialities() async => const [
-        SpecialityRow(id: 's1', name: 'Anaesthesiology', examType: 'DNB',
-            slug: 'anaesthesiology', sortOrder: 1, hasContent: true),
-      ];
-
-  @override
-  Future<List<ChapterRow>> chapters(String specialityId) async => const [
-        ChapterRow(id: 'c1', specialityId: 's1', title: 'Airway Management',
-            slug: 'airway-management', sortOrder: 1, examWeight: 100,
-            contentVersion: 1, topicCount: 2, qnaCount: 3, recalledCount: 0),
-      ];
-
-  @override
-  Future<void> ensureChapterCached(String chapterId) async {}
-
-  @override
-  Future<List<TopicRow>> topics(String chapterId) async => const [];
-
-  @override
-  Future<List<QnaRow>> qnas(String topicId) async => const [];
-
-  @override
-  Future<QnaRow?> qna(String qnaId) async => null;
-
-  @override
-  Future<Uint8List> imageBytes(String imageId) async => Uint8List(0);
-}
-
 void main() {
   testWidgets('chapter rows: title, topic count, recall progress; no locks, no download UI',
       (t) async {
-    await t.pumpWidget(host('s1', repo: _StubContentRepository()));
+    await t.pumpWidget(host('01J0SPECANAES0000000000001'));
     await t.pumpAndSettle();
     expect(find.text('Anaesthesiology'), findsOneWidget);
     expect(find.text('Airway Management'), findsOneWidget);

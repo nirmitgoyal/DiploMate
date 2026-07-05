@@ -22,8 +22,12 @@ class FixtureContentRepository implements ContentRepository {
   Map<String, dynamic>? _doc;
   final Set<String> _cached = {};
 
+  // cache: false - the global rootBundle string cache returns a Future bound
+  // to the first widget test's FakeAsync zone, which hangs a later test in the
+  // same isolate that awaits it; _doc already memoizes for the real app.
   Future<Map<String, dynamic>> _load() async => _doc ??= json
-      .decode(await rootBundle.loadString('assets/fixtures/chapter_airway.json'))
+      .decode(await rootBundle
+          .loadString('assets/fixtures/chapter_airway.json', cache: false))
       as Map<String, dynamic>;
 
   /// (name, examType, slug, sortOrder) - verbatim from
