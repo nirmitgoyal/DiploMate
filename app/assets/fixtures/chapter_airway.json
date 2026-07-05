@@ -1,0 +1,194 @@
+{
+  "speciality": {
+    "id": "01J0SPECANAES0000000000001",
+    "name": "Anaesthesiology",
+    "exam_type": "DNB",
+    "slug": "anaesthesiology",
+    "sort_order": 1
+  },
+  "chapters": [
+    {
+      "id": "01J0CHAPAIRWAY000000000001",
+      "speciality_id": "01J0SPECANAES0000000000001",
+      "title": "Airway Management",
+      "slug": "airway-management",
+      "sort_order": 1,
+      "exam_weight": 100,
+      "content_version": 1
+    },
+    {
+      "id": "01J0CHAPREGIONAL0000000001",
+      "speciality_id": "01J0SPECANAES0000000000001",
+      "title": "Regional Anaesthesia",
+      "slug": "regional-anaesthesia",
+      "sort_order": 2,
+      "exam_weight": 90,
+      "content_version": 1
+    }
+  ],
+  "topics": [
+    {
+      "id": "01J0TOPICDIFFAIR0000000001",
+      "chapter_id": "01J0CHAPAIRWAY000000000001",
+      "title": "Difficult airway algorithm",
+      "slug": "difficult-airway-algorithm",
+      "exam_theme": "Emergencies",
+      "sort_order": 1
+    },
+    {
+      "id": "01J0TOPICRSI00000000000001",
+      "chapter_id": "01J0CHAPAIRWAY000000000001",
+      "title": "Rapid sequence induction",
+      "slug": "rapid-sequence-induction",
+      "exam_theme": "Technique",
+      "sort_order": 2
+    },
+    {
+      "id": "01J0TOPICTAPBLOCK000000001",
+      "chapter_id": "01J0CHAPREGIONAL0000000001",
+      "title": "Truncal blocks",
+      "slug": "truncal-blocks",
+      "exam_theme": "Blocks",
+      "sort_order": 1
+    }
+  ],
+  "qnas": [
+    {
+      "id": "01J0QNATAPBLOCK00000000001",
+      "topic_id": "01J0TOPICTAPBLOCK000000001",
+      "question": "Describe the transversus abdominis plane (TAP) block: anatomical basis, ultrasound-guided technique, indications, and complications.",
+      "years": "2022 Paper II",
+      "marks": 10,
+      "earns_marks": [
+        { "label": "Definition", "section_key": "definition" },
+        { "label": "Anatomical basis", "section_key": "anatomy" },
+        { "label": "Technique - USG-guided", "section_key": "technique" },
+        { "label": "Indications", "section_key": "indications" },
+        { "label": "Complications", "section_key": "complications" }
+      ],
+      "sections": [
+        {
+          "key": "definition",
+          "heading": "Definition",
+          "body_md": "The TAP block is a fascial plane block depositing local anaesthetic between internal oblique and transversus abdominis, anaesthetising the anterior rami of T6-L1.",
+          "marks": 1
+        },
+        {
+          "key": "anatomy",
+          "heading": "Anatomical basis",
+          "body_md": "Three muscle layers form the anterolateral abdominal wall: external oblique, internal oblique, transversus abdominis. The neurovascular plane lies between the latter two.",
+          "marks": 2
+        },
+        {
+          "key": "technique",
+          "heading": "Technique - USG-guided",
+          "body_md": "High-frequency linear probe in the mid-axillary line between costal margin and iliac crest; identify the three layers; in-plane needle to the fascial plane; hydrodissect; deposit 15-20 ml per side.",
+          "marks": 3
+        },
+        { "key": "diagram", "heading": "Diagram", "body_md": "", "marks": 1 },
+        {
+          "key": "indications",
+          "heading": "Indications",
+          "body_md": "Analgesia for lower abdominal surgery: caesarean section, appendicectomy, inguinal hernia repair, abdominoplasty.",
+          "marks": 1
+        },
+        {
+          "key": "complications",
+          "heading": "Complications",
+          "body_md": "Intraperitoneal injection, bowel puncture, liver laceration (right-sided), local anaesthetic systemic toxicity, block failure.",
+          "marks": 2
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "A landmark-simple, ultrasound-reliable analgesic block of the abdominal wall; know the plane, the volume, and the LAST risk.",
+          "marks": null
+        }
+      ],
+      "sort_order": 1,
+      "images": [
+        {
+          "id": "01J0IMGTAPBLOCK00000000001",
+          "caption": "Fig 1 - TAP block: needle in the plane between internal oblique and transversus abdominis",
+          "content_description": "Ultrasound cross-section of the abdominal wall showing external oblique, internal oblique and transversus abdominis muscle layers with the needle tip and local anaesthetic spread in the transversus abdominis plane",
+          "byte_size": 1024,
+          "sha256": "fixture-sha",
+          "sort_order": 1
+        }
+      ]
+    },
+    {
+      "id": "01J0QNADIFFAIR000000000001",
+      "topic_id": "01J0TOPICDIFFAIR0000000001",
+      "question": "Outline the difficult airway algorithm for an anticipated difficult intubation.",
+      "years": "2021 Paper I",
+      "marks": 10,
+      "earns_marks": [
+        { "label": "Definition", "section_key": "definition" },
+        { "label": "Assessment", "section_key": "assessment" },
+        { "label": "Plan A-D", "section_key": "plans" }
+      ],
+      "sections": [
+        {
+          "key": "definition",
+          "heading": "Definition",
+          "body_md": "A clinical situation in which a trained anaesthesiologist experiences difficulty with facemask ventilation, laryngoscopy, or both.",
+          "marks": 2
+        },
+        {
+          "key": "assessment",
+          "heading": "Assessment",
+          "body_md": "History, Mallampati, thyromental distance, mouth opening, neck mobility; plan awake techniques when two or more predictors align.",
+          "marks": 3
+        },
+        {
+          "key": "plans",
+          "heading": "Plan A-D",
+          "body_md": "Plan A optimal laryngoscopy; Plan B supraglottic airway; Plan C facemask oxygenation and wake-up; Plan D front-of-neck access.",
+          "marks": 5
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "Declare difficulty early; prioritise oxygenation over intubation at every branch.",
+          "marks": null
+        }
+      ],
+      "sort_order": 1,
+      "images": []
+    },
+    {
+      "id": "01J0QNARSI0000000000000001",
+      "topic_id": "01J0TOPICRSI00000000000001",
+      "question": "Describe rapid sequence induction: indications, drugs, and technique.",
+      "years": "2019, 2023 Paper I",
+      "marks": 5,
+      "earns_marks": [
+        { "label": "Indications", "section_key": "indications" },
+        { "label": "Technique", "section_key": "technique" }
+      ],
+      "sections": [
+        {
+          "key": "indications",
+          "heading": "Indications",
+          "body_md": "Full stomach, emergency surgery, gastro-oesophageal reflux, pregnancy beyond the first trimester.",
+          "marks": 2
+        },
+        {
+          "key": "technique",
+          "heading": "Technique",
+          "body_md": "Preoxygenation 3 minutes; induction agent + rapid-onset relaxant; cricoid pressure; no mask ventilation; intubate and confirm with capnography.",
+          "marks": 3
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "Speed and aspiration prophylaxis are the whole point; have suction and a rescue plan ready.",
+          "marks": null
+        }
+      ],
+      "sort_order": 1,
+      "images": []
+    }
+  ]
+}
