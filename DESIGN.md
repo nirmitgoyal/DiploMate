@@ -348,6 +348,8 @@ Nine screens + one sheet. Reference `prototype/index.html`.
    (feature removed 2026-07-04). Locked chapters
    stay visible (title + count, never answer previews); the lock signal is
    lock icon + `Locked` lozenge, nothing else (no third signal, no preview).
+   **Billing slice - not rendered in beta (PG3):** in the free beta every
+   chapter row is open and tappable; see the Free-Beta UI Contract section.
 5. **Topics** - chapter → topic rows, each with an aggregate recall pip
    (Recalled / Due / New - bare status word + color, never color alone; no
    date/interval copy as of 2026-07-04). Chapter
@@ -371,7 +373,8 @@ Nine screens + one sheet. Reference `prototype/index.html`.
    reminder → sign out → delete account (Play mandate).
 8. **Bookmarks** - saved questions as rows (question + `Chapter · Topic` source),
    reached from Home, lights the Home tab.
-9. **Paywall sheet** - locked contents (titles + counts, never previews) →
+9. **Paywall sheet** - **Billing slice - not rendered in beta (PG3).**
+   locked contents (titles + counts, never previews) →
    exact price (₹499 one-time) → what's included → **Purchase** → one support
    line ("Trouble? Mail us"). **No Restore row** - restore is implicit under
    Google-only sign-in (D5) on Play; an explicit "Restore purchase" slot
@@ -390,6 +393,103 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 - `prefers-reduced-motion` disables all motion (reveal → instant swap).
 
 ---
+
+## Free-Beta UI Contract (PG3, 2026-07-04)
+
+The beta is a fully free app. This section is the render contract for lane B;
+it supersedes any lock/paywall rendering described elsewhere in this document.
+
+- **Beta screen inventory (9):** Sign-in, Speciality onboarding (+ change
+  mode), Home, Syllabus, Topics, Reader/Recall, Bookmarks, Account, and the
+  fullscreen diagram viewer. The paywall sheet is NOT in the beta widget tree.
+- **No monetization UI anywhere:** no lock icons, no `Locked` lozenges, no
+  Purchase/price/unlock copy, no "locked chapters" footer. Entitlement lives
+  in the API schema (plan 2), never in beta widgets.
+- **Syllabus row contract:** every chapter row renders title + topic-count
+  subtitle (`N topics`) + recall progress as the loud right-side signal
+  (`8/14` over `recalled`, `--teal-ink`) with a thin progress bar once
+  recall has started. No download/offline state of any kind (feature removed
+  2026-07-04): no lozenges, no percentages, no remove-download, no storage
+  lines.
+- **Chapter tap contract:** tapping ANY chapter row navigates to Topics.
+  Content is fetched on demand on entry; while fetching, Topics shows a
+  centered progress indicator; on failure it shows the inline retry state
+  (below). No "download prep" percentage anywhere.
+- **Syllabus footer:** removed in beta. Its only job was selling the unlock;
+  with nothing locked it says nothing true.
+- **Lock/paywall material elsewhere in this doc** (Screen Anatomy items 4
+  and 9, Copy Voice store-compliance lines) is annotated in place as
+  "billing slice - not rendered in beta" and kept for the billing slice.
+
+## State Specs (D6 edge inventory, amended 2026-07-04)
+
+Pack/storage edges are gone with the Downloads feature. The inventory below
+is exhaustive for lane B; each state ships with a widget test. Copy is exact.
+
+1. **Content fetch failed (any screen that loads content):** inline state,
+   centered in the failed region: body text `Couldn't load this - retry`
+   with a `Retry` text button under it. One string product-wide. No jargon,
+   no error codes.
+2. **Sign-in in-flight:** after tapping `Continue with Google` the button
+   disables and shows a small progress spinner in place of its icon; no
+   second action appears. Cancelling the Google sheet returns to idle with
+   no error shown.
+3. **Sign-in auth-error vs offline (distinct copies):**
+   - auth error: `Sign-in failed - try again.`
+   - offline: `You're offline - connect and retry.`
+     Both render as a single meta-size line under the button, `--exam-red`.
+4. **Speciality commit pending:** CTA disables, label swaps to a spinner;
+   list stays interactive-off (taps ignored) until resolution.
+5. **Speciality commit failure vs offline (distinct copies), shown as a
+   meta line above the CTA, `--exam-red`, with the CTA re-enabled to retry:**
+   - offline: `You're offline - your speciality wasn't saved. Retry.`
+   - failure: `Couldn't save your speciality - retry.`
+6. **Home N=0:** the primary CTA is hidden entirely (no empty or disabled
+   button); the ghost bookmarks CTA drops its top margin to close the gap.
+7. **This Week % floor (n>=5):** the `% rated Easy` stat renders only when
+   at least 5 ratings exist in the trailing 7 days; below that the block
+   shows the `answers recalled` figure alone. Counts render from 0 honestly.
+8. **Resume slot, day zero ("Start here"):** with no reading history the
+   pinned row shows overline `Start here` + the highest-exam-weight
+   chapter's title + subtitle `Begin with the highest-yield chapter`;
+   tapping routes into that chapter's Topics screen. No auto-download
+   exists. With history it shows overline `Pick up where you left off` +
+   chapter title + `Topic i of N · <topic title>`.
+9. **Empty track (PG2, first-class screen):** when the chosen speciality
+   has no published chapters, Syllabus renders (not a dialog, not a toast):
+   heading `No answers here yet` (serif title size), body `<Speciality>
+answers are being written. Your pick counts - it tells us which
+speciality we publish next.`, sub-line `You can change your speciality
+once in Account.` Bottom nav stays live. Empty-track picks are excluded
+   from the activation cohort (analytics note, plan 2/6).
+10. **Catalog loading / catalog error (Syllabus):** loading = centered
+    progress indicator; error = state 1 (inline retry) filling the list
+    region.
+11. **Empty Bookmarks:** heading `Nothing saved yet.` + body `Bookmark an
+answer while reading and it will be kept here.` Centered in the list
+    region; crumb count reads `Saved · 0 questions`.
+12. **Reader end-of-queue completion (queue mode - built in plan 5, specced
+    here):** after rating the last due answer the Reader shows a completion
+    state, not a bounce: `Today's recall is complete. N reviewed; next due
+tomorrow.` + ghost CTA `Study a new answer` (routes to Syllabus).
+13. **Report an answer error (TD1):** post-reveal only, a quiet row action
+    under the rating tray: `Report an answer error`. Online-only in v1:
+    when offline the row is disabled with subtitle `Connect to the internet
+to report an error.` Submitting shows toast `✓ Report sent - thank you`.
+14. **One-way door confirmations (T8):** - Speciality change (Account -> change mode -> Save change with a
+    different track): confirm dialog title `Use your one change?`, body
+    `<Old> -> <New>. You can change your speciality once - this is that
+change.`, actions `Cancel` / `Change speciality`. Re-saving the same
+    track commits without a dialog and does not consume the change. - Delete account, 2-step: dialog 1 title `Delete your account?`, body
+    `This permanently removes your recall history, bookmarks and profile
+from DiploMate. There is no undo.`, actions `Cancel` / `Continue`;
+    dialog 2 title `This is permanent`, body `Your account and all data
+are deleted immediately. You would start again from zero.`, actions
+    `Keep my account` / `Delete account` (destructive red).
+15. **Account "Last synced" line (TD2):** subtitle of a quiet sync row:
+    `Not synced yet` before first sync, `Last synced today`, `Last synced
+1 day ago`, `Last synced N days ago`. Renders `--amber` when 3 or more
+    days stale, `--ink-3` otherwise.
 
 ## Decisions Log
 
@@ -413,3 +513,4 @@ Nine screens + one sheet. Reference `prototype/index.html`.
 | 2026-07-04 | Codified: no Restore row on Play (restore implicit under Google-only D5; mandatory if iOS ships); rating label "Unable to recall" (Anki's Again); red also sanctioned for the destructive Delete-account row; specimen + toast added to no-cards exceptions; lock signal = icon + lozenge                                                                                                                                                                                                                                                                          | Doc-spec-prototype contradictions resolved in the direction the specs and prototype had already locked                                                                                                |
 | 2026-07-04 | User-directed prototype pass: rating tray Unable/Hard/Good -> **Easy/Medium/Hard** (green/amber/red traffic-light, smile/meh/frown icons, no interval hints, no "done/due" counter); SRS de-surfaced (Reader "Due today" badge + Topics date pips removed -> pip now bare status Recalled/Due/New); "rated Good" -> "rated Easy"; sign-in tagline "Written by Doctors. Solved for Success!" added, util trimmed to legal links; "What earns marks" rows anchor-scroll to sections; Account avatar -> Google profile image; all em/en-dashes -> hyphen product-wide | Founder call - product shifts from a visible spaced-repetition scheduler toward a plain difficulty-rating study tool; Law 5 (red) relaxed to admit the Hard tier; DESIGN.md synced to prototype truth |
 | 2026-07-04 | **No offline Downloads feature**: no download/offline state anywhere (no syllabus lozenges, no downloading %, no "Available offline"/"Update available"/"Download failed" copy, no remove-download); content loads on demand with a transparent device cache; failed fetch = inline "Couldn't load this - retry"                                                                                                                                                                                                                                                   | Founder call (evening) - kills bundle-install/storage complexity in v1; online-first accepted; prototype's download lozenges are display-only legacy with no build obligation                         |
+| 2026-07-04 | Free-Beta UI Contract + State Specs sections added (design T1/T2/T3/T8): no monetization UI in beta, syllabus rows = title + count + recall progress, chapter tap -> Topics, empty-track first-class screen, exact copy for all D6 edge states incl. one-way-door confirmations                                                                                                                                                                                                                                                                                    | /autoplan design review P1 tasks; lane B builds against written truth                                                                                                                                 |

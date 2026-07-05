@@ -63,3 +63,12 @@ once - this is that change.`
 4. Complete onboarding → Home. Account row reads `<Speciality> · can change
 once`; change to another track → row reads `· one-time change used` and no
    longer opens the screen; re-saving the same value doesn't consume it.
+
+## Commit states (2026-07-04, DESIGN.md State Specs 4-5)
+
+Pending: CTA disabled + spinner, list taps ignored. Offline: `You're
+offline - your speciality wasn't saved. Retry.` Failure: `Couldn't save
+your speciality - retry.` Both above the CTA, `--exam-red`, CTA re-enabled.
+A real change (change mode, different track) is confirmed first: `Use your
+one change?` / `<Old> -> <New>. You can change your speciality once - this
+is that change.` / `Cancel` / `Change speciality`.

@@ -42,3 +42,10 @@ framing - guidance, not homework).
    gap (no orphan margin).
 3. Set `suggested = 1` → label is singular `answer`.
 4. Resume row stays pinned above the nav while the view scrolls.
+
+## States (2026-07-04, DESIGN.md State Specs 6-8)
+
+N=0: primary CTA absent, ghost CTA closes the gap. This Week: `% rated
+Easy` renders only at n>=5 ratings in the trailing 7 days. Day-zero resume
+slot: overline `Start here`, highest-exam-weight chapter title, subtitle
+`Begin with the highest-yield chapter`, routes to that chapter's Topics.

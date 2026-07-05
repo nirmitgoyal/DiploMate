@@ -1,5 +1,10 @@
 # Syllabus - design
 
+> **Free beta (PG3, 2026-07-04):** locked rows, the `Locked` lozenge, the
+> paywall sheet, and the unlock footer are billing-slice material - NOT
+> rendered in beta. Beta rows: title + `N topics` subtitle + recall progress;
+> every row taps through to Topics. See DESIGN.md "Free-Beta UI Contract".
+
 Date: 2026-07-03
 Scope: `prototype/index.html` only (Direction B demo). Tokens, type, color per
 `DESIGN.md`; this spec covers structure, copy, and behavior.

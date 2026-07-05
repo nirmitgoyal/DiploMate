@@ -39,3 +39,10 @@ change`.
 3. Change to a different track → subtitle `· one-time change used`, row inert
    thereafter; re-saving the same track does not consume the change.
 4. Reminder / Sign out / Delete rows render but perform no action.
+
+## Confirmations + sync line (2026-07-04, DESIGN.md State Specs 14-15)
+
+Speciality change and account deletion follow the one-way-door dialogs in
+DESIGN.md State Spec 14 (exact copy there). A quiet sync row shows
+`Not synced yet` / `Last synced today` / `Last synced N days ago`,
+amber when >=3 days stale.

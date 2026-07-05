@@ -46,3 +46,9 @@ complications.`
 2. First `Continue with Google` → Speciality onboarding (not Home).
 3. Complete onboarding, revisit Sign-in via chip, tap CTA again → straight to
    Home.
+
+## States (2026-07-04, DESIGN.md State Specs 2-3)
+
+In-flight: button disabled + spinner; cancel returns to idle, no error.
+Auth error: `Sign-in failed - try again.` Offline: `You're offline -
+connect and retry.` Distinct copies, meta size, `--exam-red`.

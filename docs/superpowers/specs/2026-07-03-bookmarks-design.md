@@ -35,3 +35,8 @@ quick recall. Tap any to reopen the answer.`
 1. Home ghost CTA → Bookmarks; Home tab stays lit.
 2. Crumb count matches the number of rows.
 3. Any row opens the Reader at pre-reveal; back returns Home.
+
+## Empty state (2026-07-04, DESIGN.md State Spec 11)
+
+`Nothing saved yet.` + `Bookmark an answer while reading and it will be
+kept here.` Crumb reads `Saved · 0 questions`.

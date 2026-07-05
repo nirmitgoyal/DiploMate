@@ -102,3 +102,12 @@ Medium · next answer`) → after 650 ms resets to `before`, clears the
 5. Bookmark toggles with toasts and `aria-pressed`.
 6. Diagram → fullscreen: zoom, pan, rotate pill toggles, Escape closes.
 7. Leave mid-reveal via crumb, return → pre-reveal again.
+
+## Beta additions (2026-07-04, DESIGN.md State Specs 1, 12, 13)
+
+Content fetch failure renders the inline retry state (`Couldn't load
+this - retry`). `Report an answer error` row sits under the rating tray,
+post-reveal only, online-only (disabled offline with `Connect to the
+internet to report an error.`); submit toasts `✓ Report sent - thank you`.
+End-of-queue completion state (queue mode, plan 5): `Today's recall is
+complete. N reviewed; next due tomorrow.` + `Study a new answer`.
