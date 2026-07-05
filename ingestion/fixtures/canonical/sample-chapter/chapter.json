@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "speciality_slug": "anaesthesia",
+  "chapter": {
+    "id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
+    "title": "Regional Anaesthesia (Sample)",
+    "slug": "regional-anaesthesia-sample",
+    "sort_order": 1,
+    "exam_weight": 10
+  },
+  "topics": [
+    {
+      "id": "01KWRJV8K5VR0JACJCB9SX1J4W",
+      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
+      "title": "Spinal Anaesthesia",
+      "slug": "spinal-anaesthesia",
+      "exam_theme": "Regional techniques",
+      "sort_order": 1
+    },
+    {
+      "id": "01KWRJV8KJ1BYQQ9S2EYTSWGG3",
+      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
+      "title": "Complications of Spinal Anaesthesia",
+      "slug": "complications-of-spinal-anaesthesia",
+      "exam_theme": "Complications and safety",
+      "sort_order": 2
+    }
+  ],
+  "qnas": [
+    {
+      "id": "01KWRJV8K50XTN4DYZWGH5JJ39",
+      "topic_id": "01KWRJV8K5VR0JACJCB9SX1J4W",
+      "question": "Define spinal anaesthesia. List its indications and contraindications.",
+      "years": "2019, 2022",
+      "marks": 10,
+      "earns_marks": [
+        {
+          "label": "Definition of subarachnoid block",
+          "section_key": "definition"
+        },
+        {
+          "label": "Indications by surgical site",
+          "section_key": "indications"
+        },
+        {
+          "label": "Absolute contraindications",
+          "section_key": "indications"
+        }
+      ],
+      "sections": [
+        {
+          "key": "definition",
+          "heading": "Definition",
+          "body_md": "Spinal anaesthesia is a regional technique in which a local anaesthetic is deposited in the subarachnoid space, producing a reversible block of the spinal nerve roots. This is owned sample text written for the DiploMate pipeline fixture."
+        },
+        {
+          "key": "indications",
+          "heading": "Indications and contraindications",
+          "body_md": "Indications include lower-abdominal and lower-limb procedures where an awake technique is preferred. Contraindications include patient refusal, local infection at the puncture site, and uncorrected coagulopathy. Sample text, not licensed content."
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "A single deposit of local anaesthetic in the subarachnoid space provides dense, reliable blockade for surgery below the umbilicus."
+        }
+      ],
+      "sort_order": 1
+    },
+    {
+      "id": "01KWRJV8KJA7G3G8XRNHC9QZDT",
+      "topic_id": "01KWRJV8K5VR0JACJCB9SX1J4W",
+      "question": "Describe the steps of performing a subarachnoid block.",
+      "years": "2021",
+      "marks": 5,
+      "earns_marks": [
+        {
+          "label": "Positioning and landmarks",
+          "section_key": "technique"
+        },
+        {
+          "label": "Confirmation of correct placement",
+          "section_key": "technique"
+        }
+      ],
+      "sections": [
+        {
+          "key": "technique",
+          "heading": "Technique",
+          "body_md": "With the patient sitting or in lateral position, the interspace is identified, the skin is prepared, and the needle is advanced in the midline until free flow of cerebrospinal fluid confirms placement. Owned sample text for fixture use."
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "Positioning, landmark identification, sterile technique, and confirmation by cerebrospinal fluid flow are the marks-earning steps."
+        }
+      ],
+      "sort_order": 2
+    },
+    {
+      "id": "01KWRJV8KJACRNDSG9Y7XDBDTC",
+      "topic_id": "01KWRJV8KJ1BYQQ9S2EYTSWGG3",
+      "question": "What is post dural puncture headache? Outline its management.",
+      "years": "2018, 2023",
+      "marks": 10,
+      "earns_marks": [
+        {
+          "label": "Postural character of the headache",
+          "section_key": "definition"
+        },
+        {
+          "label": "Conservative and definitive management",
+          "section_key": "management"
+        }
+      ],
+      "sections": [
+        {
+          "key": "definition",
+          "heading": "Definition",
+          "body_md": "Post dural puncture headache is a positional headache that follows breach of the dura, worsening on sitting or standing and easing when supine. Owned sample text for fixture use."
+        },
+        {
+          "key": "management",
+          "heading": "Management",
+          "body_md": "Initial management is conservative with fluids and simple analgesia; persistent cases are treated definitively. Sample text, not licensed content."
+        },
+        {
+          "key": "summary",
+          "heading": "Summary",
+          "body_md": "Recognise the postural pattern, start conservative measures, and escalate when the headache persists."
+        }
+      ],
+      "sort_order": 1
+    }
+  ],
+  "images": [
+    {
+      "id": "01KWRJV8K5BXBBTMS47GPZPV4Q",
+      "qna_id": "01KWRJV8K50XTN4DYZWGH5JJ39",
+      "caption": "Vertebral levels relevant to spinal anaesthesia (sample diagram)",
+      "content_description": "Sample placeholder panel standing in for a labelled vertebral column diagram.",
+      "file": "images/01KWRJV8K5BXBBTMS47GPZPV4Q.webp",
+      "byte_size": 938,
+      "sha256": "e04591afe2d67118e998bfe61a33b4853d799cf8501e852e63494eb1b5c9a801",
+      "sort_order": 1
+    }
+  ]
+}
