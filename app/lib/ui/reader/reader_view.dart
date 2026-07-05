@@ -208,70 +208,87 @@ class _ReaderViewState extends State<ReaderView> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    for (final s in q.sections) ...[
-                                      IntrinsicHeight(
-                                        key: _sectionKeys[s.key],
-                                        child: Row(
+                                    // Signature move: examiner's red margin -
+                                    // one continuous rail spans the whole
+                                    // answer block; per-section mark weights
+                                    // sit in the margin next to their section.
+                                    Stack(
+                                      children: [
+                                        Positioned(
+                                          left: DmReader.examinerRail,
+                                          top: 0,
+                                          bottom: 0,
+                                          child: Container(
+                                              width: 1, color: dm.examRed),
+                                        ),
+                                        Column(
                                           crossAxisAlignment:
-                                              CrossAxisAlignment.stretch,
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            // Signature move: examiner's red
-                                            // margin - 26px hanging left margin
-                                            // with a continuous rail; each
-                                            // section's mark weight sits here.
-                                            SizedBox(
-                                              width: DmReader.examinerIndent,
-                                              child: Stack(
-                                                children: [
-                                                  Positioned(
-                                                    left: DmReader.examinerRail,
-                                                    top: 0,
-                                                    bottom: 0,
-                                                    child: VerticalDivider(
-                                                        width: 1,
-                                                        thickness: 1,
-                                                        color: dm.rule),
-                                                  ),
-                                                  if (s.marks != null)
-                                                    Text('${s.marks}',
-                                                        style: DmType.meta
-                                                            .copyWith(
-                                                                color: dm
-                                                                    .examRed)),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: DmSpace.sm),
-                                            Expanded(
-                                              child: Column(
+                                            for (final s in q.sections) ...[
+                                              Row(
+                                                key: _sectionKeys[s.key],
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Text(s.heading,
-                                                      style: DmType.section
-                                                          .copyWith(
-                                                              color: dm.ink)),
+                                                  SizedBox(
+                                                    width:
+                                                        DmReader.examinerIndent,
+                                                    child: s.marks != null
+                                                        ? Text('${s.marks}',
+                                                            style: DmType.meta
+                                                                .copyWith(
+                                                                    color: dm
+                                                                        .examRed))
+                                                        : null,
+                                                  ),
                                                   const SizedBox(
-                                                      height: DmSpace.xs),
-                                                  if (s.bodyMd.isNotEmpty)
-                                                    Text(s.bodyMd,
-                                                        style: DmType.body
-                                                            .copyWith(
-                                                                color: dm.ink)),
-                                                  if (s.key == 'diagram' &&
-                                                      widget.imageBuilder !=
-                                                          null)
-                                                    for (final img in q.images)
-                                                      widget.imageBuilder!(
-                                                          context, img),
+                                                      width: DmSpace.sm),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(s.heading,
+                                                            style: DmType
+                                                                .section
+                                                                .copyWith(
+                                                                    color: dm
+                                                                        .ink)),
+                                                        const SizedBox(
+                                                            height:
+                                                                DmSpace.xs),
+                                                        if (s.bodyMd
+                                                            .isNotEmpty)
+                                                          Text(s.bodyMd,
+                                                              style: DmType
+                                                                  .body
+                                                                  .copyWith(
+                                                                      color: dm
+                                                                          .ink)),
+                                                        if (s.key ==
+                                                                'diagram' &&
+                                                            widget.imageBuilder !=
+                                                                null)
+                                                          for (final img
+                                                              in q.images)
+                                                            widget
+                                                                .imageBuilder!(
+                                                                    context,
+                                                                    img),
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ],
                                               ),
-                                            ),
+                                              const SizedBox(
+                                                  height: DmSpace.lg),
+                                            ],
                                           ],
                                         ),
-                                      ),
-                                      const SizedBox(height: DmSpace.lg),
-                                    ],
+                                      ],
+                                    ),
                                     if (!widget.rated) ...[
                                       const SizedBox(height: DmSpace.sm),
                                       Row(children: [
