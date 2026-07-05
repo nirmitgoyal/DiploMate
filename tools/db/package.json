@@ -1,0 +1,11 @@
+{
+  "name": "diplomate-db-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pg": "^8.12.0"
+  }
+}
