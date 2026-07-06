@@ -1,5 +1,5 @@
 // Minimal content tree for endpoint tests - shaped exactly like the
-// ingestion publisher's output. Safe to call repeatedly.
+// ingestion publisher's output (schema v2: qnas hang off chapters).
 async function seedContent(pool) {
   const { rows } = await pool.query(
     `SELECT id FROM specialities WHERE slug = 'anaesthesiology'`,
@@ -13,16 +13,12 @@ async function seedContent(pool) {
     [spec],
   );
   await pool.query(`
-    INSERT INTO topics (id, chapter_id, title, slug, exam_theme, sort_order)
-    VALUES ('TP1', 'CH1', 'Difficult airway', 'difficult-airway', 'Emergencies', 1)
-    ON CONFLICT (id) DO NOTHING`);
-  await pool.query(`
-    INSERT INTO qnas (id, topic_id, question, years, marks, earns_marks, sections, sort_order)
+    INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, sort_order)
     VALUES
-      ('QN1', 'TP1', 'Outline the difficult airway algorithm.', '2021 Paper I', 10,
+      ('QN1', 'CH1', 'Outline the difficult airway algorithm.', '2021 Paper I', 10,
        '[{"label":"Definition","section_key":"definition"}]',
        '[{"key":"definition","heading":"Definition","body_md":"A clinical situation...","marks":2}]', 1),
-      ('QN2', 'TP1', 'Describe rapid sequence induction.', '2019', 5,
+      ('QN2', 'CH1', 'Describe rapid sequence induction.', '2019', 5,
        '[]', '[{"key":"summary","heading":"Summary","body_md":"Speed matters.","marks":null}]', 2)
     ON CONFLICT (id) DO NOTHING`);
   await pool.query(`
