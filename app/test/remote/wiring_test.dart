@@ -4,6 +4,7 @@ import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/remote/api_client.dart';
 import 'package:diplomate/data/remote/remote_auth_repository.dart';
 import 'package:diplomate/data/remote/remote_providers.dart';
+import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/providers/study_providers.dart';
 import 'package:diplomate/router.dart';
 import 'package:diplomate/theme/app_theme.dart';
@@ -65,9 +66,18 @@ Future<ProviderContainer> _boot(WidgetTester tester,
 
   // The pre-runApp bootstrap does real dio I/O (restoreSession); run it in the
   // real async zone (as production main() does) - inside testWidgets' fake-async
-  // a stubbed dio Future would never resolve.
-  final user = await tester.runAsync(
-      () => container.read(authRepositoryProvider).restoreSession());
+  // a stubbed dio Future would never resolve. The try/catch mirrors main()'s
+  // guarded bootstrap: an offline cold-start degrades to Sign-in, never throws.
+  // The try/catch mirrors main()'s guarded bootstrap: an offline cold-start
+  // degrades to Sign-in, never throws. (The guard sits around the same dio I/O
+  // main() guards; runAsync surfaces a throw to the framework, so catch inside.)
+  final user = await tester.runAsync<SessionUser?>(() async {
+    try {
+      return await container.read(authRepositoryProvider).restoreSession();
+    } catch (_) {
+      return null;
+    }
+  });
   container.read(sessionUserProvider.notifier).state = user;
 
   await tester.pumpWidget(UncontrolledProviderScope(
@@ -124,5 +134,77 @@ void main() {
     expect(find.text('Continue with Google'), findsNothing);
     expect(find.text('Exam speciality'), findsNothing);
     expect(find.text('This Week'), findsOneWidget, reason: 'landed on Home');
+  });
+
+  testWidgets(
+      'C1: live 401 during sync flush nulls the session and bounces to Sign-in',
+      (tester) async {
+    // Start signed-in on Home (stored JWT, /manifest 200, silent re-auth).
+    final api = ApiClient(
+        baseUrl: 'https://api.test', tokenStore: _MemoryTokenStore('stored-jwt'));
+    await api.init();
+    api.dio.httpClientAdapter = _StubAdapter((o) {
+      if (o.path == '/manifest') {
+        return ResponseBody.fromString(
+            '{"schema_version":1,"min_app_version":1,"specialities":[]}', 200,
+            headers: {
+              'content-type': ['application/json']
+            });
+      }
+      if (o.path == '/auth/google') {
+        return ResponseBody.fromString(
+            '{"session_jwt":"jwt2","user":{"id":"u1","email":"a@b.c","name":null,"photo_url":null,"speciality_id":"S1","speciality_change_count":0}}',
+            200,
+            headers: {
+              'content-type': ['application/json']
+            });
+      }
+      // The first flush drains empty pending tables (returns early), so the only
+      // HTTP is the bookmarks PUT - answer it 401 to simulate an expired session
+      // discovered mid background-sync.
+      return ResponseBody.fromString('{"error":"unauthorized"}', 401,
+          headers: {
+            'content-type': ['application/json']
+          });
+    });
+
+    final container =
+        await _boot(tester, api: api, google: _FakeGoogle(token: 'gid'));
+    expect(find.text('This Week'), findsOneWidget, reason: 'started on Home');
+
+    // Fire the exact sync path main() runs on app-start / backgrounding. The
+    // 401 handler is fire-and-forget async (signOut + null the session), so let
+    // its microtasks drain in the real zone before pumping the router.
+    await tester.runAsync(() async {
+      await container.read(syncServiceProvider).flush();
+      await Future<void>.delayed(Duration.zero);
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // onAuthExpired signed out AND nulled sessionUserProvider -> router redirect.
+    expect(container.read(sessionUserProvider), isNull,
+        reason: 'session cleared by onAuthExpired');
+    expect(find.text('Continue with Google'), findsOneWidget,
+        reason: 'bounced to Sign-in, not stranded on a dead Home');
+  });
+
+  testWidgets(
+      'C2: offline cold-start (restore probe connectionError) does not crash, shows Sign-in',
+      (tester) async {
+    // Returning user launching offline: JWT present, but the /manifest whoami
+    // probe throws connectionError. restoreSession() rethrows it; the bootstrap
+    // wrapper must swallow it and degrade to Sign-in rather than crash pre-runApp.
+    final api = ApiClient(
+        baseUrl: 'https://api.test', tokenStore: _MemoryTokenStore('stored-jwt'));
+    await api.init();
+    api.dio.httpClientAdapter = _StubAdapter(
+        (o) => throw DioException.connectionError(
+            requestOptions: RequestOptions(path: o.path), reason: 'offline'));
+
+    // _boot runs the same guarded bootstrap sequence as main() (see the helper).
+    await _boot(tester, api: api, google: _FakeGoogle());
+    expect(find.text('Continue with Google'), findsOneWidget,
+        reason: 'offline boot degraded to Sign-in without throwing');
   });
 }

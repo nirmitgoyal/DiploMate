@@ -136,6 +136,34 @@ void main() {
     expect(qnas.single.question, 'Q v2?', reason: 'stale rows replaced in one transaction');
   });
 
+  test('content_version bump purges the stale image blob; imageBytes refetches new bytes', () async {
+    await repo.ensureChapterCached('CH1');
+    expect(await repo.imageBytes('IM1'), [1, 2, 3, 4], reason: 'v1 bytes cached');
+
+    // Republish the SAME image id (stable ULID) at v2 with DIFFERENT bytes.
+    var v2manifest = Map<String, dynamic>.from(_manifest);
+    v2manifest['chapters'] = [
+      {...(_manifest['chapters'] as List).first as Map<String, dynamic>, 'content_version': 2}
+    ];
+    var v2page = Map<String, dynamic>.from(_page);
+    v2page['content_version'] = 2;
+    adapter.handler = (o) {
+      if (o.path == '/manifest') return json(v2manifest);
+      if (o.path == '/chapters/CH1/qnas') return json(v2page);
+      if (o.path == '/images/IM1') {
+        return ResponseBody.fromBytes(Uint8List.fromList([9, 9, 9, 9]), 200,
+            headers: {'content-type': ['image/webp'], 'etag': ['"def"']});
+      }
+      return json({'error': 'not_found'}, 404);
+    };
+    await repo.ensureChapterCached('CH1');
+
+    // If replaceChapterContent had left the old blob, this would still be
+    // [1,2,3,4]; the purge forces a refetch of the new bytes.
+    expect(await repo.imageBytes('IM1'), [9, 9, 9, 9],
+        reason: 'stale image_blobs row purged in the same transaction, refetched');
+  });
+
   test('server-sent topics[] persist with real titles; specialities carry slug + hasContent', () async {
     await repo.ensureChapterCached('CH1');
     final topics = await repo.topics('CH1');

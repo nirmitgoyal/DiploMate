@@ -181,6 +181,18 @@ class AppDatabase extends _$AppDatabase {
             .map((q) => q.id)
             .get();
         if (qnaIds.isNotEmpty) {
+          // Purge the cached bytes too, not just the metadata: under stable
+          // ULIDs a reused image id with changed bytes would otherwise serve
+          // the OLD blob forever (imageBytes() reads image_blobs by id first).
+          // Same transaction = atomic swap.
+          final imageIds = await (select(images)
+                ..where((i) => i.qnaId.isIn(qnaIds)))
+              .map((i) => i.id)
+              .get();
+          if (imageIds.isNotEmpty) {
+            await (delete(imageBlobs)..where((b) => b.imageId.isIn(imageIds)))
+                .go();
+          }
           await (delete(images)..where((i) => i.qnaId.isIn(qnaIds))).go();
         }
         await (delete(qnas)..where((q) => q.topicId.isIn(topicIds))).go();

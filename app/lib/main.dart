@@ -6,6 +6,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'app_providers.dart';
 import 'data/db/app_db.dart';
 import 'data/remote/api_client.dart';
+import 'data/repos/auth_repository.dart';
 import 'data/remote/remote_providers.dart';
 import 'data/remote/remote_auth_repository.dart';
 import 'data/remote/secure_token_store.dart';
@@ -41,7 +42,15 @@ Future<void> main() async {
   // session, seed sessionUserProvider - the router redirect then lands
   // Sign-in / Speciality / Home correctly.
   await api.init();
-  final user = await container.read(authRepositoryProvider).restoreSession();
+  SessionUser? user;
+  try {
+    user = await container.read(authRepositoryProvider).restoreSession();
+  } catch (_) {
+    // Offline / transient cold-start (network DioException or AuthOffline):
+    // degrade to Sign-in rather than crash before runApp. A broad catch is
+    // deliberate - either uncaught throw here is a launch-time white screen.
+    user = null;
+  }
   container.read(sessionUserProvider.notifier).state = user;
 
   // Starter funnel: no auto-download. Flush pending events on app start and on

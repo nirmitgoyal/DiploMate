@@ -71,8 +71,13 @@ List<Override> remoteOverrides({
           api: ref.watch(_apiClientProvider),
           db: ref.watch(appDatabaseProvider),
           // 401 with no silent re-auth means the session is gone - drive the
-          // auth layer to sign out so the router bounces to Sign-in.
-          onAuthExpired: () => ref.read(authRepositoryProvider).signOut(),
+          // auth layer to sign out AND null the session so the router (which
+          // only reruns its redirect on a sessionUserProvider change) bounces
+          // to Sign-in. Mirrors the UI sign-out paths (account_screen.dart).
+          onAuthExpired: () async {
+            await ref.read(authRepositoryProvider).signOut();
+            ref.read(sessionUserProvider.notifier).state = null;
+          },
         )),
     reportErrorProvider.overrideWith((ref) {
       final c = ref.watch(_apiClientProvider);
