@@ -97,4 +97,54 @@ void main() {
     // Let the 1500ms toast timer expire so no Timer outlives the tree.
     await tester.pump(const Duration(seconds: 2));
   });
+
+  testWidgets(
+      'queue mode: report row is absent pre-reveal, present post-reveal under '
+      'the rating tray, and tapping it routes to reportErrorProvider (DESIGN '
+      'item 13 - one surface, two states)', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 2600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+
+    String? reportedQnaId;
+    String? reportedMessage;
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        contentRepositoryProvider
+            .overrideWithValue(_OneQnaContentRepository(_seedQna())),
+        dueQueueProvider.overrideWithValue(const ['QN1']),
+        reportErrorProvider.overrideWithValue((qnaId, message) async {
+          reportedQnaId = qnaId;
+          reportedMessage = message;
+        }),
+      ],
+      child: MaterialApp(
+          theme: dmLightTheme(), home: const ReaderScreen.queue()),
+    ));
+    await tester.pumpAndSettle();
+
+    // Pre-reveal: no report row.
+    expect(find.text('Report an answer error'), findsNothing);
+
+    await tester.tap(find.text('Reveal model answer'));
+    await tester.pumpAndSettle();
+
+    // Post-reveal: the report row is present, under the rating tray.
+    expect(find.text('Report an answer error'), findsOneWidget);
+
+    await tester.tap(find.text('Report an answer error'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Stale marks total');
+    await tester.tap(find.text('Send'));
+    await tester.pump();
+
+    expect(reportedQnaId, 'QN1');
+    expect(reportedMessage, 'Stale marks total');
+    expect(find.text('✓ Report sent - thank you'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+  });
 }

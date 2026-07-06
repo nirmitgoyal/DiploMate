@@ -87,6 +87,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Queue mode: fetch the controller's current QnA (on-demand, cached). A
   /// null/failed resolve routes into the same retry affordance browse uses.
   Future<void> _resolveCurrent() async {
+    // Clear any stale failure up front: without this, a failed resolve on
+    // card A leaves _error set, and auto-advancing to an already-cached
+    // card B hits the early-return below without ever clearing it - wedging
+    // the queue on the retry screen for a card that in fact loaded fine.
+    if (_error != null) setState(() => _error = null);
     final id = _controller?.currentQnaId;
     if (id == null || _qnaCache.containsKey(id)) return;
     try {
@@ -219,8 +224,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           body: Center(child: CircularProgressIndicator(strokeWidth: 2)));
     }
     final controller = _controller!;
+    final online = ref.watch(isOnlineProvider);
     // Queue mode: suggestion overline + reveal/rate, auto-advancing. No crumb/
-    // search/report - it is a focused recall gate, not a browse surface.
+    // search/bookmark - it is a focused recall gate, not a browse surface -
+    // but DESIGN.md item 13 puts the report row in BOTH states (one surface,
+    // two states), so it stays wired here too.
     if (widget.queueMode) {
       return ReaderView(
         qna: qna,
@@ -233,12 +241,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             showDmToast(context, '✓ Rated ${uiLabelForWire[r]} - next answer');
           }
         },
+        belowAnswer: _ReportRow(
+          online: online,
+          onSend: (message) async {
+            await ref.read(reportErrorProvider)(qna.id, message);
+            if (context.mounted) showDmToast(context, '✓ Report sent - thank you');
+          },
+        ),
       );
     }
     final bookmarked =
         ref.watch(bookmarkedIdsProvider).valueOrNull?.contains(qna.id) ??
             false;
-    final online = ref.watch(isOnlineProvider);
     return ReaderView(
       qna: qna,
       revealed: _revealed,
