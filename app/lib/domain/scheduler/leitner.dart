@@ -92,3 +92,47 @@ CardState? foldEvents(String contentId, List<ReviewEvent> sortedEvents) {
   }
   return state;
 }
+
+/// Queue = due-only (dueLocalDay <= today), NO new-card injection (design T4).
+/// Order: overdue first -> lowest bucket -> oldest lastRatedDay; 'again'
+/// repeats (dueEndOfQueue on today's card) go to the back of today's queue.
+/// contentId tie-break keeps the order fully deterministic.
+List<String> buildQueue(Map<String, CardState> states, String todayLocalDay) {
+  final due = states.values
+      .where((s) => s.dueLocalDay.compareTo(todayLocalDay) <= 0)
+      .toList();
+  bool backOfQueue(CardState s) =>
+      s.dueEndOfQueue && s.dueLocalDay == todayLocalDay;
+  due.sort((a, b) {
+    final aBack = backOfQueue(a) ? 1 : 0;
+    final bBack = backOfQueue(b) ? 1 : 0;
+    if (aBack != bBack) return aBack - bBack;
+    final byDue = a.dueLocalDay.compareTo(b.dueLocalDay);
+    if (byDue != 0) return byDue;
+    if (a.bucket != b.bucket) return a.bucket - b.bucket;
+    final byRated = a.lastRatedDay.compareTo(b.lastRatedDay);
+    if (byRated != 0) return byRated;
+    return a.contentId.compareTo(b.contentId);
+  });
+  return [for (final s in due) s.contentId];
+}
+
+/// Groups events by contentId, sorts each group by ratedAt, folds.
+Map<String, CardState> foldAll(List<ReviewEvent> events) {
+  final byContent = <String, List<ReviewEvent>>{};
+  for (final e in events) {
+    byContent.putIfAbsent(e.contentId, () => []).add(e);
+  }
+  final states = <String, CardState>{};
+  byContent.forEach((contentId, list) {
+    list.sort((a, b) => a.ratedAt.compareTo(b.ratedAt));
+    final s = foldEvents(contentId, list);
+    if (s != null) states[contentId] = s;
+  });
+  return states;
+}
+
+/// Number of cards due on or before [day] ("YYYY-MM-DD"). Feeds the D19
+/// notification planner; monotonically nondecreasing in [day].
+int dueCountFor(Map<String, CardState> states, String day) =>
+    states.values.where((s) => s.dueLocalDay.compareTo(day) <= 0).length;
