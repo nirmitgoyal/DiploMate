@@ -573,7 +573,8 @@ class StubAdapter implements HttpClientAdapter {
 const _manifest = {
   'schema_version': 1, 'min_app_version': 1,
   'specialities': [
-    {'id': 'S1', 'name': 'Anaesthesiology', 'exam_type': 'DNB', 'has_content': true},
+    {'id': 'S1', 'name': 'Anaesthesiology', 'exam_type': 'DNB',
+     'slug': 'anaesthesiology', 'sort_order': 1, 'has_content': true},
   ],
   'chapters': [
     {'id': 'CH1', 'title': 'Airway Management', 'slug': 'airway', 'sort_order': 1,
@@ -589,6 +590,10 @@ const _page = {
      'sort_order': 1,
      'images': [{'id': 'IM1', 'caption': 'Fig', 'content_description': 'D',
                  'byte_size': 4, 'sha256': 'abc', 'sort_order': 1}]},
+  ],
+  'topics': [
+    {'id': 'TP1', 'title': 'Airway assessment', 'slug': 'airway-assessment',
+     'exam_theme': null, 'sort_order': 1},
   ],
 };
 
@@ -668,6 +673,17 @@ void main() {
     final qnas = await repo.qnas('TP1');
     expect(qnas.single.question, 'Q v2?', 'stale rows replaced in one transaction');
   });
+
+  test('server-sent topics[] persist with real titles; specialities carry slug + hasContent', () async {
+    await repo.ensureChapterCached('CH1');
+    final topics = await repo.topics('CH1');
+    expect(topics.single.title, 'Airway assessment',
+        'topic rows come from the response topics[], not synthesized from topic_id');
+    final specs = await repo.specialities();
+    final anaes = specs.firstWhere((s) => s.id == 'S1');
+    expect(anaes.slug, 'anaesthesiology');
+    expect(anaes.hasContent, isTrue, 'has_content sourced from the manifest wire');
+  });
 }
 ```
 
@@ -745,6 +761,7 @@ class RemoteContentRepository implements ContentRepository {
 
     try {
       final items = <Map<String, dynamic>>[];
+      var topics = const <Map<String, dynamic>>[];
       var page = 1, pages = 1, version = remote ?? 0;
       do {
         final res = await api.dio
@@ -753,10 +770,13 @@ class RemoteContentRepository implements ContentRepository {
         pages = body['pages'] as int;
         version = body['content_version'] as int;
         items.addAll((body['items'] as List).cast<Map<String, dynamic>>());
+        // topics[] is repeated identically on every page (Task 3a); last wins.
+        topics = ((body['topics'] as List?) ?? const [])
+            .cast<Map<String, dynamic>>();
         page++;
       } while (page <= pages);
       // ONE transaction per chapter refresh; an open QnA stays in memory.
-      await db.replaceChapterContent(chapterId, version, items);
+      await db.replaceChapterContent(chapterId, version, items, topics);
     } on DioException catch (e) {
       if (_isNetwork(e) && cached != null) return;
       if (_isNetwork(e)) throw ContentFetchException(chapterId);
@@ -787,6 +807,13 @@ class RemoteContentRepository implements ContentRepository {
 ```
 
 The drift helpers (`upsertManifest`, `readSpecialities`, `readChapters`, `cachedChapterVersion`, `manifestChapterVersion`, `replaceChapterContent`, `readTopics`, `readQnas`, `readQna`, `readImageBlob`, `writeImageBlob`) are DECLARED by plan 5 Task 1 on `AppDatabase`; if a helper is missing when this task runs, add it to `app_db.dart` as a thin drift query in the same commit (each is a 3-8 line insert/select; `replaceChapterContent` wraps `db.transaction(() { delete chapter topics/qnas; insert all; upsert cached_chapters(version); })`).
+
+**None of these 11 helpers exist yet** (plan 5 built only pending-event / card-state / bookmark queries) - author all 11. The wire was patched server-side (Task 3a, commit de70578) so the client sources display metadata honestly:
+
+- `upsertManifest`: persist each speciality's `slug` + `sort_order` (both now on the wire) into the existing `Specialities` columns; chapters as before.
+- `readSpecialities()` / `specialities()`: the `Specialities` table has NO `hasContent` column and needs none. Source `has_content` from the live `/manifest` response (online-only: the speciality picker is an onboarding step, content is on-demand). Build each `SpecialityRow` with `hasContent` from the fresh wire; on a network failure with cached rows, `hasContent` defaults false. Do NOT add a drift column or bump `schemaVersion`.
+- `replaceChapterContent(chapterId, version, items, topics)`: takes the response `topics[]` (`{id,title,slug,exam_theme,sort_order}`, `exam_theme` nullable) and writes honest `Topics` rows in the one transaction - never synthesize a topic from a bare `topic_id`.
+- `chapters()`: source `topicCount`/`qnaCount` from the manifest chapter objects (still sent, unchanged).
 
 - [ ] **Step 4: Run, expect PASS, commit**
 
