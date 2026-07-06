@@ -32,13 +32,15 @@ Widget host(Widget child,
 
 void main() {
   testWidgets('Home survives 320dp compact width without overflow', (t) async {
-    await t.pumpWidget(host(const HomeScreen()));
+    await t.pumpWidget(host(const HomeScreen(),
+        overrides: [dueCountProvider.overrideWithValue(12)]));
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
   });
 
   testWidgets('Home survives textScale 1.3', (t) async {
-    await t.pumpWidget(host(const HomeScreen(), scale: 1.3));
+    await t.pumpWidget(host(const HomeScreen(),
+        scale: 1.3, overrides: [dueCountProvider.overrideWithValue(12)]));
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
   });

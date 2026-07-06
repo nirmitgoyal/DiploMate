@@ -1,5 +1,6 @@
 import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
+import 'package:diplomate/providers/study_providers.dart';
 import 'package:diplomate/theme/app_theme.dart';
 import 'package:diplomate/ui/home/home_screen.dart';
 import 'package:diplomate/ui/reader/reader_screen.dart';
@@ -114,11 +115,13 @@ void main() {
       'Home TalkBack order: greeting -> primary CTA -> ghost CTA -> stats -> resume -> nav',
       (t) async {
     final handle = t.ensureSemantics();
-    // due>0 (dueCountProvider default is 12) so the primary CTA renders -
-    // State 6 hides it entirely at due==0, which would make this ordering
-    // moot for that element.
+    // due>0 so the primary CTA renders - State 6 hides it entirely at
+    // due==0, which would make this ordering moot for that element.
     await t.pumpWidget(ProviderScope(
-      overrides: [sessionUserProvider.overrideWith((ref) => _user)],
+      overrides: [
+        sessionUserProvider.overrideWith((ref) => _user),
+        dueCountProvider.overrideWithValue(12),
+      ],
       child: MaterialApp(
         theme: dmLightTheme(),
         // Nav lives in AppShell (see app/lib/router.dart), a separate

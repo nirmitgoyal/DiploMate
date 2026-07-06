@@ -1,6 +1,7 @@
 import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/main.dart';
+import 'package:diplomate/providers/study_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,7 +11,10 @@ const _onboarded = SessionUser(
     specialityId: '01J0SPECANAES0000000000001', specialityChangeCount: 0);
 
 Widget appWith(SessionUser? user) => ProviderScope(
-      overrides: [sessionUserProvider.overrideWith((ref) => user)],
+      overrides: [
+        sessionUserProvider.overrideWith((ref) => user),
+        dueCountProvider.overrideWithValue(12),
+      ],
       child: const DiplomateApp(),
     );
 
@@ -42,7 +46,8 @@ void main() {
   testWidgets(
       'live sign-in navigates off Sign-in without remount; live sign-out returns to it',
       (t) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+        overrides: [dueCountProvider.overrideWithValue(12)]);
     addTearDown(container.dispose);
     await t.pumpWidget(UncontrolledProviderScope(
       container: container,
