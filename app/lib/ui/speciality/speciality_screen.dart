@@ -84,8 +84,15 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
       _error = null;
     });
     try {
-      final user = await ref.read(authRepositoryProvider).setSpeciality(id);
-      ref.read(sessionUserProvider.notifier).state = user;
+      // setSpeciality returns only the changed fields (no /me read endpoint);
+      // merge them into the live SessionUser so id/email/name survive (T2).
+      final partial = await ref.read(authRepositoryProvider).setSpeciality(id);
+      final current = ref.read(sessionUserProvider);
+      ref.read(sessionUserProvider.notifier).state = current == null
+          ? partial
+          : current.copyWith(
+              specialityId: partial.specialityId,
+              specialityChangeCount: partial.specialityChangeCount);
       if (!mounted) return;
       if (widget.changeMode) {
         showDmToast(context, 'Speciality updated');
