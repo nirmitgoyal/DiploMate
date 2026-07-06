@@ -46,26 +46,15 @@ test("chapters columns exact (content_version in, bundle columns out)", async ()
   ]);
 });
 
-test("topics columns exact", async () => {
-  assert.deepEqual(await columns("topics"), [
-    "chapter_id",
-    "exam_theme",
-    "id",
-    "slug",
-    "sort_order",
-    "title",
-  ]);
-});
-
 test("qnas columns exact (no row_hash)", async () => {
   assert.deepEqual(await columns("qnas"), [
+    "chapter_id",
     "earns_marks",
     "id",
     "marks",
     "question",
     "sections",
     "sort_order",
-    "topic_id",
     "years",
   ]);
 });
@@ -118,12 +107,8 @@ test("images byte_size over 204800 is rejected by images_byte_size_check", async
      VALUES ('0000000000000000000000TCHP', '0000000000000000000000TSPC', 'Tmp', 'tmp-ch')`,
   );
   await client.query(
-    `INSERT INTO topics (id, chapter_id, title, slug)
-     VALUES ('0000000000000000000000TTPC', '0000000000000000000000TCHP', 'Tmp', 'tmp-tp')`,
-  );
-  await client.query(
-    `INSERT INTO qnas (id, topic_id, question, sections)
-     VALUES ('0000000000000000000000TQNA', '0000000000000000000000TTPC', 'Q?', '[]')`,
+    `INSERT INTO qnas (id, chapter_id, question, sections)
+     VALUES ('0000000000000000000000TQNA', '0000000000000000000000TCHP', 'Q?', '[]')`,
   );
   const err = await client
     .query(
@@ -137,4 +122,14 @@ test("images byte_size over 204800 is rejected by images_byte_size_check", async
   await client.query("ROLLBACK");
   assert.ok(err, "insert with byte_size 204801 must fail");
   assert.equal(err.constraint, "images_byte_size_check");
+});
+
+test("0004 indexes exist", async () => {
+  const idx = (
+    await client.query(
+      `SELECT indexname FROM pg_indexes WHERE schemaname = 'public'`,
+    )
+  ).rows.map((r) => r.indexname);
+  assert.ok(idx.includes("qnas_chapter_id_idx"));
+  assert.ok(idx.includes("images_qna_id_idx"));
 });
