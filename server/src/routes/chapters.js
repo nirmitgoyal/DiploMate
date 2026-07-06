@@ -55,6 +55,12 @@ router.get(
         [chapterId, PAGE_SIZE, (page - 1) * PAGE_SIZE],
       );
 
+      const { rows: topics } = await pool.query(
+        `SELECT id, title, slug, exam_theme, sort_order FROM topics
+         WHERE chapter_id = $1 ORDER BY sort_order`,
+        [chapterId],
+      );
+
       res.json({
         chapter_id: chapterId,
         content_version: meta.rows[0].content_version,
@@ -62,6 +68,7 @@ router.get(
         page,
         pages,
         items,
+        topics,
       });
     } catch (e) {
       next(e);

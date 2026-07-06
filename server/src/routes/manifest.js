@@ -11,7 +11,7 @@ router.get("/manifest", requireAuth, async (req, res, next) => {
   try {
     const { pool } = req.app.locals;
     const { rows: specialities } = await pool.query(`
-      SELECT s.id, s.name, s.exam_type,
+      SELECT s.id, s.name, s.exam_type, s.slug, s.sort_order,
              EXISTS (SELECT 1 FROM chapters c WHERE c.speciality_id = s.id
                      AND c.content_version > 0) AS has_content
       FROM specialities s ORDER BY s.sort_order`);

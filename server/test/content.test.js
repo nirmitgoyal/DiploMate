@@ -41,6 +41,15 @@ test("chapter qnas are paginated JSON with image metadata, no bytes", async () =
     undefined,
     "no bytes in JSON (no base64 tax)",
   );
+
+  assert.strictEqual(res.body.topics.length, 1);
+  const t1 = res.body.topics[0];
+  assert.strictEqual(t1.id, "TP1");
+  assert.strictEqual(t1.title, "Difficult airway");
+  assert.strictEqual(t1.slug, "difficult-airway");
+  assert.strictEqual(t1.sort_order, 1);
+  // exam_theme is nullable in the schema; this fixture happens to set it.
+  assert.strictEqual(t1.exam_theme, "Emergencies");
 });
 
 test("images stream binary webp with ETag; If-None-Match -> 304", async () => {

@@ -33,6 +33,8 @@ test("manifest lists 61 specialities with has_content; chapters only with ?speci
   assert.strictEqual(res.body.specialities.length, 61);
   const anaes = res.body.specialities.find((s) => s.has_content);
   assert.strictEqual(anaes.id, spec);
+  assert.strictEqual(typeof anaes.slug, "string");
+  assert.strictEqual(typeof anaes.sort_order, "number");
   assert.strictEqual(
     res.body.chapters,
     undefined,
