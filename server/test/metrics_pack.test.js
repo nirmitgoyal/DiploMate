@@ -17,7 +17,7 @@ async function seedUserJourney(userId, { validRecall }) {
   );
   await pool.query(
     `INSERT INTO app_events (id, user_id, event_type, content_id, occurred_at, local_day)
-     VALUES ($1, $2, 'topic_opened', 'TP1', '2026-07-01T10:00:00Z', '2026-07-01')`,
+     VALUES ($1, $2, 'chapter_opened', 'CH1', '2026-07-01T10:00:00Z', '2026-07-01')`,
     [crypto.randomUUID(), userId],
   );
   await pool.query(
@@ -38,8 +38,8 @@ test("metrics pack computes activation and validity from local_day windows", asy
   await seedUserJourney("honest", { validRecall: true });
   await seedUserJourney("skimmer", { validRecall: false }); // <10s reveal
 
-  // Second valid recall for honest, same topic (TP1), different QnA (QN2).
-  // Proves D14 topic-collapsing: 2 QnAs rated in 1 topic -> topics=1, qnas=2.
+  // Second valid recall for honest, same chapter (CH1), different QnA (QN2).
+  // Proves D14 chapter-collapsing: 2 QnAs rated in 1 chapter -> chapters=1, qnas=2.
   await pool.query(
     `INSERT INTO app_events (id, user_id, event_type, content_id, hidden_ms, occurred_at, local_day)
      VALUES ($1, 'honest', 'recall_revealed', 'QN2', 15000, '2026-07-01T10:15:00Z', '2026-07-01')`,
@@ -59,7 +59,7 @@ test("metrics pack computes activation and validity from local_day windows", asy
   assert.strictEqual(
     Number(act.rows[0].activated_users),
     2,
-    "both opened a topic",
+    "both opened a chapter",
   );
 
   const validRecall = fs.readFileSync(
@@ -69,14 +69,14 @@ test("metrics pack computes activation and validity from local_day windows", asy
   const vr = await pool.query(validRecall);
   const honest = vr.rows.find((r) => r.user_id === "honest");
   const skimmer = vr.rows.find((r) => r.user_id === "skimmer");
-  assert.strictEqual(Number(honest.valid_recall_topics), 1);
+  assert.strictEqual(Number(honest.valid_recall_chapters), 1);
   assert.strictEqual(
     Number(honest.valid_recall_qnas),
     2,
-    "two QnAs in one topic: 2 qnas but 1 topic (D14)",
+    "two QnAs in one chapter: 2 qnas but 1 chapter (D14 at chapter grain)",
   );
   assert.ok(
-    !skimmer || Number(skimmer.valid_recall_topics) === 0,
+    !skimmer || Number(skimmer.valid_recall_chapters) === 0,
     "<10s reveal never counts (D9)",
   );
 });
@@ -89,4 +89,22 @@ test("pack files never window on synced_at (outside voice #12)", () => {
       `${f} must window on local_day, not synced_at`,
     );
   }
+});
+
+test("a legacy topic_opened row still activates (IN-list continuity)", async () => {
+  await resetUserData();
+  await seedContent(pool);
+  await pool.query(
+    `INSERT INTO users (id, google_sub, email) VALUES ('legacy','legacy','x@y.z')
+     ON CONFLICT (google_sub) DO NOTHING`,
+  );
+  await pool.query(
+    `INSERT INTO app_events (id, user_id, event_type, content_id, occurred_at, local_day)
+     VALUES ($1, 'legacy', 'topic_opened', 'CH1', '2026-07-01T10:00:00Z', '2026-07-01')`,
+    [crypto.randomUUID()],
+  );
+  const act = await pool.query(
+    fs.readFileSync(path.join(packDir, "activation.sql"), "utf8"),
+  );
+  assert.strictEqual(Number(act.rows[0].activated_users), 1);
 });
