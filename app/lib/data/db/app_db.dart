@@ -322,4 +322,97 @@ class AppDatabase extends _$AppDatabase {
       ImageBlobsCompanion.insert(imageId: imageId, bytes: bytes, sha256: sha256),
     );
   }
+
+  // --- RemoteSyncService drift helpers (plan 6, Task 4) ------------------
+  //
+  // Pending = synced_at IS NULL (never deleted on ack today - the Leitner fold
+  // reads history - but the flush drain DOES delete on inserted, since a synced
+  // row's history lives server-side once accepted). sync_attempts is the
+  // durable poison counter: bumped per rejection, the row dropped once it hits
+  // the ceiling so a persistently-invalid row can never wedge the queue (T4).
+
+  static const _poisonCeilingAttempts = 5;
+
+  Future<List<PendingReviewEvent>> unsyncedReviewEvents() =>
+      (select(pendingReviewEvents)
+            ..where((t) => t.syncedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.ratedAt)]))
+          .get();
+
+  Future<List<PendingAppEvent>> unsyncedAppEvents() =>
+      (select(pendingAppEvents)
+            ..where((t) => t.syncedAt.isNull())
+            ..orderBy([(t) => OrderingTerm.asc(t.occurredAt)]))
+          .get();
+
+  Future<void> deleteReviewEventsByIds(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await (delete(pendingReviewEvents)..where((t) => t.id.isIn(ids))).go();
+  }
+
+  Future<void> deleteAppEventsByIds(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await (delete(pendingAppEvents)..where((t) => t.id.isIn(ids))).go();
+  }
+
+  /// Bumps sync_attempts on each rejected id, then drops any row that has now
+  /// reached the poison ceiling (dropped AFTER the 5th rejection). One
+  /// transaction so a crash mid-drain never double-counts.
+  Future<void> recordReviewRejections(List<String> ids) =>
+      _recordRejections(pendingReviewEvents, ids);
+
+  Future<void> recordAppRejections(List<String> ids) =>
+      _recordRejections(pendingAppEvents, ids);
+
+  Future<void> _recordRejections<T extends Table, R>(
+      TableInfo<T, R> table, List<String> ids) async {
+    if (ids.isEmpty) return;
+    await transaction(() async {
+      // Drift has no bulk expression-UPDATE across the manager here; per-id is
+      // fine at beta scale (a flush rejects a handful of rows at most).
+      // ponytail: row-at-a-time, batch if a flush ever rejects thousands.
+      for (final id in ids) {
+        await customStatement(
+          'UPDATE ${table.actualTableName} '
+          'SET sync_attempts = sync_attempts + 1 WHERE id = ?',
+          [id],
+        );
+      }
+      await customStatement(
+        'DELETE FROM ${table.actualTableName} '
+        'WHERE id IN (${List.filled(ids.length, '?').join(',')}) '
+        'AND sync_attempts >= ?',
+        [...ids, _poisonCeilingAttempts],
+      );
+    });
+  }
+
+  /// LWW upsert by content_id (last-writer-wins is enforced by the caller: the
+  /// sync merge-back only calls this for rows the server declares newer).
+  Future<void> upsertBookmark(
+          String contentId, DateTime updatedAt, bool deleted) =>
+      into(bookmarks).insertOnConflictUpdate(BookmarksCompanion.insert(
+        contentId: contentId,
+        updatedAt: updatedAt,
+        deleted: Value(deleted),
+      ));
+
+  Future<List<Bookmark>> readBookmarkRows() => select(bookmarks).get();
+
+  Future<String?> readSetting(String key) async {
+    final row = await (select(localSettings)..where((s) => s.key.equals(key)))
+        .getSingleOrNull();
+    return row?.value;
+  }
+
+  Stream<String?> watchSetting(String key) =>
+      (select(localSettings)..where((s) => s.key.equals(key)))
+          .watchSingleOrNull()
+          .map((row) => row?.value);
+
+  Future<void> writeSetting(String key, String value) =>
+      into(localSettings).insert(
+        LocalSettingsCompanion.insert(key: key, value: value),
+        mode: InsertMode.insertOrReplace,
+      );
 }

@@ -9,8 +9,8 @@ void main() {
   setUp(() => db = AppDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 1', () {
-    expect(db.schemaVersion, 1);
+  test('schemaVersion is 2', () {
+    expect(db.schemaVersion, 2);
   });
 
   test('content mirror round-trips a qna row with contract column names', () async {
