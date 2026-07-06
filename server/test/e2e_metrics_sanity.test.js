@@ -40,7 +40,7 @@ test("metrics pack runs on one journey pushed through the real sync API", async 
   const tok = await tokenFor("u1");
   const day = "2026-07-01";
 
-  // app-events: opened the topic (activation), then revealed the answer with
+  // app-events: opened the chapter (activation), then revealed the answer with
   // the answer hidden >= 10s (valid recall per D9). Both land via POST, so the
   // server stamps user_id from the JWT - exactly the launch path.
   const ae = await request(app)
@@ -93,7 +93,7 @@ test("metrics pack runs on one journey pushed through the real sync API", async 
   assert.strictEqual(
     Number(act.rows[0].activated_users),
     1,
-    "one user opened a topic -> activated",
+    "one user opened a chapter -> activated",
   );
 
   const vr = await pool.query(sql("valid_recall.sql"));
