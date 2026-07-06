@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
+import '../../domain/models.dart';
 import 'tables.dart';
 
 part 'app_db.g.dart';
@@ -31,4 +34,284 @@ class AppDatabase extends _$AppDatabase {
           // migrations here; test/db/migration_test.dart verifies each path.
         },
       );
+
+  // --- RemoteContentRepository drift helpers (plan 6, Task 3) -------------
+  //
+  // The wire is the source of truth for display metadata; drift is only the
+  // offline read model. `Specialities` has no `hasContent` column - that
+  // field is computed server-side (has_content EXISTS query) and is only
+  // ever trustworthy fresh off `/manifest`, so `readSpecialities()` takes it
+  // as a same-call parameter rather than persisting a column that would go
+  // stale the moment a chapter gets content elsewhere.
+
+  /// Upserts `/manifest`'s `specialities[]` (always present) and, when the
+  /// caller requested one track (`spec` non-null and the body carries a
+  /// scoped `chapters[]`), that track's chapters too. `chapters[]` carries
+  /// no `speciality_id` of its own - the wire scopes the whole array to
+  /// whichever `?speciality=` was requested, so `spec` supplies it here.
+  Future<void> upsertManifest(Map<String, dynamic> manifest, String? spec) async {
+    final specialities =
+        (manifest['specialities'] as List).cast<Map<String, dynamic>>();
+    final chapters = (manifest['chapters'] as List?)?.cast<Map<String, dynamic>>();
+    await transaction(() async {
+      for (final s in specialities) {
+        await into(this.specialities).insertOnConflictUpdate(
+          SpecialitiesCompanion.insert(
+            id: s['id'] as String,
+            name: s['name'] as String,
+            examType: s['exam_type'] as String,
+            slug: s['slug'] as String,
+            sortOrder: Value(s['sort_order'] as int),
+          ),
+        );
+      }
+      if (chapters != null && spec != null) {
+        for (final c in chapters) {
+          await into(this.chapters).insertOnConflictUpdate(
+            ChaptersCompanion.insert(
+              id: c['id'] as String,
+              specialityId: spec,
+              title: c['title'] as String,
+              slug: c['slug'] as String,
+              sortOrder: Value(c['sort_order'] as int),
+              examWeight: Value(c['exam_weight'] as int),
+              contentVersion: Value(c['content_version'] as int),
+            ),
+          );
+        }
+      }
+    });
+  }
+
+  /// `hasContent` is sourced from the live wire, not persisted - a stale
+  /// cached row defaults it false (matches the online-only onboarding step
+  /// the brief describes; no schema change, no `schemaVersion` bump).
+  Future<List<SpecialityRow>> readSpecialities(
+      [Map<String, bool> hasContentBySpecialityId = const {}]) async {
+    final rows = await (select(specialities)
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+    return [
+      for (final r in rows)
+        SpecialityRow(
+          id: r.id,
+          name: r.name,
+          examType: r.examType,
+          slug: r.slug,
+          sortOrder: r.sortOrder,
+          hasContent: hasContentBySpecialityId[r.id] ?? false,
+        ),
+    ];
+  }
+
+  /// `topicCount`/`qnaCount` are manifest-only counts (not drift columns);
+  /// pass the just-fetched `chapters[]` through so they ride along without a
+  /// second round trip. Falls back to a drift `COUNT(*)` when no manifest
+  /// snapshot is available (offline read of a previously cached chapter).
+  Future<List<ChapterRow>> readChapters(String specialityId,
+      [List<Map<String, dynamic>>? manifestChapters]) async {
+    final rows = await (select(chapters)
+          ..where((t) => t.specialityId.equals(specialityId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+    final counts = {
+      for (final c in manifestChapters ?? const <Map<String, dynamic>>[])
+        c['id'] as String: c,
+    };
+    return [
+      for (final r in rows)
+        ChapterRow(
+          id: r.id,
+          specialityId: r.specialityId,
+          title: r.title,
+          slug: r.slug,
+          sortOrder: r.sortOrder,
+          examWeight: r.examWeight,
+          contentVersion: r.contentVersion,
+          topicCount: counts[r.id]?['topic_count'] as int? ??
+              await (select(topics)..where((t) => t.chapterId.equals(r.id)))
+                  .get()
+                  .then((v) => v.length),
+          qnaCount: counts[r.id]?['qna_count'] as int? ??
+              await (select(qnas)
+                    ..where((q) => existsQuery(select(topics)
+                      ..where((t) =>
+                          t.id.equalsExp(q.topicId) & t.chapterId.equals(r.id)))))
+                  .get()
+                  .then((v) => v.length),
+        ),
+    ];
+  }
+
+  Future<int?> cachedChapterVersion(String chapterId) async {
+    final row = await (select(cachedChapters)
+          ..where((t) => t.chapterId.equals(chapterId)))
+        .getSingleOrNull();
+    return row?.contentVersion;
+  }
+
+  Future<int?> manifestChapterVersion(String chapterId) async {
+    final row =
+        await (select(chapters)..where((t) => t.id.equals(chapterId)))
+            .getSingleOrNull();
+    return row?.contentVersion;
+  }
+
+  /// One transaction per chapter refresh: replaces every topic/qna/image
+  /// scoped to `chapterId`, writes the response's honest `topics[]` rows
+  /// (never synthesized from a bare `topic_id`), then marks the chapter
+  /// cached at `version`.
+  Future<void> replaceChapterContent(String chapterId, int version,
+      List<Map<String, dynamic>> items, List<Map<String, dynamic>> topics) async {
+    await transaction(() async {
+      final topicIds = await (select(this.topics)
+            ..where((t) => t.chapterId.equals(chapterId)))
+          .map((t) => t.id)
+          .get();
+      if (topicIds.isNotEmpty) {
+        final qnaIds = await (select(qnas)..where((q) => q.topicId.isIn(topicIds)))
+            .map((q) => q.id)
+            .get();
+        if (qnaIds.isNotEmpty) {
+          await (delete(images)..where((i) => i.qnaId.isIn(qnaIds))).go();
+        }
+        await (delete(qnas)..where((q) => q.topicId.isIn(topicIds))).go();
+      }
+      await (delete(this.topics)..where((t) => t.chapterId.equals(chapterId)))
+          .go();
+
+      for (final t in topics) {
+        await into(this.topics).insertOnConflictUpdate(
+          TopicsCompanion.insert(
+            id: t['id'] as String,
+            chapterId: chapterId,
+            title: t['title'] as String,
+            slug: t['slug'] as String,
+            examTheme: Value(t['exam_theme'] as String?),
+            sortOrder: Value(t['sort_order'] as int),
+          ),
+        );
+      }
+      for (final q in items) {
+        await into(qnas).insertOnConflictUpdate(
+          QnasCompanion.insert(
+            id: q['id'] as String,
+            topicId: q['topic_id'] as String,
+            question: q['question'] as String,
+            years: Value(q['years'] as String?),
+            marks: Value(q['marks'] as int?),
+            earnsMarks: jsonEncode(q['earns_marks']),
+            sections: jsonEncode(q['sections']),
+            sortOrder: Value(q['sort_order'] as int),
+          ),
+        );
+        for (final i in (q['images'] as List).cast<Map<String, dynamic>>()) {
+          await into(images).insertOnConflictUpdate(
+            ImagesCompanion.insert(
+              id: i['id'] as String,
+              qnaId: q['id'] as String,
+              caption: i['caption'] as String,
+              contentDescription: i['content_description'] as String,
+              byteSize: i['byte_size'] as int,
+              sha256: i['sha256'] as String,
+              sortOrder: Value(i['sort_order'] as int),
+            ),
+          );
+        }
+      }
+
+      await into(cachedChapters).insertOnConflictUpdate(
+        CachedChaptersCompanion.insert(
+          chapterId: chapterId,
+          contentVersion: version,
+          cachedAt: DateTime.now(),
+        ),
+      );
+    });
+  }
+
+  Future<List<TopicRow>> readTopics(String chapterId) async {
+    final rows = await (select(topics)
+          ..where((t) => t.chapterId.equals(chapterId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+    return [
+      for (final r in rows)
+        TopicRow(
+          id: r.id,
+          chapterId: r.chapterId,
+          title: r.title,
+          slug: r.slug,
+          examTheme: r.examTheme,
+          sortOrder: r.sortOrder,
+        ),
+    ];
+  }
+
+  Future<List<QnaRow>> readQnas(String topicId) async {
+    final rows = await (select(qnas)
+          ..where((q) => q.topicId.equals(topicId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+    return [for (final r in rows) await _qnaFromRow(r)];
+  }
+
+  Future<QnaRow?> readQna(String qnaId) async {
+    final row =
+        await (select(qnas)..where((q) => q.id.equals(qnaId))).getSingleOrNull();
+    return row == null ? null : _qnaFromRow(row);
+  }
+
+  Future<QnaRow> _qnaFromRow(Qna r) async {
+    final imgRows = await (select(images)
+          ..where((i) => i.qnaId.equals(r.id))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+        .get();
+    return QnaRow(
+      id: r.id,
+      topicId: r.topicId,
+      question: r.question,
+      years: r.years,
+      marks: r.marks,
+      earnsMarks: [
+        for (final e in (jsonDecode(r.earnsMarks) as List).cast<Map<String, dynamic>>())
+          EarnRow(label: e['label'] as String, sectionKey: e['section_key'] as String),
+      ],
+      sections: [
+        for (final s in (jsonDecode(r.sections) as List).cast<Map<String, dynamic>>())
+          AnswerSection(
+            key: s['key'] as String,
+            heading: s['heading'] as String,
+            bodyMd: s['body_md'] as String,
+            marks: s['marks'] as int?,
+          ),
+      ],
+      sortOrder: r.sortOrder,
+      images: [
+        for (final i in imgRows)
+          ImageRow(
+            id: i.id,
+            caption: i.caption,
+            contentDescription: i.contentDescription,
+            byteSize: i.byteSize,
+            sha256: i.sha256,
+            sortOrder: i.sortOrder,
+          ),
+      ],
+    );
+  }
+
+  Future<Uint8List?> readImageBlob(String imageId) async {
+    final row = await (select(imageBlobs)
+          ..where((t) => t.imageId.equals(imageId)))
+        .getSingleOrNull();
+    return row?.bytes;
+  }
+
+  Future<void> writeImageBlob(String imageId, Uint8List bytes,
+      [String sha256 = '']) async {
+    await into(imageBlobs).insertOnConflictUpdate(
+      ImageBlobsCompanion.insert(imageId: imageId, bytes: bytes, sha256: sha256),
+    );
+  }
 }
