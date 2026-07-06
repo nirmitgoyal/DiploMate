@@ -98,8 +98,8 @@ void main() {
         reason: 'no done/due counter');
 
     await t.tap(find.text('Easy'));
-    await t.pump(); // toast frame
-    expect(find.text('✓ Rated Easy · next answer'), findsOneWidget);
+    await t.pumpAndSettle(); // the rating persists (awaited drift write) then toasts
+    expect(find.text('✓ Rated Easy - next answer'), findsOneWidget);
     await t.pump(const Duration(seconds: 2)); // toast expiry
     expect(find.text('Next in topic'), findsNothing,
         reason: 'TAP topic has one QnA - no next');

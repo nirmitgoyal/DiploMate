@@ -49,7 +49,7 @@ GoRouter buildRouter(Ref ref) {
               changeMode: s.uri.queryParameters['mode'] == 'change')),
       GoRoute(
           path: '/reader/queue',
-          builder: (_, __) => const ReaderScreen.queuePlaceholder()),
+          builder: (_, __) => const ReaderScreen.queue()),
       GoRoute(
           path: '/reader/:qnaId',
           builder: (_, s) => ReaderScreen.browse(

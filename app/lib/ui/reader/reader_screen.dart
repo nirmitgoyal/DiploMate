@@ -4,21 +4,25 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_providers.dart';
 import '../../domain/models.dart';
+import '../../providers/study_providers.dart';
 import '../../theme/tokens.dart';
 import '../shell/dm_toast.dart';
 import 'answer_search.dart';
 import 'diagram_viewer.dart';
+import 'reader_controller.dart';
 import 'reader_view.dart';
 
 final bookmarkedIdsProvider = StreamProvider<Set<String>>(
     (ref) => ref.watch(bookmarkRepositoryProvider).bookmarkedIds());
 
-/// Browse-mode Reader. Plan 5 Task 8 replaces the fixture state below with
-/// its ReaderController binding (same ReaderView API); the route stays.
+/// Reader. Queue mode drives due-only suggestions via [ReaderController]
+/// (auto-advancing recall gate); browse mode opens one QnA from Topics/
+/// Bookmarks and rate-then-stays. Both route reveal/rate through the
+/// controller so ratings persist local-first before any UI ack (D4).
 class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen.browse({super.key, required this.qnaId, this.topicId})
       : queueMode = false;
-  const ReaderScreen.queuePlaceholder({super.key})
+  const ReaderScreen.queue({super.key})
       : qnaId = null,
         topicId = null,
         queueMode = true;
@@ -32,30 +36,73 @@ class ReaderScreen extends ConsumerStatefulWidget {
 }
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
+  ReaderController? _controller;
   QnaRow? _qna;
   List<QnaRow> _topicQnas = const [];
   String? _topicTitle;
   String? _chapterTitle;
   String? _chapterId;
-  bool _revealed = false;
   bool _rated = false;
   Object? _error;
+
+  // Queue mode resolves each currentQnaId on demand (no up-front topic list);
+  // resolved rows are cached so an auto-advance doesn't re-fetch a seen card.
+  final _qnaCache = <String, QnaRow>{};
 
   bool _searchOpen = false;
   final _searchController = TextEditingController();
   List<SearchMatch> _matches = const [];
   int _activeMatch = 0;
 
+  bool get _revealed => _controller?.revealed ?? false;
+
   @override
   void initState() {
     super.initState();
-    if (!widget.queueMode) _fetch();
+    if (widget.queueMode) {
+      _controller = ReaderController.queue(
+        repo: ref.read(studyRepositoryProvider),
+        queue: ref.read(dueQueueProvider),
+      )..addListener(_onController);
+      _resolveCurrent();
+    } else {
+      _fetch();
+    }
   }
 
   @override
   void dispose() {
+    _controller?.removeListener(_onController);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Controller advanced (auto-advance in queue, or reveal/rate flips): pull the
+  // new current card into the cache, then rebuild.
+  void _onController() {
+    if (widget.queueMode) _resolveCurrent();
+    if (mounted) setState(() {});
+  }
+
+  /// Queue mode: fetch the controller's current QnA (on-demand, cached). A
+  /// null/failed resolve routes into the same retry affordance browse uses.
+  Future<void> _resolveCurrent() async {
+    final id = _controller?.currentQnaId;
+    if (id == null || _qnaCache.containsKey(id)) return;
+    try {
+      final qna = await ref.read(contentRepositoryProvider).qna(id);
+      if (!mounted) return;
+      setState(() {
+        if (qna == null) {
+          _error = StateError('qna not found');
+        } else {
+          _qnaCache[id] = qna;
+          _error = null;
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
+    }
   }
 
   Future<void> _fetch() async {
@@ -93,15 +140,32 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _topicTitle = topicTitle;
         _chapterTitle = chapterTitle;
         _chapterId = chapterId;
+        // Build the browse controller once the topic list is known; rate/reveal
+        // and "Next in topic" route through it (rate-then-stay). topicQnaIds
+        // must contain the opened id, so fall back to [qnaId] when there is no
+        // topic context (deep-linked bookmark).
+        if (qna != null) {
+          _controller?.removeListener(_onController);
+          _controller = ReaderController.browse(
+            repo: ref.read(studyRepositoryProvider),
+            qnaId: qna.id,
+            topicQnaIds:
+                topicQnas.isEmpty ? [qna.id] : [for (final q in topicQnas) q.id],
+          )..addListener(_onController);
+        }
       });
     } catch (e) {
       setState(() => _error = e);
     }
   }
 
-  QnaRow? get _next {
-    final i = _topicQnas.indexWhere((q) => q.id == _qna?.id);
-    return i >= 0 && i + 1 < _topicQnas.length ? _topicQnas[i + 1] : null;
+  /// The card currently on screen. Queue: from the on-demand cache. Browse:
+  /// from the pre-loaded topic list, tracking the controller's current id.
+  QnaRow? get _currentQna {
+    final id = _controller?.currentQnaId;
+    if (id == null) return widget.queueMode ? null : _qna;
+    if (widget.queueMode) return _qnaCache[id];
+    return _topicQnas.firstWhere((q) => q.id == id, orElse: () => _qna!);
   }
 
   void _closeSearch() {
@@ -115,7 +179,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   void _onQueryChanged(String query) {
     setState(() {
-      _matches = query.isEmpty ? const [] : findMatches(_qna!, query);
+      _matches = query.isEmpty ? const [] : findMatches(_currentQna!, query);
       _activeMatch = 0;
     });
   }
@@ -129,11 +193,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final dm = context.dm;
-    if (widget.queueMode) {
-      return Scaffold(
-        body: Center(
-            child: Text('Recall queue arrives with the study loop.',
-                style: DmType.bodyUi.copyWith(color: dm.ink2))),
+    // End-of-queue completion (design F8): currentQnaId is null once complete.
+    if (widget.queueMode && (_controller?.complete ?? false)) {
+      return _QueueComplete(
+        reviewed: _controller!.total,
+        onStudyNew: () => context.go('/syllabus'),
       );
     }
     if (_error != null) {
@@ -142,15 +206,34 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text("Couldn't load this - retry",
                 style: DmType.bodyUi.copyWith(color: dm.ink2)),
-            TextButton(onPressed: _fetch, child: const Text('Retry')),
+            TextButton(
+                onPressed: widget.queueMode ? _resolveCurrent : _fetch,
+                child: const Text('Retry')),
           ]),
         ),
       );
     }
-    final qna = _qna;
+    final qna = _currentQna;
     if (qna == null) {
       return const Scaffold(
           body: Center(child: CircularProgressIndicator(strokeWidth: 2)));
+    }
+    final controller = _controller!;
+    // Queue mode: suggestion overline + reveal/rate, auto-advancing. No crumb/
+    // search/report - it is a focused recall gate, not a browse surface.
+    if (widget.queueMode) {
+      return ReaderView(
+        qna: qna,
+        overline: 'Suggestion · ${controller.position} of ${controller.total}',
+        revealed: _revealed,
+        onReveal: controller.reveal,
+        onRate: (r) async {
+          await controller.rate(r);
+          if (context.mounted) {
+            showDmToast(context, '✓ Rated ${uiLabelForWire[r]} - next answer');
+          }
+        },
+      );
     }
     final bookmarked =
         ref.watch(bookmarkedIdsProvider).valueOrNull?.contains(qna.id) ??
@@ -160,15 +243,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       qna: qna,
       revealed: _revealed,
       rated: _rated,
-      onReveal: () => setState(() => _revealed = true),
-      onRate: (r) {
-        setState(() => _rated = true);
+      onReveal: controller.reveal,
+      onRate: (r) async {
         _closeSearch();
-        showDmToast(context, '✓ Rated ${uiLabelForWire[r]} · next answer');
+        await controller.rate(r);
+        if (!context.mounted) return;
+        setState(() => _rated = true);
+        showDmToast(context, '✓ Rated ${uiLabelForWire[r]} - next answer');
       },
-      onNextInTopic: _next == null
-          ? null
-          : () => context.go('/reader/${_next!.id}?topic=${widget.topicId}'),
+      onNextInTopic: controller.hasNextInTopic
+          ? () {
+              controller.nextInTopic();
+              setState(() => _rated = false);
+            }
+          : null,
       crumb: [
         if (_chapterTitle != null)
           (
@@ -234,6 +322,46 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       imageBuilder: (context, img) => DiagramPlate(
         image: img,
         bytesLoader: () => ref.read(contentRepositoryProvider).imageBytes(img.id),
+      ),
+    );
+  }
+}
+
+/// Design F8: after the last due answer the queue shows a completion state,
+/// not a bounce. Ghost CTA routes to Syllabus ("study a new answer").
+class _QueueComplete extends StatelessWidget {
+  const _QueueComplete({required this.reviewed, required this.onStudyNew});
+  final int reviewed;
+  final VoidCallback onStudyNew;
+
+  @override
+  Widget build(BuildContext context) {
+    final dm = context.dm;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DmSpace.gutter),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                    "Today's recall is complete. $reviewed reviewed; "
+                    'next due tomorrow.',
+                    textAlign: TextAlign.center,
+                    style: DmType.body.copyWith(color: dm.ink)),
+                const SizedBox(height: DmSpace.lg),
+                OutlinedButton(
+                  onPressed: onStudyNew,
+                  style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: dm.ruleStrong)),
+                  child: Text('Study a new answer',
+                      style: DmType.bodyUi.copyWith(color: dm.tealInk)),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
