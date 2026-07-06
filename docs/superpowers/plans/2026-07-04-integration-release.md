@@ -835,17 +835,21 @@ git commit -m "feat(app): RemoteSyncService - drain pending, poison drop after 5
 
 ---
 
-### Task 5: main.dart wiring + starter funnel + report/online providers (DESIGN-T3 funnel, plan-4 seam swap)
+### Task 5: main.dart wiring + starter funnel + report/online providers + Reader controller binding (DESIGN-T3 funnel, plan-4 seam swap, plan-5 ReaderController -> ReaderScreen)
 
 **Files:**
 
 - Modify: `app/lib/main.dart`
 - Create: `app/lib/data/remote/remote_providers.dart`
+- Modify: `app/lib/ui/reader/reader_screen.dart` (swap the plan-4 fixture state for the `ReaderController` binding; rename the `queuePlaceholder` constructor to `queue` with a real body; delete the stale L16-17 "Plan 5 Task 8 replaces the fixture" comment)
+- Modify: `app/lib/router.dart` (line 51: `/reader/queue` builds `const ReaderScreen.queue()`, not `ReaderScreen.queuePlaceholder()`)
+- Modify: `app/test/ui/reader_surface_test.dart` (line 102 toast assertion -> hyphen copy + pump for the awaited persist; see reader-binding rules)
 - Test: `app/test/remote/wiring_test.dart`
+- Test: `app/test/ui/reader/reader_queue_wiring_test.dart` (new: a `rate()` in the screen persists a `pending_review_events` row - Task 8's activation-path foundation)
 
 **Interfaces:**
 
-- Consumes: every remote class (Tasks 1-4); plan-4 seams (`contentRepositoryProvider`, `authRepositoryProvider`, `syncServiceProvider`, `isOnlineProvider`, `reportErrorProvider`, `sessionUserProvider`); plan-5 `appDatabaseProvider` + notification init.
+- Consumes: every remote class (Tasks 1-4); plan-4 seams (`contentRepositoryProvider`, `authRepositoryProvider`, `syncServiceProvider`, `isOnlineProvider`, `reportErrorProvider`, `sessionUserProvider`); plan-5 `appDatabaseProvider` + notification init; plan-5 `ReaderController` (`app/lib/ui/reader/reader_controller.dart`: `.queue({repo, queue, now})` / `.browse({repo, qnaId, topicQnaIds, now})`; `reveal()`, `rate(WireRating)`, `nextInTopic()`; getters `mode`/`currentQnaId`/`position`/`total`/`revealed`/`ratingInFlight`/`complete`/`hasNextInTopic`), `dueQueueProvider` + `studyRepositoryProvider` (`app/lib/providers/study_providers.dart`), the existing `ReaderView` slots (`overline`, `revealed`, `rated`, `onReveal`, `onRate`, `onNextInTopic` - unchanged), and `WireRating`/`uiLabelForWire` (`app/lib/domain/models.dart`).
 - Produces: `remoteOverrides({required String apiBaseUrl, required String serverClientId})` -> `List<Override>` used in `main()`; `API_BASE_URL` + `GOOGLE_SERVER_CLIENT_ID` via `--dart-define` (document: `flutter run --dart-define=API_BASE_URL=https://diplomate-api.herokuapp.com --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id>.apps.googleusercontent.com`).
 
 Wiring rules:
@@ -856,10 +860,23 @@ Wiring rules:
 - Starter funnel (no auto-download): after onboarding commit, Home's pinned row (plan 4 `resumeChapterProvider`) already targets the highest-exam-weight chapter; `SyncService.flush()` fires on app start and on `AppLifecycleState.paused` (registered here); `topic_opened`/session events flow via plan 5.
 - Speciality-commit merge: fix the Task 2 note - screen call site merges `setSpeciality` result into the current `SessionUser` with `copyWith`.
 
-- [ ] **Steps: failing wiring test** (ProviderScope with `remoteOverrides` + stub adapter boots to Sign-in with no stored JWT; with a stored JWT + stubbed `/manifest` 200 + silent re-auth it lands Home), **implement, PASS, commit** - follow the exact test harness pattern of Tasks 2/3.
+Reader controller binding (plan-5 `ReaderController` -> plan-4 `ReaderScreen`; PLAN-6 HANDOFF - no other task in plan 5 or 6 owns this seam, and Task 8's activation path cannot pass without it):
+
+- **Queue mode.** `/reader/queue` stops rendering the hard-coded placeholder ("Recall queue arrives with the study loop." at reader_screen.dart ~L132-138); rename the `queuePlaceholder` constructor to `queue` and give it a real body. On entry (`initState`, fresh per entry - the recall gate resets) construct `ReaderController.queue(repo: ref.read(studyRepositoryProvider), queue: ref.read(dueQueueProvider))`, listen via `AnimatedBuilder`/`addListener`, and render `ReaderView` for the current card:
+  - `overline: 'Suggestion · ${controller.position} of ${controller.total}'` (middle dot U+00B7, word "Suggestion" per design F-series; `ReaderView` uppercases it).
+  - `onReveal: controller.reveal` (controller no-ops repeat reveals); `onRate: (r) async { await controller.rate(r); if (mounted) showDmToast(context, '✓ Rated ${uiLabelForWire[r]} - next answer'); }` - the toast fires ONLY after the awaited persist (D4 pre-ack). `onNextInTopic: null` (queue auto-advances inside `rate()`); the double-tap guard is controller-owned (T8 debounce), so no extra button-disable.
+  - When `controller.complete`, render the designed end-of-queue state (design F8) in place of `ReaderView` (`currentQnaId` is null once complete). Home's primary CTA (home_screen.dart:65) already routes here.
+- **Browse mode.** Keep the `ReaderScreen.browse(qnaId:, topicId:)` public signature intact - several existing widget tests (reader_actions, reader_surface, a11y, responsive) pump it; do not change its API. After `_fetch()` loads the topic QnAs, construct `ReaderController.browse(repo: ref.read(studyRepositoryProvider), qnaId: widget.qnaId!, topicQnaIds: [for (final q in _topicQnas) q.id])`. Route `onReveal`/`onRate` through it (rate-then-stay: after the awaited `rate()`, flip a local `rated` flag so `ReaderView` swaps the tray for "Next in topic"); `onNextInTopic: controller.hasNextInTopic ? () { controller.nextInTopic(); setState(() => rated = false); } : null` (replaces the fixture `_next`/`context.go` hop).
+- **Content stays on-demand.** Resolve `controller.currentQnaId` to a `QnaRow` via `ref.read(contentRepositoryProvider).qna(id)` (drift-backed read model); reuse the screen's EXISTING loading spinner + "Couldn't load this - retry" affordance for a null/failed resolve (no new error UI). Search / bookmark / report rows are unchanged.
+- **Toast copy (resolves N4).** The plan-4 screen showed `✓ Rated <tier> · next answer` (middle dot); align it to the T8/contract copy `✓ Rated <tier> - next answer` (plain hyphen). This ripples one existing assertion: `reader_surface_test.dart:102` -> `'✓ Rated Easy - next answer'`, and its trailing `pump()` becomes `pumpAndSettle()` (the toast now follows an awaited drift write). Delete the stale `reader_screen.dart:16-17` fixture comment as part of the swap.
+
+- [ ] **Step: failing wiring test** (ProviderScope with `remoteOverrides` + stub adapter boots to Sign-in with no stored JWT; with a stored JWT + stubbed `/manifest` 200 + silent re-auth it lands Home) - follow the exact test harness pattern of Tasks 2/3.
+- [ ] **Step: failing reader-binding test** `app/test/ui/reader/reader_queue_wiring_test.dart` - pump `const ReaderScreen.queue()` inside a `ProviderScope` overriding `appDatabaseProvider` -> `AppDatabase(NativeDatabase.memory())`, `contentRepositoryProvider` -> a fake serving one seeded `QnaRow`, and `dueQueueProvider` -> `['QN1']`; tap "Reveal model answer" -> "Easy" -> `pumpAndSettle`; assert exactly one row in `db.pendingReviewEvents` (proves `onRate` routed through `ReaderController.rate` -> `StudyRepository.recordRating`, not the deleted fixture `_rated` flag) and the `✓ Rated Easy - next answer` toast appears only after the persist. Mirror the in-memory-drift harness in `app/test/ui/reader/rating_debounce_widget_test.dart`. This is the unit-level foundation Task 8's E2E activation path builds on.
+- [ ] **Implement both (production wiring + reader binding), run, PASS, commit** - follow the exact test harness pattern of Tasks 2/3.
 
 ```bash
 git commit -m "feat(app): production wiring - remote overrides, dart-define config, lifecycle flush"
+git commit -m "feat(app): wire ReaderController into ReaderScreen - real queue view, persist-before-toast rate, browse rate-then-stay"
 ```
 
 ---
@@ -917,7 +934,7 @@ No code - a checklist with EXACT console steps; each line is checkable and block
 - Consumes: everything.
 - Produces: the CI-checkable activation path; the lane-D exit criterion.
 
-- [ ] **Step 1: `app/integration_test/activation_path_test.dart`** - runs against a LOCAL server (`node server/src/index.js` with the test DB seeded by the ingestion fixture publisher) using `remoteOverrides(apiBaseUrl: 'http://10.0.2.2:3000', ...)` and a `FakeGoogle` override injecting a stubbed Google verifier token accepted by a test-mode server flag - simpler and honest: override ONLY `authRepositoryProvider` with the fake (auth E2E is covered by the release smoke on a real device, checklist Task 7 step 6); everything else real. Flow asserted: boot -> Sign-in -> (fake) continue -> Speciality pick (Anaesthesiology) -> Home shows the funnel row -> tap "Start here" -> Topics loads (real `/chapters` fetch) -> open QnA -> reveal -> rate Easy -> `SyncService.flush()` -> assert `POST /sync/review-events` landed (query the test DB through the server or expose the stub's hit log). Wall-clock budget assertion: the browse-to-first-recall stretch completes without any 35s timeout firing (the <3min budget's automatable slice; the real 4G measurement is checklist step 6).
+- [ ] **Step 1: `app/integration_test/activation_path_test.dart`** - runs against a LOCAL server (`node server/src/index.js` with the test DB seeded by the ingestion fixture publisher) using `remoteOverrides(apiBaseUrl: 'http://10.0.2.2:3000', ...)` and a `FakeGoogle` override injecting a stubbed Google verifier token accepted by a test-mode server flag - simpler and honest: override ONLY `authRepositoryProvider` with the fake (auth E2E is covered by the release smoke on a real device, checklist Task 7 step 6); everything else real. Flow asserted: boot -> Sign-in -> (fake) continue -> Speciality pick (Anaesthesiology) -> Home shows the funnel row -> tap "Start here" -> Topics loads (real `/chapters` fetch) -> open QnA -> reveal -> rate Easy (the Reader screen routes reveal/rate through plan-5's `ReaderController` -> `StudyRepository.recordRating`, wired in Task 5) -> `SyncService.flush()` -> assert `POST /sync/review-events` landed (query the test DB through the server or expose the stub's hit log). Wall-clock budget assertion: the browse-to-first-recall stretch completes without any 35s timeout firing (the <3min budget's automatable slice; the real 4G measurement is checklist step 6).
 - [ ] **Step 2: `server/test/e2e_metrics_sanity.test.js`** - seed one honest user journey through the REAL sync endpoints (supertest), then execute all three `sql/metrics/*.sql` files and assert: activation 1, valid_recall_topics 1, d7 0 - proving the pack runs against API-shaped data, not just hand-inserted rows.
 - [ ] **Step 3: `.github/workflows/app-ci.yml`** - `flutter test` on push to `app/**` (integration_test runs on a maintainer machine/emulator, not CI - note it in the workflow comment; CI/CD to Play stays deferred, TODOS 1).
 - [ ] **Step 4: run both suites, PASS, commit** `test: activation-path integration + metrics E2E sanity + app CI`.
