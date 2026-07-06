@@ -35,7 +35,7 @@ function sql(file) {
 
 test("metrics pack runs on one journey pushed through the real sync API", async () => {
   await resetUserData();
-  await seedContent(pool); // CH1 -> TP1 -> QN1 (topic_opened target + rated QnA)
+  await seedContent(pool); // CH1 -> QN1 (chapter_opened target + rated QnA)
   const app = createApp({ pool, secrets: SECRETS });
   const tok = await tokenFor("u1");
   const day = "2026-07-01";
@@ -50,8 +50,8 @@ test("metrics pack runs on one journey pushed through the real sync API", async 
       events: [
         {
           id: crypto.randomUUID(),
-          event_type: "topic_opened",
-          content_id: "TP1",
+          event_type: "chapter_opened",
+          content_id: "CH1",
           occurred_at: `${day}T10:00:00Z`,
           local_day: day,
         },
@@ -100,9 +100,9 @@ test("metrics pack runs on one journey pushed through the real sync API", async 
   const u1 = vr.rows.find((r) => r.user_id === "u1");
   assert.ok(u1, "the journeying user appears in valid_recall");
   assert.strictEqual(
-    Number(u1.valid_recall_topics),
+    Number(u1.valid_recall_chapters),
     1,
-    ">=10s reveal + rating in week 1 -> 1 valid-recall topic",
+    ">=10s reveal + rating in week 1 -> 1 valid-recall chapter",
   );
   assert.strictEqual(Number(u1.valid_recall_qnas), 1, "exactly one QnA rated");
 
