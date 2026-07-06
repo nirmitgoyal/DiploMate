@@ -101,3 +101,44 @@ const uiLabelForWire = {
   WireRating.hard: 'Medium',
   WireRating.again: 'Hard',
 };
+
+/// A single recall rating event. Wire shape of review_events
+/// (sql/0003_users_events.sql); rating strings are OWNED by that DDL.
+class ReviewEvent {
+  const ReviewEvent({
+    required this.id,
+    required this.contentId,
+    required this.rating,
+    required this.shownAt,
+    required this.revealedAt,
+    required this.ratedAt,
+    required this.localDay,
+  });
+
+  final String id; // client-generated UUID (idempotency key, D4)
+  final String contentId; // QnA ULID (D14)
+  final String rating; // 'again' | 'hard' | 'good' (raw string: fold must skip unknowns)
+  final DateTime shownAt;
+  final DateTime revealedAt;
+  final DateTime ratedAt;
+  final String localDay; // "YYYY-MM-DD", 4am rollover
+}
+
+/// App analytics event (D9 amended list - NO pack_download_* events).
+class AppEvent {
+  const AppEvent({
+    required this.id,
+    required this.eventType,
+    this.contentId,
+    this.hiddenMs,
+    required this.occurredAt,
+    required this.localDay,
+  });
+
+  final String id;
+  final String eventType; // topic_opened | recall_shown | recall_revealed | recall_rated | session_start
+  final String? contentId;
+  final int? hiddenMs; // recall_revealed only
+  final DateTime occurredAt;
+  final String localDay;
+}
