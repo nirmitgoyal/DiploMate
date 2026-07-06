@@ -1,6 +1,7 @@
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'app_providers.dart';
 import 'data/db/app_db.dart';
@@ -10,6 +11,7 @@ import 'data/remote/remote_auth_repository.dart';
 import 'data/remote/secure_token_store.dart';
 import 'providers/study_providers.dart';
 import 'router.dart';
+import 'sentry_scrub.dart';
 import 'services/study_lifecycle_observer.dart';
 import 'theme/app_theme.dart';
 
@@ -55,11 +57,19 @@ Future<void> main() async {
     onPaused: sync.flush,
   ));
 
-  // Single runApp call - Task 6 wraps this in SentryFlutter.init(appRunner: ...).
-  runApp(UncontrolledProviderScope(
-    container: container,
-    child: const DiplomateApp(),
-  ));
+  // Crash reporting: beforeSend/beforeBreadcrumb scrub licensed answer text
+  // and bearer tokens before anything leaves the device (see sentry_scrub.dart).
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = const String.fromEnvironment('SENTRY_DSN');
+      options.beforeSend = scrubEvent;
+      options.beforeBreadcrumb = beforeBreadcrumb;
+    },
+    appRunner: () => runApp(UncontrolledProviderScope(
+      container: container,
+      child: const DiplomateApp(),
+    )),
+  );
 }
 
 class DiplomateApp extends ConsumerWidget {
