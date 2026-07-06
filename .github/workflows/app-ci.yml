@@ -1,0 +1,27 @@
+name: app-ci
+on:
+  push:
+    paths: ["app/**"]
+jobs:
+  flutter-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Install
+        working-directory: app
+        run: flutter pub get
+      - name: Analyze
+        working-directory: app
+        run: flutter analyze
+      # `flutter test` covers the unit + widget suites only. The activation
+      # path (integration_test/activation_path_test.dart) is deliberately NOT
+      # run here: integration_test needs a real engine on an emulator/device
+      # plus a live seeded server, which this runner does not have - it runs on
+      # a maintainer machine/emulator (see that file's header for how). CI/CD to
+      # the Play Store also stays deferred (TODOS 1) - no signing/upload here.
+      - name: Unit + widget tests
+        working-directory: app
+        run: flutter test
