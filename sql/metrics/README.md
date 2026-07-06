@@ -8,10 +8,10 @@ beta experiment from the event log.
 
 The topics layer was removed (sql/0004); questions hang directly off Miller
 chapters. The activation event is `chapter_opened`, emitted when a chapter is
-opened - the chapter list is the nav level that replaced topics, so "opened
-&gt;= 1 content unit" keeps its meaning. `topic_opened` remains legal in the
-CHECK and in every query's IN-list for back-compat; production app_events was
-EMPTY at the rename (pre-launch), so no historical rows straddle the grain.
+opened - the chapter list is the nav level that replaced topics, so
+"opened >= 1 content unit" keeps its meaning. `topic_opened` remains legal in
+the CHECK and in every query's IN-list for back-compat; production app_events
+was EMPTY at the rename (pre-launch), so no historical rows straddle the grain.
 
 `valid_recall.sql` now counts DISTINCT CHAPTERS (`valid_recall_chapters`,
 formerly `valid_recall_topics`). A Miller chapter aggregates what were
