@@ -1,0 +1,205 @@
+/* DiploMate — legal pages (Privacy, Terms).
+   Clinical Editorial. Tokens verbatim from DESIGN.md: light = Direction B
+   (Clinical Chart), dark = Night Desk. Page sits on --paper, never --elevated:
+   white is the material code for a model answer only. Red (--exam-red) is
+   reserved for exam marks/errors and is deliberately absent here. */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Light — Clinical Chart (DESIGN.md .dir-b) */
+  --paper: #f6f8fa;
+  --elevated: #ffffff;
+  --sunk: #edf1f5;
+  --ink: #0e1626;
+  --ink-2: #57657a;
+  --ink-3: #5f6f84;
+  --rule: #e1e7ee;
+  --rule-strong: #cfd8e2;
+  --teal: #087a72;
+  --teal-ink: #0a6e67;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark — Night Desk (DESIGN.md .dir-c) — this persona studies at 2am */
+    --paper: #19181a;
+    --elevated: #211f22;
+    --sunk: #141315;
+    --ink: #ece6dc;
+    --ink-2: #9c9488;
+    --ink-3: #908878;
+    --rule: #302d31;
+    --rule-strong: #3e3a3f;
+    --teal: #3ed8c4;
+    --teal-ink: #8cebdd;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  font-family: "Source Serif 4", Georgia, serif;
+  background: var(--paper);
+  color: var(--ink-2);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  padding: 0 18px; /* 18px gutter — the one horizontal screen gutter */
+}
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 0 56px;
+}
+
+/* ---- header ---- */
+.doc-head {
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--rule);
+}
+.wordmark {
+  display: inline-block;
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  margin-bottom: 22px;
+}
+.ovl {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--teal-ink);
+  margin-bottom: 8px;
+}
+h1 {
+  font-weight: 600;
+  font-size: 28px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.dateline {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- sections (list-and-rule; no cards) ---- */
+section {
+  padding: 26px 0;
+  border-bottom: 1px solid var(--rule);
+}
+section:last-of-type {
+  border-bottom: 0;
+}
+h2 {
+  font-weight: 600;
+  font-size: 19px;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+h2 .sn {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--teal-ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+}
+h3 {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+  margin: 18px 0 8px;
+}
+p {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+p:last-child {
+  margin-bottom: 0;
+}
+ul {
+  margin: 0 0 12px;
+  list-style: none;
+}
+li {
+  font-size: 17px;
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 7px;
+}
+li:last-child {
+  margin-bottom: 0;
+}
+li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 12px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule-strong);
+}
+strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+a {
+  color: var(--teal-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+} /* teal-ink + underline: color never the only signal */
+
+/* ---- footer ---- */
+.doc-foot {
+  margin-top: 32px;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+.doc-foot nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 22px;
+}
+.doc-foot nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* 44px touch target */
+  color: var(--teal-ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+.doc-foot nav a:hover {
+  text-decoration: underline;
+}
+.doc-foot .copy {
+  margin-top: 2px;
+}
