@@ -48,6 +48,7 @@ Source plan: `~/.gstack/projects/nirmitgoyal-DiploMate/nirmit-main-design-202607
 - **Cons:** Reintroduces a second storage system + a signed-URL component (the API itself or a CF Worker); migration script for existing content; two delivery paths during transition.
 - **Context:** Design doc D3 (revised) carries the `ponytail:` ceiling note. Trigger: dyno bandwidth / Postgres plan-size line item becomes noticeable, OR speciality count × pack size makes bundle fetches slow. Client repository pattern isolates the change - only the bundle-fetch implementation swaps. **Trigger moved up (2026-07-04 eng review):** Heroku Postgres Essential-0 caps storage at 1GB - beta Anaesthesia bytea (≤~360MB) fits, but the full-catalog load (billing slice, per TD3 sequencing) exceeds it. Interim remedy = Postgres plan upgrade (Essential-1 10GB) at catalog load; decide plan-upgrade vs this R2/S3 migration at that point, not during beta.
 - **Depends on / blocked by:** Real scale signal (do NOT do this during beta).
+- **Content-pass intersection (2026-07-06 eng review):** the book-grounded answer pass adds scanned Miller figures (WebP ≤200KB each) to bytea for every populated chapter (~150 max). The pilot chapter measures figure bytes/chapter; project that number × populated chapters against the Essential-0 1GB cap BEFORE the full pass publishes. If projection exceeds ~700MB, decide Essential-1 upgrade vs this migration at that point.
 
 ## 6. Design-review deferrals (2026-07-04 /design-review pass)
 
@@ -112,3 +113,21 @@ F5/F8/F12/F14 + Codex #7/#9); tasks-ceo-review JSONL T6-T9.
   progress pulls Marrow/PrepLadder into exit-exam prep wholesale; strategy =
   speed + exclusivity (PG1) + recall-history switching cost (PG4). One
   paragraph in the plan; revisit quarterly.
+
+## 8. Embedding retrieval index for the answer generator (trigger-gated)
+
+- **What:** Build an embedding index over the Miller page index and switch Stage 3 retrieval from keyword/section matching to hybrid (keyword + vector) retrieval.
+- **Why:** Content-pass design (2026-07-06) Open Q2: if the pilot's flag rate is inflated by retrieval MISSES (the book covers the question but keyword retrieval never surfaces the page) rather than true coverage gaps, keyword-only retrieval is leaving answerable questions in the manual queue.
+- **Pros:** Recovers answerable questions from the flag queue without manual authoring; one-time offline cost, no runtime component; shrinks founder's manual-writing backlog.
+- **Cons:** ~0.5-1 day (CC); adds an embedding dependency + index artifact to the generator; useless if the pilot shows flags are true coverage gaps (Indian protocols, guidelines Miller doesn't cover).
+- **Context:** Generator retrieval is deliberately lazy (keyword over pdftotext page index). The pilot chapter measures flag rate AND flag reasons; only `no-source-coverage` flags where a human can point at the covering Miller page count as retrieval misses. Start: generator's retrieval module, swap behind the same interface.
+- **Depends on / blocked by:** Pilot flag-rate data with reason taxonomy; only build if retrieval-miss share is material.
+
+## 9. Figure-crop batch review UI (trigger-gated)
+
+- **What:** A minimal local web UI for reviewing model-proposed figure crop boxes in bulk: page render + proposed bbox overlay, approve/adjust/reject per figure, writes crops to the chapter's images/ dir.
+- **Why:** Content-pass Stage 3 has a human verifying every figure crop (model proposes bbox, human confirms). Fine for the pilot chapter; at ~150 populated chapters the per-figure click cost may dominate the founder's review time.
+- **Pros:** Turns hours of image-editor fiddling into an approve/adjust queue; keeps the human-verified guarantee the design requires; reusable for future books/specialities.
+- **Cons:** ~1 day (CC) building tooling that may never be needed if figures-per-chapter is low; another local tool to maintain; design explicitly scoped it out until proven necessary (Open Q6).
+- **Context:** Pilot measures figures-per-chapter and per-figure review seconds. Trigger: projected total figure-review time exceeds ~a founder-day. Start: generator's figure sub-task output (page PNG + bbox JSON) is already the exact input this UI needs.
+- **Depends on / blocked by:** Pilot throughput data; figure pipeline landed (content-pass Stage 3).
