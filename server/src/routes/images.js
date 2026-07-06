@@ -9,8 +9,7 @@ async function imageSpeciality(req, pool) {
   const { rows } = await pool.query(
     `SELECT c.speciality_id FROM images i
        JOIN qnas q ON i.qna_id = q.id
-       JOIN topics t ON q.topic_id = t.id
-       JOIN chapters c ON t.chapter_id = c.id
+       JOIN chapters c ON q.chapter_id = c.id
      WHERE i.id = $1`,
     [req.params.id],
   );

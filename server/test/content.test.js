@@ -30,11 +30,12 @@ test("chapter qnas are paginated JSON with image metadata, no bytes", async () =
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.body.chapter_id, "CH1");
   assert.strictEqual(res.body.content_version, 1);
+  assert.strictEqual(res.body.schema_version, 2);
   assert.strictEqual(res.body.page, 1);
   assert.strictEqual(res.body.pages, 1);
   assert.strictEqual(res.body.items.length, 2);
   const q1 = res.body.items.find((q) => q.id === "QN1");
-  assert.strictEqual(q1.topic_id, "TP1");
+  assert.strictEqual(q1.chapter_id, "CH1");
   assert.strictEqual(q1.images[0].sha256, "abc123");
   assert.strictEqual(
     q1.images[0].webp,
@@ -42,14 +43,11 @@ test("chapter qnas are paginated JSON with image metadata, no bytes", async () =
     "no bytes in JSON (no base64 tax)",
   );
 
-  assert.strictEqual(res.body.topics.length, 1);
-  const t1 = res.body.topics[0];
-  assert.strictEqual(t1.id, "TP1");
-  assert.strictEqual(t1.title, "Difficult airway");
-  assert.strictEqual(t1.slug, "difficult-airway");
-  assert.strictEqual(t1.sort_order, 1);
-  // exam_theme is nullable in the schema; this fixture happens to set it.
-  assert.strictEqual(t1.exam_theme, "Emergencies");
+  assert.strictEqual(
+    res.body.topics,
+    undefined,
+    "v2: no topics key on the wire",
+  );
 });
 
 test("images stream binary webp with ETag; If-None-Match -> 304", async () => {
