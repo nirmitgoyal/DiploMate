@@ -1,11 +1,9 @@
 const express = require("express");
 const { requireAuth } = require("../middleware/auth");
 const { requireEntitlement } = require("../middleware/entitlement");
+const { SCHEMA_VERSION, MIN_APP_VERSION } = require("../lib/constants");
 
 const router = express.Router();
-
-const SCHEMA_VERSION = 1;
-const MIN_APP_VERSION = 1;
 
 router.get("/manifest", requireAuth, async (req, res, next) => {
   try {
@@ -27,13 +25,17 @@ router.get("/manifest", requireAuth, async (req, res, next) => {
 
     // lazy per-track chapters (TD3) behind the entitlement gate
     return requireEntitlement(() => spec)(req, res, async () => {
+      // Empty-chapter filter (design deliverable): Stage 0 publishes only
+      // populated chapters; this WHERE EXISTS is the belt-and-braces server
+      // invariant that keeps nav clean even if an empty chapter ever lands.
       const { rows: chapters } = await pool.query(
         `
         SELECT c.id, c.title, c.slug, c.sort_order, c.exam_weight, c.content_version,
-               (SELECT count(*)::int FROM topics t WHERE t.chapter_id = c.id) AS topic_count,
-               (SELECT count(*)::int FROM qnas q JOIN topics t ON q.topic_id = t.id
-                 WHERE t.chapter_id = c.id) AS qna_count
-        FROM chapters c WHERE c.speciality_id = $1 ORDER BY c.sort_order`,
+               (SELECT count(*)::int FROM qnas q WHERE q.chapter_id = c.id) AS qna_count
+        FROM chapters c
+        WHERE c.speciality_id = $1
+          AND EXISTS (SELECT 1 FROM qnas q WHERE q.chapter_id = c.id)
+        ORDER BY c.sort_order`,
         [spec],
       );
       res.json({ ...body, chapters });
