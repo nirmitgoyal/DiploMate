@@ -84,6 +84,7 @@ class PendingReviewEvents extends Table {
   DateTimeColumn get ratedAt => dateTime()();
   TextColumn get localDay => text()(); // "YYYY-MM-DD", 4am rollover
   DateTimeColumn get syncedAt => dateTime().nullable()();
+  IntColumn get syncAttempts => integer().withDefault(const Constant(0))(); // poison drop after 5 (T4)
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -96,6 +97,7 @@ class PendingAppEvents extends Table {
   DateTimeColumn get occurredAt => dateTime()();
   TextColumn get localDay => text()();
   DateTimeColumn get syncedAt => dateTime().nullable()();
+  IntColumn get syncAttempts => integer().withDefault(const Constant(0))(); // poison drop after 5 (T4)
   @override
   Set<Column> get primaryKey => {id};
 }

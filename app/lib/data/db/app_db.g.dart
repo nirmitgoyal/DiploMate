@@ -2128,9 +2128,26 @@ class $PendingReviewEventsTable extends PendingReviewEvents
   late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
       'synced_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _syncAttemptsMeta =
+      const VerificationMeta('syncAttempts');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, contentId, rating, shownAt, revealedAt, ratedAt, localDay, syncedAt];
+  late final GeneratedColumn<int> syncAttempts = GeneratedColumn<int>(
+      'sync_attempts', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        contentId,
+        rating,
+        shownAt,
+        revealedAt,
+        ratedAt,
+        localDay,
+        syncedAt,
+        syncAttempts
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2188,6 +2205,12 @@ class $PendingReviewEventsTable extends PendingReviewEvents
       context.handle(_syncedAtMeta,
           syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta));
     }
+    if (data.containsKey('sync_attempts')) {
+      context.handle(
+          _syncAttemptsMeta,
+          syncAttempts.isAcceptableOrUnknown(
+              data['sync_attempts']!, _syncAttemptsMeta));
+    }
     return context;
   }
 
@@ -2213,6 +2236,8 @@ class $PendingReviewEventsTable extends PendingReviewEvents
           .read(DriftSqlType.string, data['${effectivePrefix}local_day'])!,
       syncedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}synced_at']),
+      syncAttempts: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sync_attempts'])!,
     );
   }
 
@@ -2232,6 +2257,7 @@ class PendingReviewEvent extends DataClass
   final DateTime ratedAt;
   final String localDay;
   final DateTime? syncedAt;
+  final int syncAttempts;
   const PendingReviewEvent(
       {required this.id,
       required this.contentId,
@@ -2240,7 +2266,8 @@ class PendingReviewEvent extends DataClass
       required this.revealedAt,
       required this.ratedAt,
       required this.localDay,
-      this.syncedAt});
+      this.syncedAt,
+      required this.syncAttempts});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2254,6 +2281,7 @@ class PendingReviewEvent extends DataClass
     if (!nullToAbsent || syncedAt != null) {
       map['synced_at'] = Variable<DateTime>(syncedAt);
     }
+    map['sync_attempts'] = Variable<int>(syncAttempts);
     return map;
   }
 
@@ -2269,6 +2297,7 @@ class PendingReviewEvent extends DataClass
       syncedAt: syncedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(syncedAt),
+      syncAttempts: Value(syncAttempts),
     );
   }
 
@@ -2284,6 +2313,7 @@ class PendingReviewEvent extends DataClass
       ratedAt: serializer.fromJson<DateTime>(json['ratedAt']),
       localDay: serializer.fromJson<String>(json['localDay']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+      syncAttempts: serializer.fromJson<int>(json['syncAttempts']),
     );
   }
   @override
@@ -2298,6 +2328,7 @@ class PendingReviewEvent extends DataClass
       'ratedAt': serializer.toJson<DateTime>(ratedAt),
       'localDay': serializer.toJson<String>(localDay),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+      'syncAttempts': serializer.toJson<int>(syncAttempts),
     };
   }
 
@@ -2309,7 +2340,8 @@ class PendingReviewEvent extends DataClass
           DateTime? revealedAt,
           DateTime? ratedAt,
           String? localDay,
-          Value<DateTime?> syncedAt = const Value.absent()}) =>
+          Value<DateTime?> syncedAt = const Value.absent(),
+          int? syncAttempts}) =>
       PendingReviewEvent(
         id: id ?? this.id,
         contentId: contentId ?? this.contentId,
@@ -2319,6 +2351,7 @@ class PendingReviewEvent extends DataClass
         ratedAt: ratedAt ?? this.ratedAt,
         localDay: localDay ?? this.localDay,
         syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+        syncAttempts: syncAttempts ?? this.syncAttempts,
       );
   PendingReviewEvent copyWithCompanion(PendingReviewEventsCompanion data) {
     return PendingReviewEvent(
@@ -2331,6 +2364,9 @@ class PendingReviewEvent extends DataClass
       ratedAt: data.ratedAt.present ? data.ratedAt.value : this.ratedAt,
       localDay: data.localDay.present ? data.localDay.value : this.localDay,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      syncAttempts: data.syncAttempts.present
+          ? data.syncAttempts.value
+          : this.syncAttempts,
     );
   }
 
@@ -2344,14 +2380,15 @@ class PendingReviewEvent extends DataClass
           ..write('revealedAt: $revealedAt, ')
           ..write('ratedAt: $ratedAt, ')
           ..write('localDay: $localDay, ')
-          ..write('syncedAt: $syncedAt')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('syncAttempts: $syncAttempts')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, contentId, rating, shownAt, revealedAt, ratedAt, localDay, syncedAt);
+  int get hashCode => Object.hash(id, contentId, rating, shownAt, revealedAt,
+      ratedAt, localDay, syncedAt, syncAttempts);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2363,7 +2400,8 @@ class PendingReviewEvent extends DataClass
           other.revealedAt == this.revealedAt &&
           other.ratedAt == this.ratedAt &&
           other.localDay == this.localDay &&
-          other.syncedAt == this.syncedAt);
+          other.syncedAt == this.syncedAt &&
+          other.syncAttempts == this.syncAttempts);
 }
 
 class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
@@ -2375,6 +2413,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
   final Value<DateTime> ratedAt;
   final Value<String> localDay;
   final Value<DateTime?> syncedAt;
+  final Value<int> syncAttempts;
   final Value<int> rowid;
   const PendingReviewEventsCompanion({
     this.id = const Value.absent(),
@@ -2385,6 +2424,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
     this.ratedAt = const Value.absent(),
     this.localDay = const Value.absent(),
     this.syncedAt = const Value.absent(),
+    this.syncAttempts = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendingReviewEventsCompanion.insert({
@@ -2396,6 +2436,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
     required DateTime ratedAt,
     required String localDay,
     this.syncedAt = const Value.absent(),
+    this.syncAttempts = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         contentId = Value(contentId),
@@ -2413,6 +2454,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
     Expression<DateTime>? ratedAt,
     Expression<String>? localDay,
     Expression<DateTime>? syncedAt,
+    Expression<int>? syncAttempts,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2424,6 +2466,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
       if (ratedAt != null) 'rated_at': ratedAt,
       if (localDay != null) 'local_day': localDay,
       if (syncedAt != null) 'synced_at': syncedAt,
+      if (syncAttempts != null) 'sync_attempts': syncAttempts,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2437,6 +2480,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
       Value<DateTime>? ratedAt,
       Value<String>? localDay,
       Value<DateTime?>? syncedAt,
+      Value<int>? syncAttempts,
       Value<int>? rowid}) {
     return PendingReviewEventsCompanion(
       id: id ?? this.id,
@@ -2447,6 +2491,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
       ratedAt: ratedAt ?? this.ratedAt,
       localDay: localDay ?? this.localDay,
       syncedAt: syncedAt ?? this.syncedAt,
+      syncAttempts: syncAttempts ?? this.syncAttempts,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2478,6 +2523,9 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
+    if (syncAttempts.present) {
+      map['sync_attempts'] = Variable<int>(syncAttempts.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2495,6 +2543,7 @@ class PendingReviewEventsCompanion extends UpdateCompanion<PendingReviewEvent> {
           ..write('ratedAt: $ratedAt, ')
           ..write('localDay: $localDay, ')
           ..write('syncedAt: $syncedAt, ')
+          ..write('syncAttempts: $syncAttempts, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2548,9 +2597,25 @@ class $PendingAppEventsTable extends PendingAppEvents
   late final GeneratedColumn<DateTime> syncedAt = GeneratedColumn<DateTime>(
       'synced_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _syncAttemptsMeta =
+      const VerificationMeta('syncAttempts');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, eventType, contentId, hiddenMs, occurredAt, localDay, syncedAt];
+  late final GeneratedColumn<int> syncAttempts = GeneratedColumn<int>(
+      'sync_attempts', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        eventType,
+        contentId,
+        hiddenMs,
+        occurredAt,
+        localDay,
+        syncedAt,
+        syncAttempts
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2598,6 +2663,12 @@ class $PendingAppEventsTable extends PendingAppEvents
       context.handle(_syncedAtMeta,
           syncedAt.isAcceptableOrUnknown(data['synced_at']!, _syncedAtMeta));
     }
+    if (data.containsKey('sync_attempts')) {
+      context.handle(
+          _syncAttemptsMeta,
+          syncAttempts.isAcceptableOrUnknown(
+              data['sync_attempts']!, _syncAttemptsMeta));
+    }
     return context;
   }
 
@@ -2621,6 +2692,8 @@ class $PendingAppEventsTable extends PendingAppEvents
           .read(DriftSqlType.string, data['${effectivePrefix}local_day'])!,
       syncedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}synced_at']),
+      syncAttempts: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}sync_attempts'])!,
     );
   }
 
@@ -2638,6 +2711,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
   final DateTime occurredAt;
   final String localDay;
   final DateTime? syncedAt;
+  final int syncAttempts;
   const PendingAppEvent(
       {required this.id,
       required this.eventType,
@@ -2645,7 +2719,8 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
       this.hiddenMs,
       required this.occurredAt,
       required this.localDay,
-      this.syncedAt});
+      this.syncedAt,
+      required this.syncAttempts});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2662,6 +2737,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
     if (!nullToAbsent || syncedAt != null) {
       map['synced_at'] = Variable<DateTime>(syncedAt);
     }
+    map['sync_attempts'] = Variable<int>(syncAttempts);
     return map;
   }
 
@@ -2680,6 +2756,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
       syncedAt: syncedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(syncedAt),
+      syncAttempts: Value(syncAttempts),
     );
   }
 
@@ -2694,6 +2771,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       localDay: serializer.fromJson<String>(json['localDay']),
       syncedAt: serializer.fromJson<DateTime?>(json['syncedAt']),
+      syncAttempts: serializer.fromJson<int>(json['syncAttempts']),
     );
   }
   @override
@@ -2707,6 +2785,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'localDay': serializer.toJson<String>(localDay),
       'syncedAt': serializer.toJson<DateTime?>(syncedAt),
+      'syncAttempts': serializer.toJson<int>(syncAttempts),
     };
   }
 
@@ -2717,7 +2796,8 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
           Value<int?> hiddenMs = const Value.absent(),
           DateTime? occurredAt,
           String? localDay,
-          Value<DateTime?> syncedAt = const Value.absent()}) =>
+          Value<DateTime?> syncedAt = const Value.absent(),
+          int? syncAttempts}) =>
       PendingAppEvent(
         id: id ?? this.id,
         eventType: eventType ?? this.eventType,
@@ -2726,6 +2806,7 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
         occurredAt: occurredAt ?? this.occurredAt,
         localDay: localDay ?? this.localDay,
         syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
+        syncAttempts: syncAttempts ?? this.syncAttempts,
       );
   PendingAppEvent copyWithCompanion(PendingAppEventsCompanion data) {
     return PendingAppEvent(
@@ -2737,6 +2818,9 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
           data.occurredAt.present ? data.occurredAt.value : this.occurredAt,
       localDay: data.localDay.present ? data.localDay.value : this.localDay,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
+      syncAttempts: data.syncAttempts.present
+          ? data.syncAttempts.value
+          : this.syncAttempts,
     );
   }
 
@@ -2749,14 +2833,15 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
           ..write('hiddenMs: $hiddenMs, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('localDay: $localDay, ')
-          ..write('syncedAt: $syncedAt')
+          ..write('syncedAt: $syncedAt, ')
+          ..write('syncAttempts: $syncAttempts')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, eventType, contentId, hiddenMs, occurredAt, localDay, syncedAt);
+  int get hashCode => Object.hash(id, eventType, contentId, hiddenMs,
+      occurredAt, localDay, syncedAt, syncAttempts);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2767,7 +2852,8 @@ class PendingAppEvent extends DataClass implements Insertable<PendingAppEvent> {
           other.hiddenMs == this.hiddenMs &&
           other.occurredAt == this.occurredAt &&
           other.localDay == this.localDay &&
-          other.syncedAt == this.syncedAt);
+          other.syncedAt == this.syncedAt &&
+          other.syncAttempts == this.syncAttempts);
 }
 
 class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
@@ -2778,6 +2864,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
   final Value<DateTime> occurredAt;
   final Value<String> localDay;
   final Value<DateTime?> syncedAt;
+  final Value<int> syncAttempts;
   final Value<int> rowid;
   const PendingAppEventsCompanion({
     this.id = const Value.absent(),
@@ -2787,6 +2874,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
     this.occurredAt = const Value.absent(),
     this.localDay = const Value.absent(),
     this.syncedAt = const Value.absent(),
+    this.syncAttempts = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PendingAppEventsCompanion.insert({
@@ -2797,6 +2885,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
     required DateTime occurredAt,
     required String localDay,
     this.syncedAt = const Value.absent(),
+    this.syncAttempts = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         eventType = Value(eventType),
@@ -2810,6 +2899,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
     Expression<DateTime>? occurredAt,
     Expression<String>? localDay,
     Expression<DateTime>? syncedAt,
+    Expression<int>? syncAttempts,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2820,6 +2910,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (localDay != null) 'local_day': localDay,
       if (syncedAt != null) 'synced_at': syncedAt,
+      if (syncAttempts != null) 'sync_attempts': syncAttempts,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2832,6 +2923,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
       Value<DateTime>? occurredAt,
       Value<String>? localDay,
       Value<DateTime?>? syncedAt,
+      Value<int>? syncAttempts,
       Value<int>? rowid}) {
     return PendingAppEventsCompanion(
       id: id ?? this.id,
@@ -2841,6 +2933,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
       occurredAt: occurredAt ?? this.occurredAt,
       localDay: localDay ?? this.localDay,
       syncedAt: syncedAt ?? this.syncedAt,
+      syncAttempts: syncAttempts ?? this.syncAttempts,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2869,6 +2962,9 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
     if (syncedAt.present) {
       map['synced_at'] = Variable<DateTime>(syncedAt.value);
     }
+    if (syncAttempts.present) {
+      map['sync_attempts'] = Variable<int>(syncAttempts.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2885,6 +2981,7 @@ class PendingAppEventsCompanion extends UpdateCompanion<PendingAppEvent> {
           ..write('occurredAt: $occurredAt, ')
           ..write('localDay: $localDay, ')
           ..write('syncedAt: $syncedAt, ')
+          ..write('syncAttempts: $syncAttempts, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4683,6 +4780,7 @@ typedef $$PendingReviewEventsTableCreateCompanionBuilder
   required DateTime ratedAt,
   required String localDay,
   Value<DateTime?> syncedAt,
+  Value<int> syncAttempts,
   Value<int> rowid,
 });
 typedef $$PendingReviewEventsTableUpdateCompanionBuilder
@@ -4695,6 +4793,7 @@ typedef $$PendingReviewEventsTableUpdateCompanionBuilder
   Value<DateTime> ratedAt,
   Value<String> localDay,
   Value<DateTime?> syncedAt,
+  Value<int> syncAttempts,
   Value<int> rowid,
 });
 
@@ -4730,6 +4829,9 @@ class $$PendingReviewEventsTableFilterComposer
 
   ColumnFilters<DateTime> get syncedAt => $composableBuilder(
       column: $table.syncedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts, builder: (column) => ColumnFilters(column));
 }
 
 class $$PendingReviewEventsTableOrderingComposer
@@ -4764,6 +4866,10 @@ class $$PendingReviewEventsTableOrderingComposer
 
   ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
       column: $table.syncedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$PendingReviewEventsTableAnnotationComposer
@@ -4798,6 +4904,9 @@ class $$PendingReviewEventsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get syncedAt =>
       $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts, builder: (column) => column);
 }
 
 class $$PendingReviewEventsTableTableManager extends RootTableManager<
@@ -4838,6 +4947,7 @@ class $$PendingReviewEventsTableTableManager extends RootTableManager<
             Value<DateTime> ratedAt = const Value.absent(),
             Value<String> localDay = const Value.absent(),
             Value<DateTime?> syncedAt = const Value.absent(),
+            Value<int> syncAttempts = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingReviewEventsCompanion(
@@ -4849,6 +4959,7 @@ class $$PendingReviewEventsTableTableManager extends RootTableManager<
             ratedAt: ratedAt,
             localDay: localDay,
             syncedAt: syncedAt,
+            syncAttempts: syncAttempts,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -4860,6 +4971,7 @@ class $$PendingReviewEventsTableTableManager extends RootTableManager<
             required DateTime ratedAt,
             required String localDay,
             Value<DateTime?> syncedAt = const Value.absent(),
+            Value<int> syncAttempts = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingReviewEventsCompanion.insert(
@@ -4871,6 +4983,7 @@ class $$PendingReviewEventsTableTableManager extends RootTableManager<
             ratedAt: ratedAt,
             localDay: localDay,
             syncedAt: syncedAt,
+            syncAttempts: syncAttempts,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -4905,6 +5018,7 @@ typedef $$PendingAppEventsTableCreateCompanionBuilder
   required DateTime occurredAt,
   required String localDay,
   Value<DateTime?> syncedAt,
+  Value<int> syncAttempts,
   Value<int> rowid,
 });
 typedef $$PendingAppEventsTableUpdateCompanionBuilder
@@ -4916,6 +5030,7 @@ typedef $$PendingAppEventsTableUpdateCompanionBuilder
   Value<DateTime> occurredAt,
   Value<String> localDay,
   Value<DateTime?> syncedAt,
+  Value<int> syncAttempts,
   Value<int> rowid,
 });
 
@@ -4948,6 +5063,9 @@ class $$PendingAppEventsTableFilterComposer
 
   ColumnFilters<DateTime> get syncedAt => $composableBuilder(
       column: $table.syncedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts, builder: (column) => ColumnFilters(column));
 }
 
 class $$PendingAppEventsTableOrderingComposer
@@ -4979,6 +5097,10 @@ class $$PendingAppEventsTableOrderingComposer
 
   ColumnOrderings<DateTime> get syncedAt => $composableBuilder(
       column: $table.syncedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$PendingAppEventsTableAnnotationComposer
@@ -5010,6 +5132,9 @@ class $$PendingAppEventsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get syncedAt =>
       $composableBuilder(column: $table.syncedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get syncAttempts => $composableBuilder(
+      column: $table.syncAttempts, builder: (column) => column);
 }
 
 class $$PendingAppEventsTableTableManager extends RootTableManager<
@@ -5046,6 +5171,7 @@ class $$PendingAppEventsTableTableManager extends RootTableManager<
             Value<DateTime> occurredAt = const Value.absent(),
             Value<String> localDay = const Value.absent(),
             Value<DateTime?> syncedAt = const Value.absent(),
+            Value<int> syncAttempts = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingAppEventsCompanion(
@@ -5056,6 +5182,7 @@ class $$PendingAppEventsTableTableManager extends RootTableManager<
             occurredAt: occurredAt,
             localDay: localDay,
             syncedAt: syncedAt,
+            syncAttempts: syncAttempts,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -5066,6 +5193,7 @@ class $$PendingAppEventsTableTableManager extends RootTableManager<
             required DateTime occurredAt,
             required String localDay,
             Value<DateTime?> syncedAt = const Value.absent(),
+            Value<int> syncAttempts = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PendingAppEventsCompanion.insert(
@@ -5076,6 +5204,7 @@ class $$PendingAppEventsTableTableManager extends RootTableManager<
             occurredAt: occurredAt,
             localDay: localDay,
             syncedAt: syncedAt,
+            syncAttempts: syncAttempts,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

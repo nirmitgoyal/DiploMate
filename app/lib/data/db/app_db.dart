@@ -24,7 +24,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -32,6 +32,14 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           // schemaVersion 1 = beta build 1. Future versions add stepwise
           // migrations here; test/db/migration_test.dart verifies each path.
+          // v2 (plan 6, Task 4): per-row sync_attempts counter so poison-row
+          // drop-after-5 survives restarts (T4). Defaulted 0, so existing rows
+          // backfill cleanly.
+          if (from < 2) {
+            await m.addColumn(
+                pendingReviewEvents, pendingReviewEvents.syncAttempts);
+            await m.addColumn(pendingAppEvents, pendingAppEvents.syncAttempts);
+          }
         },
       );
 

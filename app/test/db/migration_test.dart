@@ -27,9 +27,17 @@ void main() {
     await db.close();
   });
 
-  // When schemaVersion bumps to 2: add
-  //   startAt(1) -> migrateAndValidate(db, 2)
-  // so every beta build 1 device has a proven upgrade path.
+  // schemaVersion 2 (plan 6, Task 4): the first cross-version drift catch.
+  // startAt(1) builds a real v1 DB, then migrateAndValidate(db, 2) runs the
+  // live onUpgrade (addColumn sync_attempts x2) and asserts the result matches
+  // the frozen v2 snapshot - proving every beta build 1 device upgrades cleanly.
+  test('v1 database migrates to v2 and matches the dumped v2 snapshot',
+      () async {
+    final connection = await verifier.startAt(1);
+    final db = AppDatabase(connection);
+    await verifier.migrateAndValidate(db, 2);
+    await db.close();
+  });
 
   test('live onCreate produces the schema the generated code expects',
       () async {
