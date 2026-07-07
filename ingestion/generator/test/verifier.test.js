@@ -70,6 +70,24 @@ test("a quote spanning a page break verifies via N||N+1 and cites a range", () =
   assert.equal(r.citationRange, "1-2");
 });
 
+test("no whitespace at the page boundary still verifies via N||N+1 (fusion guard)", () => {
+  const index = idx([
+    "...ends at the end of page one", // no trailing whitespace before the break
+    "and continues on page two.", // no leading whitespace after the break
+  ]);
+  const r = verifyQuote("end of page one and continues on page two.", {
+    index,
+    map,
+    bookPage: 1,
+  });
+  assert.equal(
+    r.ok,
+    true,
+    "the page-break separator must stand in for the missing whitespace",
+  );
+  assert.equal(r.citationRange, "1-2");
+});
+
 test("a quote absent from the page fails with quote-verification-failed", () => {
   const index = idx(["Nothing relevant here."]);
   const r = verifyQuote("This sentence is not in the book.", {

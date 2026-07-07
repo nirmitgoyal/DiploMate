@@ -7,7 +7,7 @@
 // Run: node fixtures/make-paper.js (from ingestion/generator/)
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { writeFileSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { writeFileSync, readdirSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import path from "node:path";

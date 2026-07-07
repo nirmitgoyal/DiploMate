@@ -42,12 +42,15 @@ export async function extractQuestions(
 
   const fullText = index.map((p) => p.text).join("\n");
   const { year, paper } = stampProvenance(pdfPath, index[0]?.text ?? "");
-  const questions = splitQuestionBlocks(fullText).map(({ text, marks }) => ({
-    question_text: text,
-    year,
-    paper,
-    ...(marks === undefined ? {} : { marks }),
-  }));
+  const questions = splitQuestionBlocks(fullText).map(
+    ({ text, marks, position }) => ({
+      question_text: text,
+      year,
+      paper,
+      position,
+      ...(marks === undefined ? {} : { marks }),
+    }),
+  );
 
   return { questions, qa: buildQaReport(questions, fullText, expectedCount) };
 }
@@ -73,7 +76,7 @@ function buildQaReport(questions, fullText, expectedCount) {
   };
 }
 
-const QUESTION_START_RE = /^\s*\d{1,2}\.\s+/gm;
+const QUESTION_START_RE = /^\s*(\d{1,2})\.\s+/gm;
 const MARKS_SUFFIX_RE = /\(\s*(\d+)\s*marks?\s*\)\s*$/i;
 
 function splitQuestionBlocks(text) {
@@ -83,6 +86,11 @@ function splitQuestionBlocks(text) {
     const start = starts[i].index + starts[i][0].length;
     const end = i + 1 < starts.length ? starts[i + 1].index : text.length;
     let body = text.slice(start, end).trim();
+    // Printed item number, not the loop index i - stable across extraction
+    // drift (a question printed "3." stays position 3 even if question 2
+    // is dropped from a later re-run), which the ledger's provenance match
+    // (paper, year, position) depends on.
+    const position = Number(starts[i][1]);
 
     const marksMatch = body.match(MARKS_SUFFIX_RE);
     let marks;
@@ -90,7 +98,7 @@ function splitQuestionBlocks(text) {
       marks = Number(marksMatch[1]);
       body = body.slice(0, marksMatch.index).trim();
     }
-    if (body) blocks.push({ text: body, marks });
+    if (body) blocks.push({ text: body, marks, position });
   }
   return blocks;
 }

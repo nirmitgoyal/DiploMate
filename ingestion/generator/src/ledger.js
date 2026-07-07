@@ -87,14 +87,20 @@ export function reconcile(extracted, ledger, prevArtifacts) {
   const matched = [];
   const minted = [];
   const ambiguous = [];
-  // Keys already reused in THIS call. A published key backs exactly one
-  // question, so a second question can never silently claim it too (a
-  // many-to-one merge would serve one question's answer for another) - the
-  // collision goes to review instead.
+  // Keys already reused in THIS call. Consulted by the cross-slot branch
+  // below only (text is the sole signal there, so a key already spent this
+  // call cannot be spent again). The same-slot branch below adds to this
+  // Set too but never consults it - two extracted items landing on the
+  // identical (paper, year, position) triple would collide there, but that
+  // indicates an upstream extraction bug, not a case this Set needs to
+  // catch: provenance already scopes each slot to one question.
   const claimed = new Set();
 
   for (const q of extracted) {
-    const norm = normalizeQuestion(q.text);
+    // extracted items come from extract.js, which emits `question_text`;
+    // prevArtifacts (below) come from ledger storage, which uses `text` -
+    // two different sources, two different shapes, both correct.
+    const norm = normalizeQuestion(q.question_text);
 
     // 1. Exact provenance hit: a prior artifact already published at this
     // exact (paper, year, position) slot. High similarity -> the same
@@ -136,7 +142,7 @@ export function reconcile(extracted, ledger, prevArtifacts) {
       ambiguous.push({ ...q, candidateKey: best.key, similarity: best.sim });
     } else {
       // 3. No match anywhere (or below the review floor): genuinely new.
-      minted.push({ ...q, key: questionKey(q.text) });
+      minted.push({ ...q, key: questionKey(q.question_text) });
     }
   }
 

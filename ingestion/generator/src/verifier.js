@@ -29,7 +29,13 @@ export function verifyQuote(quote, { index, map, bookPage }) {
   }
 
   const pageN1 = pageText(index, pdfPage + 1);
-  if (normalize(pageN + pageN1).includes(nq)) {
+  // A page break is at least a word boundary even when the extracted text
+  // carries no trailing/leading whitespace around it - without this, the
+  // last word of page N and the first word of page N+1 could fuse and a
+  // genuinely correct cross-page quote would fail to verify (false
+  // negative; normalize()'s \s+ collapse makes this a no-op when a real
+  // newline is already there).
+  if (normalize(pageN + "\n" + pageN1).includes(nq)) {
     return { ok: true, citationRange: `${bookPage}-${bookPage + 1}` };
   }
 
