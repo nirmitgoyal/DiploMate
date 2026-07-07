@@ -37,6 +37,24 @@ test("precheck catches a collision before emit (not at publish)", () => {
   assert.deepEqual(precheckUnique(["a", "b", "a"]), ["a"]);
 });
 
+// Fix wave 1: a punctuation-only / N.-only OCR-garbled TOC title slugifies
+// to "" (SLUG_RE-invalid). dedupe/precheck compare equality, never format,
+// so an empty slug would sail through to emit - surface it loudly at Stage 0.
+test("slugify throws on a title with no slug-able characters (not a silent empty)", () => {
+  assert.throws(() => slugify("&&&"), /&&&/);
+  assert.throws(() => slugify(""));
+  assert.throws(() => slugify("5.")); // leading-N. strip leaves nothing
+});
+
+// Fix wave 1: dedupe must skip PAST a pre-existing literal, not blindly
+// append the running count - otherwise the deduper itself emits a duplicate.
+test("dedupe skips a pre-existing literal instead of colliding with it", () => {
+  const out = dedupeSlugs([{ slug: "x" }, { slug: "x-2" }, { slug: "x" }]);
+  const slugs = out.map((c) => c.slug);
+  assert.deepEqual(slugs, ["x", "x-2", "x-3"]);
+  assert.equal(new Set(slugs).size, slugs.length, "no duplicate slug emitted");
+});
+
 test("parseToc reads title + book page from TOC lines", () => {
   const toc =
     "1. The Scope of Modern Anesthetic Practice ..... 3\n19. Pulmonary Pharmacology ..... 512";
