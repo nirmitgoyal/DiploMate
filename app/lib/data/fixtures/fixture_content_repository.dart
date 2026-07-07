@@ -119,7 +119,6 @@ class FixtureContentRepository implements ContentRepository {
   Future<List<ChapterRow>> chapters(String specialityId) async {
     final doc = await _load();
     if (specialityId != (doc['speciality'] as Map)['id']) return const [];
-    final topics = (doc['topics'] as List).cast<Map<String, dynamic>>();
     final qnas = (doc['qnas'] as List).cast<Map<String, dynamic>>();
     return [
       for (final c in (doc['chapters'] as List).cast<Map<String, dynamic>>())
@@ -131,11 +130,7 @@ class FixtureContentRepository implements ContentRepository {
           sortOrder: c['sort_order'] as int,
           examWeight: c['exam_weight'] as int,
           contentVersion: c['content_version'] as int,
-          topicCount: topics.where((t) => t['chapter_id'] == c['id']).length,
-          qnaCount: qnas
-              .where((q) => topics.any((t) =>
-                  t['id'] == q['topic_id'] && t['chapter_id'] == c['id']))
-              .length,
+          qnaCount: qnas.where((q) => q['chapter_id'] == c['id']).length,
         ),
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
   }
@@ -146,21 +141,8 @@ class FixtureContentRepository implements ContentRepository {
     _cached.add(chapterId);
   }
 
-  @override
-  Future<List<TopicRow>> topics(String chapterId) async {
-    final doc = await _load();
-    return [
-      for (final t in (doc['topics'] as List).cast<Map<String, dynamic>>())
-        if (t['chapter_id'] == chapterId)
-          TopicRow(
-              id: t['id'] as String, chapterId: t['chapter_id'] as String,
-              title: t['title'] as String, slug: t['slug'] as String,
-              examTheme: t['exam_theme'] as String?, sortOrder: t['sort_order'] as int),
-    ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-  }
-
   QnaRow _qnaFromJson(Map<String, dynamic> q) => QnaRow(
-        id: q['id'] as String, topicId: q['topic_id'] as String,
+        id: q['id'] as String, chapterId: q['chapter_id'] as String,
         question: q['question'] as String, years: q['years'] as String?,
         marks: q['marks'] as int?,
         earnsMarks: [
@@ -183,12 +165,14 @@ class FixtureContentRepository implements ContentRepository {
       );
 
   @override
-  Future<List<QnaRow>> qnas(String topicId) async {
+  Future<List<QnaRow>> qnas(String chapterId) async {
     final doc = await _load();
     return [
       for (final q in (doc['qnas'] as List).cast<Map<String, dynamic>>())
-        if (q['topic_id'] == topicId) _qnaFromJson(q),
-    ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        if (q['chapter_id'] == chapterId) _qnaFromJson(q),
+    ]..sort((a, b) => a.sortOrder != b.sortOrder
+        ? a.sortOrder.compareTo(b.sortOrder)
+        : a.id.compareTo(b.id));
   }
 
   @override
