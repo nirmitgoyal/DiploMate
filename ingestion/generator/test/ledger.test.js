@@ -17,7 +17,7 @@ test("a typo-edited question reconciles to its existing ledger key (no re-key)",
       paper: "2019-I",
       year: 2019,
       position: 3,
-      text: "Define spinal anaesthesia",
+      question_text: "Define spinal anaesthesia",
     },
   ]; // trailing period gone
   const r = reconcile(extracted, {}, prev);
@@ -36,7 +36,7 @@ test("a genuinely new question mints a fresh sha256-16 key", () => {
         paper: "2024-II",
         year: 2024,
         position: 1,
-        text: "A brand new question about capnography.",
+        question_text: "A brand new question about capnography.",
       },
     ],
     {},
@@ -61,7 +61,7 @@ test("an ambiguous match (same provenance, very different text) queues for revie
       paper: "2019-I",
       year: 2019,
       position: 3,
-      text: "Describe the anatomy of the brachial plexus in full.",
+      question_text: "Describe the anatomy of the brachial plexus in full.",
     },
   ];
   const r = reconcile(extracted, {}, prev);
@@ -105,7 +105,7 @@ test("a templated cross-slot near-miss is NOT auto-reused (queues for review, ne
       paper: "2024-II",
       year: 2024,
       position: 7,
-      text: "Define epidural anaesthesia.",
+      question_text: "Define epidural anaesthesia.",
     }, // 0.85 similar - same template, DIFFERENT question
   ];
   const r = reconcile(extracted, {}, prev);
@@ -138,7 +138,7 @@ test("a genuine verbatim cross-slot reappearance reuses the existing key", () =>
       paper: "2022-II",
       year: 2022,
       position: 5,
-      text: "Define spinal anaesthesia.",
+      question_text: "Define spinal anaesthesia.",
     }, // same question, later paper -> verbatim reappearance
   ];
   const r = reconcile(extracted, {}, prev);
@@ -165,13 +165,13 @@ test("a many-to-one key collision reuses once, routes the rest to review", () =>
       paper: "2022-II",
       year: 2022,
       position: 5,
-      text: "Define spinal anaesthesia.",
+      question_text: "Define spinal anaesthesia.",
     },
     {
       paper: "2023-I",
       year: 2023,
       position: 2,
-      text: "Define spinal anaesthesia",
+      question_text: "Define spinal anaesthesia",
     }, // both normalize identical to prev -> both want the same key
   ];
   const r = reconcile(extracted, {}, prev);
@@ -182,4 +182,33 @@ test("a many-to-one key collision reuses once, routes the rest to review", () =>
   );
   assert.equal(r.ambiguous.length, 1, "the collision goes to review");
   assert.equal(r.ambiguous[0].candidateKey, "abcd1234abcd1234");
+});
+
+// Seam test: extract.js emits `question_text` (not `text`); ledger-stored
+// prevArtifacts use `text`. Hand-built to mirror extract.js's real output
+// shape - not imported from extract.js, so this proves the seam composes
+// without coupling the two modules' test suites together.
+test("extract-shaped items ({question_text, position}) compose with reconcile end to end", () => {
+  const prev = [
+    {
+      key: "seed1234seed1234",
+      paper: "2019-I",
+      year: 2019,
+      position: 3,
+      text: "Define spinal anaesthesia.",
+    },
+  ];
+  const extracted = [
+    {
+      question_text: "Define spinal anaesthesia.",
+      year: 2019,
+      paper: "2019-I",
+      position: 3,
+    },
+  ];
+  const r = reconcile(extracted, {}, prev);
+  assert.equal(r.matched.length, 1);
+  assert.equal(r.matched[0].key, "seed1234seed1234");
+  assert.equal(r.minted.length, 0);
+  assert.equal(r.ambiguous.length, 0);
 });

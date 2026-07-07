@@ -44,6 +44,11 @@ test("extraction splits all numbered questions and parses their marks", async ()
     questions.map((q) => q.marks),
     [10, 10, 5],
   );
+  assert.deepEqual(
+    questions.map((q) => q.position),
+    [1, 2, 3],
+    "position is the printed item number, not the array index",
+  );
   assert.equal(qa.count, SAMPLE_QUESTIONS.length);
 });
 
