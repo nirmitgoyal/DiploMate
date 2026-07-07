@@ -117,7 +117,7 @@ void main() {
     await db.transaction(() async {
       await db.delete(db.qnas).go();
       await db.into(db.qnas).insert(QnasCompanion.insert(
-          id: 'Q1', topicId: 'T1', question: 'Updated wording',
+          id: 'Q1', chapterId: 'T1', question: 'Updated wording',
           earnsMarks: '[]', sections: '[]'));
     });
 

@@ -136,9 +136,9 @@ class _ChapterRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final dm = context.dm;
     final started = chapter.recalledCount > 0;
-    final fraction = started ? chapter.recalledCount / chapter.topicCount : 0.0;
+    final fraction = started ? chapter.recalledCount / chapter.qnaCount : 0.0;
     return InkWell(
-      onTap: () => context.go('/syllabus/topics/${chapter.id}'),
+      onTap: () => context.go('/reader/chapter/${chapter.id}'),
       child: Container(
         constraints: const BoxConstraints(minHeight: 56),
         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: dm.rule))),
@@ -154,12 +154,12 @@ class _ChapterRow extends StatelessWidget {
                     children: [
                       Text(chapter.title, style: DmType.bodyUi.copyWith(color: dm.ink)),
                       const SizedBox(height: 2),
-                      Text('${chapter.topicCount} topics',
+                      Text('${chapter.qnaCount} questions',
                           style: DmType.meta.copyWith(color: dm.ink3)),
                     ],
                   ),
                 ),
-                Text('${chapter.recalledCount}/${chapter.topicCount} recalled',
+                Text('${chapter.recalledCount}/${chapter.qnaCount} recalled',
                     style: DmType.meta.copyWith(
                         color: dm.tealInk, fontFeatures: DmType.tabularNums)),
               ],
@@ -168,7 +168,7 @@ class _ChapterRow extends StatelessWidget {
               const SizedBox(height: DmSpace.sm),
               Semantics(
                 label:
-                    '${chapter.recalledCount} of ${chapter.topicCount} topics recalled',
+                    '${chapter.recalledCount} of ${chapter.qnaCount} questions recalled',
                 child: ExcludeSemantics(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(DmRadius.sm),

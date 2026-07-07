@@ -10,6 +10,7 @@ import 'package:diplomate/ui/syllabus/syllabus_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 SessionUser userWith(String specId) => SessionUser(
     id: 'u1', email: 'a@b.c', name: 'Ananya', photoUrl: null,
@@ -44,10 +45,7 @@ class _ThrowingContentRepository implements ContentRepository {
   Future<void> ensureChapterCached(String chapterId) async {}
 
   @override
-  Future<List<TopicRow>> topics(String chapterId) async => const [];
-
-  @override
-  Future<List<QnaRow>> qnas(String topicId) async => const [];
+  Future<List<QnaRow>> qnas(String chapterId) async => const [];
 
   @override
   Future<QnaRow?> qna(String qnaId) async => null;
@@ -57,18 +55,46 @@ class _ThrowingContentRepository implements ContentRepository {
 }
 
 void main() {
-  testWidgets('chapter rows: title, topic count, recall progress; no locks, no download UI',
+  testWidgets('chapter rows: title, question count, recall progress; no locks, no download UI',
       (t) async {
     await t.pumpWidget(host('01J0SPECANAES0000000000001'));
     await t.pumpAndSettle();
     expect(find.text('Anaesthesiology'), findsOneWidget);
     expect(find.text('Airway Management'), findsOneWidget);
-    expect(find.text('2 topics'), findsOneWidget);
+    expect(find.text('2 questions'), findsOneWidget);
     expect(find.text('0/2 recalled'), findsOneWidget);
     expect(find.byIcon(Icons.lock), findsNothing);
     expect(find.byIcon(Icons.lock_outline), findsNothing);
     expect(find.textContaining('ffline'), findsNothing, reason: 'no offline copy');
     expect(find.textContaining('ownload'), findsNothing, reason: 'no download copy');
+  });
+
+  testWidgets('chapter row tap opens the reader directly at /reader/chapter/<id> '
+      '(topics nav level removed)', (t) async {
+    String? opened;
+    final router = GoRouter(initialLocation: '/syllabus', routes: [
+      GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
+      GoRoute(
+          path: '/reader/chapter/:chapterId',
+          builder: (_, s) {
+            opened = s.pathParameters['chapterId'];
+            return const SizedBox.shrink();
+          }),
+    ]);
+    await t.pumpWidget(ProviderScope(
+      overrides: [
+        sessionUserProvider.overrideWith(
+            (ref) => userWith('01J0SPECANAES0000000000001')),
+      ],
+      child: MaterialApp.router(theme: dmLightTheme(), routerConfig: router),
+    ));
+    await t.pumpAndSettle();
+
+    await t.tap(find.text('Airway Management'));
+    await t.pumpAndSettle();
+
+    expect(opened, '01J0CHAPAIRWAY000000000001',
+        reason: 'one fewer tap - the row opens the Reader, not a topics list');
   });
 
   testWidgets('empty track renders the first-class no-content state (DESIGN.md State 9)',
