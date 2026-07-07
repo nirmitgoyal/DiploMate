@@ -16,19 +16,31 @@ final bookmarkedIdsProvider = StreamProvider<Set<String>>(
     (ref) => ref.watch(bookmarkRepositoryProvider).bookmarkedIds());
 
 /// Reader. Queue mode drives due-only suggestions via [ReaderController]
-/// (auto-advancing recall gate); browse mode opens one QnA from Topics/
+/// (auto-advancing recall gate); browse mode opens one QnA from Syllabus/
 /// Bookmarks and rate-then-stays. Both route reveal/rate through the
 /// controller so ratings persist local-first before any UI ack (D4).
 class ReaderScreen extends ConsumerStatefulWidget {
-  const ReaderScreen.browse({super.key, required this.qnaId, this.topicId})
-      : queueMode = false;
+  const ReaderScreen.browse({super.key, required this.qnaId, this.chapterId})
+      : queueMode = false,
+        entryChapterId = null;
   const ReaderScreen.queue({super.key})
       : qnaId = null,
-        topicId = null,
+        chapterId = null,
+        entryChapterId = null,
         queueMode = true;
 
+  /// Chapter entry (2026-07-06 content pass): the syllabus row lands HERE -
+  /// ensure the chapter is cached, record chapter_opened, browse from the
+  /// first question.
+  const ReaderScreen.chapter({super.key, required String chapterId})
+      : qnaId = null,
+        chapterId = chapterId,
+        entryChapterId = chapterId,
+        queueMode = false;
+
   final String? qnaId;
-  final String? topicId;
+  final String? chapterId;
+  final String? entryChapterId; // non-null only for chapter entry
   final bool queueMode;
 
   @override
@@ -38,10 +50,8 @@ class ReaderScreen extends ConsumerStatefulWidget {
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   ReaderController? _controller;
   QnaRow? _qna;
-  List<QnaRow> _topicQnas = const [];
-  String? _topicTitle;
+  List<QnaRow> _chapterQnas = const [];
   String? _chapterTitle;
-  String? _chapterId;
   bool _rated = false;
   Object? _error;
 
@@ -114,48 +124,59 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     setState(() => _error = null);
     try {
       final repo = ref.read(contentRepositoryProvider);
-      final qna = await repo.qna(widget.qnaId!);
-      final topicQnas = widget.topicId == null
-          ? <QnaRow>[]
-          : await repo.qnas(widget.topicId!);
-      String? topicTitle, chapterTitle, chapterId;
-      if (widget.topicId != null) {
-        // repo.topics() is keyed by chapterId, not topicId, so the ancestor
-        // walk scans every chapter's topics for a match (fixture-sized data).
-        final specialities = await repo.specialities();
-        for (final sp in specialities.where((s) => s.hasContent)) {
+      final chapterId = widget.chapterId;
+      // Cache the chapter first: chapter entry always, deep-linked browse when
+      // the ?chapter= param is present.
+      if (chapterId != null) await repo.ensureChapterCached(chapterId);
+      // Chapter entry only (rewrite 4): record the activation BEFORE the
+      // controller (which fires recall_shown). Fire-and-forget, same as
+      // recall_shown - the reader must not wait on an analytics write.
+      if (widget.entryChapterId != null) {
+        ref.read(studyRepositoryProvider).recordAppEvent(
+            eventType: 'chapter_opened', contentId: widget.entryChapterId);
+      }
+      final chapterQnas =
+          chapterId == null ? const <QnaRow>[] : await repo.qnas(chapterId);
+      // Crumb title: find the chapter by id via the spec -> chapters walk.
+      String? chapterTitle;
+      if (chapterId != null) {
+        for (final sp
+            in (await repo.specialities()).where((s) => s.hasContent)) {
           for (final c in await repo.chapters(sp.id)) {
-            for (final t in await repo.topics(c.id)) {
-              if (t.id == widget.topicId) {
-                topicTitle = t.title;
-                chapterId = t.chapterId;
-                chapterTitle = c.title;
-              }
-            }
+            if (c.id == chapterId) chapterTitle = c.title;
           }
         }
       }
+      // Deep-linked browse keeps its own row lookup (a stale bookmark id
+      // resolves to null -> retry, not a crash). Chapter entry starts at the
+      // first question; a chapter with zero qnas (server excludes these) also
+      // routes into retry rather than throwing on .first.
+      final QnaRow? qna;
+      if (widget.qnaId != null) {
+        qna = await repo.qna(widget.qnaId!);
+      } else {
+        qna = chapterQnas.isEmpty ? null : chapterQnas.first;
+      }
       setState(() {
         _qna = qna;
-        // A fetch that completes with no error but no qna (id not found -
-        // e.g. a stale/deleted deep-linked bookmark) must not fall through
-        // to the loading spinner forever - route it into the same retry UI.
+        // No error but no row (stale/deleted deep link, or an empty chapter)
+        // must not fall through to the loading spinner forever - route it into
+        // the same retry UI.
         _error = qna == null ? StateError('qna not found') : null;
-        _topicQnas = topicQnas;
-        _topicTitle = topicTitle;
+        _chapterQnas = chapterQnas;
         _chapterTitle = chapterTitle;
-        _chapterId = chapterId;
-        // Build the browse controller once the topic list is known; rate/reveal
-        // and "Next in topic" route through it (rate-then-stay). topicQnaIds
-        // must contain the opened id, so fall back to [qnaId] when there is no
-        // topic context (deep-linked bookmark).
+        // Build the browse controller once the chapter list is known; rate/
+        // reveal and "Next in chapter" route through it (rate-then-stay).
+        // chapterQnaIds must contain the opened id, so fall back to [qna.id]
+        // when there is no chapter context (deep-linked bookmark).
         if (qna != null) {
           _controller?.removeListener(_onController);
           _controller = ReaderController.browse(
             repo: ref.read(studyRepositoryProvider),
             qnaId: qna.id,
-            topicQnaIds:
-                topicQnas.isEmpty ? [qna.id] : [for (final q in topicQnas) q.id],
+            chapterQnaIds: chapterQnas.isEmpty
+                ? [qna.id]
+                : [for (final q in chapterQnas) q.id],
           )..addListener(_onController);
         }
       });
@@ -165,12 +186,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   /// The card currently on screen. Queue: from the on-demand cache. Browse:
-  /// from the pre-loaded topic list, tracking the controller's current id.
+  /// from the pre-loaded chapter list, tracking the controller's current id.
   QnaRow? get _currentQna {
     final id = _controller?.currentQnaId;
     if (id == null) return widget.queueMode ? null : _qna;
     if (widget.queueMode) return _qnaCache[id];
-    return _topicQnas.firstWhere((q) => q.id == id, orElse: () => _qna!);
+    return _chapterQnas.firstWhere((q) => q.id == id, orElse: () => _qna!);
   }
 
   void _closeSearch() {
@@ -255,6 +276,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             false;
     return ReaderView(
       qna: qna,
+      overline: 'Question ${controller.position} of ${controller.total}',
       revealed: _revealed,
       rated: _rated,
       onReveal: controller.reveal,
@@ -265,9 +287,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         setState(() => _rated = true);
         showDmToast(context, '✓ Rated ${uiLabelForWire[r]} - next answer');
       },
-      onNextInTopic: controller.hasNextInTopic
+      onNextInChapter: controller.hasNextInChapter
           ? () {
-              controller.nextInTopic();
+              controller.nextInChapter();
               setState(() => _rated = false);
             }
           : null,
@@ -275,9 +297,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         if (_chapterTitle != null)
           (
             label: _chapterTitle!,
-            onTap: () => context.go('/syllabus/topics/$_chapterId'),
+            onTap: () => context.go('/syllabus'),
           ),
-        if (_topicTitle != null) (label: _topicTitle!, onTap: () {}),
       ],
       trailingCrumbAction: Row(mainAxisSize: MainAxisSize.min, children: [
         if (_revealed)

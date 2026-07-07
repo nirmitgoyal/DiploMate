@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _tapQna = '01J0QNATAPBLOCK00000000001';
-const _tapTopic = '01J0TOPICTAPBLOCK000000001';
+const _tapChapter = '01J0CHAPREGIONAL0000000001';
 
 Widget host({ContentRepository? repo}) => ProviderScope(
       overrides: [
@@ -18,7 +18,7 @@ Widget host({ContentRepository? repo}) => ProviderScope(
       ],
       child: MaterialApp(
           theme: dmLightTheme(),
-          home: ReaderScreen.browse(qnaId: _tapQna, topicId: _tapTopic)),
+          home: ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
     );
 
 /// qna() always returns null - exercises a successful fetch that finds no
@@ -37,10 +37,7 @@ class _NullQnaContentRepository implements ContentRepository {
   Future<void> ensureChapterCached(String chapterId) async {}
 
   @override
-  Future<List<TopicRow>> topics(String chapterId) async => const [];
-
-  @override
-  Future<List<QnaRow>> qnas(String topicId) async => const [];
+  Future<List<QnaRow>> qnas(String chapterId) async => const [];
 
   @override
   Future<QnaRow?> qna(String qnaId) async {
@@ -80,7 +77,7 @@ void main() {
   });
 
   testWidgets(
-      'reveal shows sections with red mark weights; tray is Easy/Medium/Hard; rating toasts and offers Next in topic',
+      'reveal shows sections with red mark weights; tray is Easy/Medium/Hard; rating toasts and offers Next in chapter',
       (t) async {
     await useTallSurface(t);
     await t.pumpWidget(host());
@@ -101,8 +98,8 @@ void main() {
     await t.pumpAndSettle(); // the rating persists (awaited drift write) then toasts
     expect(find.text('✓ Rated Easy - next answer'), findsOneWidget);
     await t.pump(const Duration(seconds: 2)); // toast expiry
-    expect(find.text('Next in topic'), findsNothing,
-        reason: 'TAP topic has one QnA - no next');
+    expect(find.text('Next in chapter'), findsNothing,
+        reason: 'TAP chapter has one QnA - no next');
   });
 
   testWidgets('earns-marks row jumps to its section', (t) async {

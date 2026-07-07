@@ -37,7 +37,7 @@ void main() {
           theme: dmLightTheme(),
           home: const ReaderScreen.browse(
               qnaId: '01J0QNATAPBLOCK00000000001',
-              topicId: '01J0TOPICTAPBLOCK000000001')),
+              chapterId: '01J0CHAPREGIONAL0000000001')),
     ));
     await t.pumpAndSettle();
     await t.tap(find.text('Reveal model answer'));
@@ -56,7 +56,7 @@ void main() {
           data: MediaQueryData(disableAnimations: true),
           child: ReaderScreen.browse(
               qnaId: '01J0QNATAPBLOCK00000000001',
-              topicId: '01J0TOPICTAPBLOCK000000001'),
+              chapterId: '01J0CHAPREGIONAL0000000001'),
         ),
       ),
     ));
@@ -173,7 +173,7 @@ void main() {
           theme: dmLightTheme(),
           home: const ReaderScreen.browse(
               qnaId: '01J0QNATAPBLOCK00000000001',
-              topicId: '01J0TOPICTAPBLOCK000000001')),
+              chapterId: '01J0CHAPREGIONAL0000000001')),
     ));
     await t.pumpAndSettle();
 

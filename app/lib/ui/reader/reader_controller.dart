@@ -7,7 +7,7 @@ enum ReaderMode { queue, browse }
 
 /// Drives one Reader session. Queue mode: due-only suggestions with
 /// auto-advance ("Suggestion · N of M" overline). Browse mode: opened from
-/// Topics/Bookmarks - crumb only, rate-then-stay + "Next in topic".
+/// Syllabus/Bookmarks - crumb only, rate-then-stay + "Next in chapter".
 /// Construct fresh on every screen entry (the recall gate resets).
 class ReaderController extends ChangeNotifier {
   ReaderController.queue({
@@ -25,14 +25,14 @@ class ReaderController extends ChangeNotifier {
   ReaderController.browse({
     required StudyRepository repo,
     required String qnaId,
-    required List<String> topicQnaIds,
+    required List<String> chapterQnaIds,
     DateTime Function() now = DateTime.now,
   })  : _repo = repo,
         _now = now,
         mode = ReaderMode.browse,
-        _items = List.unmodifiable(topicQnaIds),
-        _index = topicQnaIds.indexOf(qnaId) {
-    assert(_index >= 0, 'qnaId must be in topicQnaIds');
+        _items = List.unmodifiable(chapterQnaIds),
+        _index = chapterQnaIds.indexOf(qnaId) {
+    assert(_index >= 0, 'qnaId must be in chapterQnaIds');
     _startCurrent();
   }
 
@@ -54,7 +54,7 @@ class ReaderController extends ChangeNotifier {
   bool get revealed => _revealed;
   bool get ratingInFlight => _ratingInFlight;
   bool get complete => _complete;
-  bool get hasNextInTopic =>
+  bool get hasNextInChapter =>
       mode == ReaderMode.browse && _index < _items.length - 1;
 
   void _startCurrent() {
@@ -116,9 +116,9 @@ class ReaderController extends ChangeNotifier {
     }
   }
 
-  /// Browse mode only: the "Next in topic" action after rate-then-stay.
-  void nextInTopic() {
-    if (mode != ReaderMode.browse || !hasNextInTopic) return;
+  /// Browse mode only: the "Next in chapter" action after rate-then-stay.
+  void nextInChapter() {
+    if (mode != ReaderMode.browse || !hasNextInChapter) return;
     _index += 1;
     _startCurrent();
   }

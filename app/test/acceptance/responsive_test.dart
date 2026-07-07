@@ -49,7 +49,7 @@ void main() {
     await t.pumpWidget(host(
         const ReaderScreen.browse(
             qnaId: '01J0QNATAPBLOCK00000000001',
-            topicId: '01J0TOPICTAPBLOCK000000001'),
+            chapterId: '01J0CHAPREGIONAL0000000001'),
         width: 640, height: 320, scale: 1.3));
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
@@ -59,7 +59,7 @@ void main() {
     await t.pumpWidget(host(
         const ReaderScreen.browse(
             qnaId: '01J0QNATAPBLOCK00000000001',
-            topicId: '01J0TOPICTAPBLOCK000000001'),
+            chapterId: '01J0CHAPREGIONAL0000000001'),
         width: 800, height: 1000));
     await t.pumpAndSettle();
     await t.tap(find.text('Reveal model answer'));

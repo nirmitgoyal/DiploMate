@@ -72,7 +72,7 @@ void main() {
       final c = ReaderController.browse(
           repo: repo,
           qnaId: 'Q2',
-          topicQnaIds: ['Q1', 'Q2', 'Q3'],
+          chapterQnaIds: ['Q1', 'Q2', 'Q3'],
           now: () => now);
       expect(c.mode, ReaderMode.browse);
       expect(c.currentQnaId, 'Q2');
@@ -80,21 +80,21 @@ void main() {
       await c.rate(WireRating.hard);
       expect(c.currentQnaId, 'Q2'); // stays
       expect(c.revealed, true); // still on the revealed answer
-      expect(c.hasNextInTopic, true);
+      expect(c.hasNextInChapter, true);
       expect((await db.select(db.pendingReviewEvents).get()).length, 1);
     });
 
-    test('nextInTopic advances within the topic and resets the gate', () async {
+    test('nextInChapter advances within the chapter and resets the gate', () async {
       final c = ReaderController.browse(
           repo: repo,
           qnaId: 'Q2',
-          topicQnaIds: ['Q1', 'Q2', 'Q3'],
+          chapterQnaIds: ['Q1', 'Q2', 'Q3'],
           now: () => now);
       await c.reveal();
-      c.nextInTopic();
+      c.nextInChapter();
       expect(c.currentQnaId, 'Q3');
       expect(c.revealed, false);
-      expect(c.hasNextInTopic, false); // Q3 is last
+      expect(c.hasNextInChapter, false); // Q3 is last
     });
   });
 }

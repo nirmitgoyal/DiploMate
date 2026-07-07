@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _tapQna = '01J0QNATAPBLOCK00000000001';
-const _tapTopic = '01J0TOPICTAPBLOCK000000001';
+const _tapChapter = '01J0CHAPREGIONAL0000000001';
 
 // Keyed by `online` so a second pumpWidget(host(online: false)) in the same
 // test forces a fresh ReaderScreen element/state instead of Flutter reusing
@@ -16,7 +16,7 @@ Widget host({bool online = true}) => ProviderScope(
       overrides: [isOnlineProvider.overrideWith((ref) => online)],
       child: MaterialApp(
           theme: dmLightTheme(),
-          home: ReaderScreen.browse(qnaId: _tapQna, topicId: _tapTopic)),
+          home: ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
     );
 
 void main() {
