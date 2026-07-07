@@ -9,89 +9,92 @@ export const MAX_IMAGE_BYTES = 204800;
 export const MAX_IMAGE_EDGE = 1600;
 const WEBP_QUALITIES = [80, 60, 40];
 
-export async function buildChapter(chapterDir, outDir) {
+// Speciality-level ledger (eng amendment 1): ONE ids.lock per speciality;
+// chapter membership is placement only, so a question moved between chapters
+// keeps its ULID. Default lock location: the chapter dir's PARENT (all of a
+// speciality's chapter dirs share it); the generator passes the committed
+// ledger path explicitly. After a cross-chapter move, republish BOTH affected
+// chapters in one publish invocation (identity survives either order; the
+// batch shrinks the transient-absence window - see publish.js).
+export function defaultLockPath(chapterDir) {
+  return path.join(path.dirname(path.resolve(chapterDir)), "ids.lock");
+}
+
+export async function buildChapter(
+  chapterDir,
+  outDir,
+  lockPath = defaultLockPath(chapterDir),
+) {
   const source = JSON.parse(
     await readFile(path.join(chapterDir, "chapter.json"), "utf8"),
   );
-  const lockPath = path.join(chapterDir, "ids.lock");
   let lock;
   try {
     lock = JSON.parse(await readFile(lockPath, "utf8"));
   } catch {
-    lock = { chapter: null, topics: {}, qnas: {}, images: {} };
+    lock = { chapters: {}, qnas: {}, images: {} };
   }
-  lock.topics ??= {};
+  lock.chapters ??= {};
   lock.qnas ??= {};
   lock.images ??= {};
-  lock.chapter ??= ulid();
   const mint = (map, key) => (map[key] ??= ulid());
 
+  if (!source.chapter?.key)
+    throw new Error(
+      `chapter "${source.chapter?.title ?? "?"}": missing "key" (permanent identity handle, see AUTHORING.md)`,
+    );
+  const chapterId = mint(lock.chapters, source.chapter.key);
+
   const canonical = {
-    schema_version: 1,
+    schema_version: 2,
     speciality_slug: source.speciality_slug,
     chapter: {
-      id: lock.chapter,
+      id: chapterId,
       title: source.chapter.title,
       slug: source.chapter.slug,
       sort_order: source.chapter.sort_order,
       exam_weight: source.chapter.exam_weight,
     },
-    topics: [],
     qnas: [],
     images: [],
   };
 
-  for (const topic of source.topics ?? []) {
-    if (!topic.key)
+  for (const qna of source.qnas ?? []) {
+    if (!qna.key)
       throw new Error(
-        `topic "${topic.title ?? "?"}": missing "key" (permanent identity handle, see AUTHORING.md)`,
+        `qna "${(qna.question ?? "?").slice(0, 40)}": missing "key" (permanent identity handle, see AUTHORING.md)`,
       );
-    const topicId = mint(lock.topics, topic.key);
-    canonical.topics.push({
-      id: topicId,
-      chapter_id: lock.chapter,
-      title: topic.title,
-      slug: topic.slug,
-      exam_theme: topic.exam_theme ?? null,
-      sort_order: topic.sort_order,
+    const qnaId = mint(lock.qnas, qna.key);
+    canonical.qnas.push({
+      id: qnaId,
+      chapter_id: chapterId,
+      question: qna.question,
+      years: qna.years ?? null,
+      marks: qna.marks ?? null,
+      earns_marks: qna.earns_marks ?? [],
+      sections: qna.sections,
+      sort_order: qna.sort_order,
     });
-    for (const qna of topic.qnas ?? []) {
-      if (!qna.key)
-        throw new Error(
-          `qna "${(qna.question ?? "?").slice(0, 40)}": missing "key" (permanent identity handle, see AUTHORING.md)`,
-        );
-      const qnaId = mint(lock.qnas, qna.key);
-      canonical.qnas.push({
-        id: qnaId,
-        topic_id: topicId,
-        question: qna.question,
-        years: qna.years ?? null,
-        marks: qna.marks ?? null,
-        earns_marks: qna.earns_marks ?? [],
-        sections: qna.sections,
-        sort_order: qna.sort_order,
+    for (const img of qna.images ?? []) {
+      const imageId = mint(lock.images, `${qna.key}/${img.file}`);
+      const processed = await processImage(
+        path.join(chapterDir, "images", img.file),
+      );
+      await mkdir(path.join(outDir, "images"), { recursive: true });
+      await writeFile(
+        path.join(outDir, "images", `${imageId}.webp`),
+        processed,
+      );
+      canonical.images.push({
+        id: imageId,
+        qna_id: qnaId,
+        caption: img.caption,
+        content_description: img.content_description,
+        file: `images/${imageId}.webp`,
+        byte_size: processed.length,
+        sha256: createHash("sha256").update(processed).digest("hex"),
+        sort_order: img.sort_order,
       });
-      for (const img of qna.images ?? []) {
-        const imageId = mint(lock.images, `${qna.key}/${img.file}`);
-        const processed = await processImage(
-          path.join(chapterDir, "images", img.file),
-        );
-        await mkdir(path.join(outDir, "images"), { recursive: true });
-        await writeFile(
-          path.join(outDir, "images", `${imageId}.webp`),
-          processed,
-        );
-        canonical.images.push({
-          id: imageId,
-          qna_id: qnaId,
-          caption: img.caption,
-          content_description: img.content_description,
-          file: `images/${imageId}.webp`,
-          byte_size: processed.length,
-          sha256: createHash("sha256").update(processed).digest("hex"),
-          sort_order: img.sort_order,
-        });
-      }
     }
   }
 
@@ -128,8 +131,7 @@ const sortKeys = (obj) =>
 
 async function writeLock(lockPath, lock) {
   const stable = {
-    chapter: lock.chapter,
-    topics: sortKeys(lock.topics),
+    chapters: sortKeys(lock.chapters),
     qnas: sortKeys(lock.qnas),
     images: sortKeys(lock.images),
   };
@@ -140,13 +142,13 @@ if (
   process.argv[1] &&
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const [chapterDir, outDir] = process.argv.slice(2);
+  const [chapterDir, outDir, lockPath] = process.argv.slice(2);
   if (!chapterDir || !outDir) {
-    console.error("usage: node src/build.js <chapterDir> <outDir>");
+    console.error("usage: node src/build.js <chapterDir> <outDir> [lockPath]");
     process.exit(2);
   }
   try {
-    const canonical = await buildChapter(chapterDir, outDir);
+    const canonical = await buildChapter(chapterDir, outDir, lockPath);
     console.log(
       `built chapter ${canonical.chapter.id} (${canonical.qnas.length} qnas, ${canonical.images.length} images)`,
     );
