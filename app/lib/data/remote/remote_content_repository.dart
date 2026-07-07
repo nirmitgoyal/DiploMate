@@ -79,7 +79,6 @@ class RemoteContentRepository implements ContentRepository {
 
     try {
       final items = <Map<String, dynamic>>[];
-      var topics = const <Map<String, dynamic>>[];
       var page = 1, pages = 1, version = remote ?? 0;
       do {
         final res = await api.dio
@@ -88,13 +87,10 @@ class RemoteContentRepository implements ContentRepository {
         pages = body['pages'] as int;
         version = body['content_version'] as int;
         items.addAll((body['items'] as List).cast<Map<String, dynamic>>());
-        // topics[] is repeated identically on every page (Task 3a); last wins.
-        topics = ((body['topics'] as List?) ?? const [])
-            .cast<Map<String, dynamic>>();
         page++;
       } while (page <= pages);
       // ONE transaction per chapter refresh; an open QnA stays in memory.
-      await db.replaceChapterContent(chapterId, version, items, topics);
+      await db.replaceChapterContent(chapterId, version, items);
     } on DioException catch (e) {
       if (_isNetwork(e) && cached != null) return;
       if (_isNetwork(e)) throw ContentFetchException(chapterId);
@@ -103,10 +99,7 @@ class RemoteContentRepository implements ContentRepository {
   }
 
   @override
-  Future<List<TopicRow>> topics(String chapterId) => db.readTopics(chapterId);
-
-  @override
-  Future<List<QnaRow>> qnas(String topicId) => db.readQnas(topicId);
+  Future<List<QnaRow>> qnas(String chapterId) => db.readQnasByChapter(chapterId);
 
   @override
   Future<QnaRow?> qna(String qnaId) => db.readQna(qnaId);

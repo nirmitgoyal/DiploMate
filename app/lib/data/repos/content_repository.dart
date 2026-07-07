@@ -13,8 +13,7 @@ abstract class ContentRepository {
   Future<List<SpecialityRow>> specialities();
   Future<List<ChapterRow>> chapters(String specialityId);
   Future<void> ensureChapterCached(String chapterId);
-  Future<List<TopicRow>> topics(String chapterId);
-  Future<List<QnaRow>> qnas(String topicId);
+  Future<List<QnaRow>> qnas(String chapterId);
   Future<QnaRow?> qna(String qnaId);
   Future<Uint8List> imageBytes(String imageId);
 }

@@ -22,9 +22,10 @@ void main() {
     final airway = chapters.first;
     expect(airway.title, 'Airway Management');
     expect(airway.contentVersion, 1);
-    final topics = await repo.topics(airway.id);
-    expect(topics.length, 2);
-    final qnas = await repo.qnas(topics.first.id);
+    final qnas = await repo.qnas(airway.id);
+    expect(qnas.map((q) => q.id).toList(),
+        ['01J0QNADIFFAIR000000000001', '01J0QNARSI0000000000000001']);
+    expect(qnas.every((q) => q.chapterId == airway.id), isTrue);
     expect(qnas.first.earnsMarks.first.sectionKey, isNotEmpty);
     expect(qnas.first.sections.first.key, qnas.first.earnsMarks.first.sectionKey);
   });
@@ -34,13 +35,10 @@ void main() {
     final anaes = specs.singleWhere((s) => s.hasContent);
     final chapters = await repo.chapters(anaes.id);
     // The image lives on the Truncal blocks QnA (Regional Anaesthesia
-    // chapter), not necessarily the first chapter/topic - walk all of them.
+    // chapter), not necessarily the first chapter - walk all of them.
     final allQnas = <QnaRow>[];
     for (final chapter in chapters) {
-      final topics = await repo.topics(chapter.id);
-      for (final topic in topics) {
-        allQnas.addAll(await repo.qnas(topic.id));
-      }
+      allQnas.addAll(await repo.qnas(chapter.id));
     }
     final img = allQnas.expand((q) => q.images).first;
     final bytes = await repo.imageBytes(img.id);

@@ -26,36 +26,10 @@
       "content_version": 1
     }
   ],
-  "topics": [
-    {
-      "id": "01J0TOPICDIFFAIR0000000001",
-      "chapter_id": "01J0CHAPAIRWAY000000000001",
-      "title": "Difficult airway algorithm",
-      "slug": "difficult-airway-algorithm",
-      "exam_theme": "Emergencies",
-      "sort_order": 1
-    },
-    {
-      "id": "01J0TOPICRSI00000000000001",
-      "chapter_id": "01J0CHAPAIRWAY000000000001",
-      "title": "Rapid sequence induction",
-      "slug": "rapid-sequence-induction",
-      "exam_theme": "Technique",
-      "sort_order": 2
-    },
-    {
-      "id": "01J0TOPICTAPBLOCK000000001",
-      "chapter_id": "01J0CHAPREGIONAL0000000001",
-      "title": "Truncal blocks",
-      "slug": "truncal-blocks",
-      "exam_theme": "Blocks",
-      "sort_order": 1
-    }
-  ],
   "qnas": [
     {
       "id": "01J0QNATAPBLOCK00000000001",
-      "topic_id": "01J0TOPICTAPBLOCK000000001",
+      "chapter_id": "01J0CHAPREGIONAL0000000001",
       "question": "Describe the transversus abdominis plane (TAP) block: anatomical basis, ultrasound-guided technique, indications, and complications.",
       "years": "2022 Paper II",
       "marks": 10,
@@ -119,7 +93,7 @@
     },
     {
       "id": "01J0QNADIFFAIR000000000001",
-      "topic_id": "01J0TOPICDIFFAIR0000000001",
+      "chapter_id": "01J0CHAPAIRWAY000000000001",
       "question": "Outline the difficult airway algorithm for an anticipated difficult intubation.",
       "years": "2021 Paper I",
       "marks": 10,
@@ -159,7 +133,7 @@
     },
     {
       "id": "01J0QNARSI0000000000000001",
-      "topic_id": "01J0TOPICRSI00000000000001",
+      "chapter_id": "01J0CHAPAIRWAY000000000001",
       "question": "Describe rapid sequence induction: indications, drugs, and technique.",
       "years": "2019, 2023 Paper I",
       "marks": 5,
