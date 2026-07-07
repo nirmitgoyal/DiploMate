@@ -38,7 +38,7 @@ const _manifest = {
   ],
   'chapters': [
     {'id': 'CH1', 'title': 'Airway Management', 'slug': 'airway', 'sort_order': 1,
-     'exam_weight': 100, 'content_version': 1, 'topic_count': 1, 'qna_count': 1},
+     'exam_weight': 100, 'content_version': 1, 'qna_count': 1},
   ],
 };
 
@@ -169,5 +169,11 @@ void main() {
     final anaes = specs.firstWhere((s) => s.id == 'S1');
     expect(anaes.slug, 'anaesthesiology');
     expect(anaes.hasContent, isTrue, reason: 'has_content sourced from the manifest wire');
+  });
+
+  test('manifest min_app_version above the supported pin throws UpgradeRequiredException', () async {
+    adapter.handler = (o) =>
+        json({'schema_version': 2, 'min_app_version': 3, 'specialities': []});
+    await expectLater(repo.specialities(), throwsA(isA<UpgradeRequiredException>()));
   });
 }

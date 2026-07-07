@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app_providers.dart';
 import '../../data/repos/auth_repository.dart';
+import '../../data/repos/content_repository.dart';
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
 import '../shell/dm_toast.dart';
@@ -23,6 +24,7 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
   String? _selectedId;
   bool _saving = false;
   String? _error;
+  bool _upgrade = false;
 
   @override
   void initState() {
@@ -35,7 +37,10 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
           _selectedId = ref.read(sessionUserProvider)?.specialityId;
         }
       });
-    });
+    }).catchError((e) {
+      if (!mounted) return;
+      setState(() => _upgrade = true);
+    }, test: (e) => e is UpgradeRequiredException);
   }
 
   String _label(SpecialityRow s) => '${s.name} (${s.examType})';
@@ -113,6 +118,27 @@ class _SpecialityScreenState extends ConsumerState<SpecialityScreen> {
   @override
   Widget build(BuildContext context) {
     final dm = Theme.of(context).extension<DmTheme>()!.colors;
+    if (_upgrade) {
+      return Scaffold(
+        backgroundColor: dm.paper,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(DmSpace.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Update DiploMate to continue',
+                    style: DmType.bodyUi.copyWith(color: dm.ink)),
+                const SizedBox(height: DmSpace.sm),
+                Text('This version is too old for the current content format.',
+                    style: DmType.meta.copyWith(color: dm.ink2),
+                    textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final filtered = _filtered;
     final dnb = [for (final s in filtered) if (s.examType == 'DNB') s];
     final drnb = [for (final s in filtered) if (s.examType == 'DrNB') s];
