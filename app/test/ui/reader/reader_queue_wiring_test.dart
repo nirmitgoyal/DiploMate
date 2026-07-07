@@ -27,16 +27,14 @@ class _OneQnaContentRepository implements ContentRepository {
   @override
   Future<void> ensureChapterCached(String chapterId) async {}
   @override
-  Future<List<TopicRow>> topics(String chapterId) async => const [];
-  @override
-  Future<List<QnaRow>> qnas(String topicId) async => const [];
+  Future<List<QnaRow>> qnas(String chapterId) async => const [];
   @override
   Future<Uint8List> imageBytes(String imageId) async => Uint8List(0);
 }
 
 QnaRow _seedQna() => const QnaRow(
       id: 'QN1',
-      topicId: 'T1',
+      chapterId: 'T1',
       question: 'Define the stress response to surgery.',
       years: '2022 Paper I',
       marks: 10,

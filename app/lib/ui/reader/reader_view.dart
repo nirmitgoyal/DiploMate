@@ -13,7 +13,7 @@ class ReaderView extends StatefulWidget {
     this.overline,
     this.crumb = const [],
     this.trailingCrumbAction,
-    this.onNextInTopic,
+    this.onNextInChapter,
     this.belowAnswer,
     this.rated = false,
     this.imageBuilder,
@@ -30,7 +30,7 @@ class ReaderView extends StatefulWidget {
   final String? overline;
   final List<({String label, VoidCallback onTap})> crumb;
   final Widget? trailingCrumbAction;
-  final VoidCallback? onNextInTopic;
+  final VoidCallback? onNextInChapter;
   final Widget? belowAnswer;
   final Widget Function(BuildContext, ImageRow)? imageBuilder;
 
@@ -377,16 +377,16 @@ class _ReaderViewState extends State<ReaderView> {
                                             onTap: () => widget
                                                 .onRate(WireRating.again)),
                                       ]),
-                                    ] else if (widget.onNextInTopic !=
+                                    ] else if (widget.onNextInChapter !=
                                         null) ...[
                                       OutlinedButton(
-                                        onPressed: widget.onNextInTopic,
+                                        onPressed: widget.onNextInChapter,
                                         style: OutlinedButton.styleFrom(
                                             minimumSize:
                                                 const Size.fromHeight(48),
                                             side: BorderSide(
                                                 color: dm.ruleStrong)),
-                                        child: Text('Next in topic',
+                                        child: Text('Next in chapter',
                                             style: DmType.bodyUi
                                                 .copyWith(color: dm.tealInk)),
                                       ),
