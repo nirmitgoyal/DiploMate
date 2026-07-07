@@ -79,7 +79,11 @@ function buildQaReport(questions, fullText, expectedCount) {
 const QUESTION_START_RE = /^\s*(\d{1,2})\.\s+/gm;
 const MARKS_SUFFIX_RE = /\(\s*(\d+)\s*marks?\s*\)\s*$/i;
 
-function splitQuestionBlocks(text) {
+// Exported for the discriminating position test: printed number vs array
+// index only diverge when the printed numbers skip, and the committed
+// sample PDF numbers 1,2,3 consecutively, so the split is exercised on a
+// hand-written gapped text input rather than a second binary fixture.
+export function splitQuestionBlocks(text) {
   const starts = [...text.matchAll(QUESTION_START_RE)];
   const blocks = [];
   for (let i = 0; i < starts.length; i++) {
