@@ -18,12 +18,13 @@ const RENDER_DPI = 300;
 
 // Renders one PDF page to a PNG via pdftoppm and returns the path it
 // actually wrote. pdftoppm never writes exactly `outPng`: given a prefix it
-// appends "-<page>" (zero-padded once the document needs more digits)
-// before the extension, e.g. outPng "page.png" -> "page-2.png" or
-// "page-006.png". So: strip outPng's extension to get the prefix pdftoppm
-// wants, run it, then find the one file in that directory matching
-// "<prefix>-<digits>.png" and return ITS real path - never the unwritten
-// `outPng` itself.
+// appends "-<page>" (zero-padded to the document's page-count width) before
+// the extension, e.g. outPng "page.png" -> "page-2.png" or "page-0012.png".
+// So: strip outPng's extension to get the prefix pdftoppm wants, run it,
+// then find the file whose numeric page segment equals THIS page (comparing
+// the parsed integer, so "0012" matches 12 AND a stale sibling render of a
+// different page left in the same dir is not returned by mistake) and return
+// ITS real path - never the unwritten `outPng`, never a wrong page's file.
 export async function renderPage(pdfPath, pdfPage, outPng) {
   const dir = path.dirname(outPng);
   const prefix = outPng.replace(/\.png$/i, "");
@@ -44,7 +45,8 @@ export async function renderPage(pdfPath, pdfPage, outPng) {
   const entries = await readdir(dir);
   const produced = entries.find((f) => {
     if (!f.startsWith(`${base}-`) || !f.endsWith(".png")) return false;
-    return /^\d+$/.test(f.slice(base.length + 1, -".png".length));
+    const middle = f.slice(base.length + 1, -".png".length);
+    return /^\d+$/.test(middle) && Number(middle) === Number(pdfPage);
   });
   if (!produced) {
     throw new Error(

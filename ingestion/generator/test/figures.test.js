@@ -67,3 +67,23 @@ test("renderPage renders one PDF page and returns the real (suffixed) path pdfto
   const meta = await sharp(rendered).metadata();
   assert.equal(meta.format, "png");
 });
+
+test("renderPage returns the REQUESTED page even when a sibling page render sits in the same dir", async () => {
+  // Two renders into the SAME prefix/dir, not cleared between calls - the
+  // exact shape a batch orchestrator produces. The predicate must key on the
+  // numeric page segment, not just "a pdftoppm-shaped name", or the second
+  // call hands back the first call's stale file.
+  const dir = await mkdtemp(path.join(tmpdir(), "figures-sibling-"));
+  const outPng = path.join(dir, "page.png");
+
+  const p1 = await renderPage(SAMPLE_PDF, 1, outPng);
+  const p2 = await renderPage(SAMPLE_PDF, 2, outPng);
+
+  assert.match(path.basename(p1), /^page-0*1\.png$/, "page-1 request");
+  assert.match(
+    path.basename(p2),
+    /^page-0*2\.png$/,
+    "page-2 request must not return the stale page-1 file",
+  );
+  assert.notEqual(p1, p2);
+});
