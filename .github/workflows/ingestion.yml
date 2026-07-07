@@ -37,5 +37,8 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      # generator/ Stage-0 tests shell out to pdftotext/pdftoppm (poppler) and,
+      # under RUN_OCR_TEST, tesseract - the same tools the plan requires on PATH.
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils tesseract-ocr
       - run: npm test
       - run: node src/validate.js fixtures/canonical/sample-chapter
