@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
-import { probeTextLayer, extractQuestions } from "../src/extract.js";
+import {
+  probeTextLayer,
+  extractQuestions,
+  splitQuestionBlocks,
+} from "../src/extract.js";
 
 // Mirrors fixtures/make-paper.js's SAMPLE_QUESTIONS. Not imported from
 // there directly - that module's top level regenerates both PDFs (shells
@@ -50,6 +54,25 @@ test("extraction splits all numbered questions and parses their marks", async ()
     "position is the printed item number, not the array index",
   );
   assert.equal(qa.count, SAMPLE_QUESTIONS.length);
+});
+
+// The PDF test above numbers 1,2,3 consecutively, so printed-number and
+// array-index+1 give the same answer and cannot tell the two apart. This
+// feeds owned synthetic text whose printed numbers SKIP (2, 5, 6): position
+// must equal the printed number, so [2,5,6]. Were position the array index
+// it would read [1,2,3] and every assertion here would fail - the guard
+// against a future regression to `i + 1`.
+test("position is the printed item number even when the printed numbers skip", () => {
+  const blocks = splitQuestionBlocks(
+    "2. First stem, printed two.\n" +
+      "5. Second stem, printed five.\n" +
+      "6. Third stem, printed six.",
+  );
+  assert.deepEqual(
+    blocks.map((b) => b.position),
+    [2, 5, 6],
+    "printed numbers, not array indices [1,2,3]",
+  );
 });
 
 test("year and paper are stamped from the first-page header", async () => {
