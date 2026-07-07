@@ -12,6 +12,8 @@ export async function testClient() {
   await client.connect();
   await client.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public");
   const sqlDir = new URL("../../sql/", import.meta.url);
+  // Numbered migrations only; the regex skips the metrics/ views dir and
+  // README.md, which are not base schema.
   const files = (await readdir(sqlDir))
     .filter((f) => /^\d{4}_.*\.sql$/.test(f))
     .sort();
