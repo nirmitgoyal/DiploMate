@@ -31,9 +31,9 @@ export async function validateCanonical(dir) {
     seenIds.add(id);
   };
 
-  if (canonical.schema_version !== 1) {
+  if (canonical.schema_version !== 2) {
     errors.push(
-      `schema_version: expected 1, got ${JSON.stringify(canonical.schema_version ?? null)}`,
+      `schema_version: expected 2, got ${JSON.stringify(canonical.schema_version ?? null)}`,
     );
   }
   if (
@@ -56,40 +56,19 @@ export async function validateCanonical(dir) {
   if (!isInt(ch.exam_weight))
     errors.push("chapter.exam_weight: not an integer");
 
-  const topics = Array.isArray(canonical.topics) ? canonical.topics : [];
-  if (topics.length === 0) errors.push("topics: must be a non-empty array");
-  const topicIds = new Set();
-  const topicSlugs = new Set();
-  topics.forEach((t, i) => {
-    checkId(`topics[${i}]`, t.id);
-    if (t.chapter_id !== ch.id)
-      errors.push(`topics[${i}].chapter_id: does not match chapter.id`);
-    if (!nonEmpty(t.title)) errors.push(`topics[${i}].title: missing or empty`);
-    if (!SLUG_RE.test(t.slug ?? ""))
-      errors.push(
-        `topics[${i}].slug: ${JSON.stringify(t.slug ?? null)} is not a valid slug`,
-      );
-    else if (topicSlugs.has(t.slug))
-      errors.push(`topics: duplicate slug ${JSON.stringify(t.slug)}`);
-    topicSlugs.add(t.slug);
-    if (t.exam_theme != null && !nonEmpty(t.exam_theme))
-      errors.push(
-        `topics[${i}].exam_theme: must be a non-empty string or null`,
-      );
-    if (!isInt(t.sort_order))
-      errors.push(`topics[${i}].sort_order: not an integer`);
-    topicIds.add(t.id);
-  });
+  if ("topics" in canonical) {
+    errors.push(
+      "topics: removed in schema v2 - qnas hang directly off the chapter (sql/0004)",
+    );
+  }
 
   const qnas = Array.isArray(canonical.qnas) ? canonical.qnas : [];
   if (qnas.length === 0) errors.push("qnas: must be a non-empty array");
   const qnaIds = new Set();
   qnas.forEach((q, i) => {
     checkId(`qnas[${i}]`, q.id);
-    if (!topicIds.has(q.topic_id))
-      errors.push(
-        `qnas[${i}].topic_id: ${JSON.stringify(q.topic_id ?? null)} does not match any topics[].id`,
-      );
+    if (q.chapter_id !== ch.id)
+      errors.push(`qnas[${i}].chapter_id: does not match chapter.id`);
     if (!nonEmpty(q.question))
       errors.push(`qnas[${i}].question: missing or empty`);
     if (q.years != null && !nonEmpty(q.years))
