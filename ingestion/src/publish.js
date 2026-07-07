@@ -48,28 +48,17 @@ export async function publishChapter(client, canonicalDir) {
       [ch.id, specialityId, ch.title, ch.slug, ch.sort_order, ch.exam_weight],
     );
 
-    for (const t of canonical.topics) {
-      await client.query(
-        `INSERT INTO topics (id, chapter_id, title, slug, exam_theme, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (id) DO UPDATE SET
-           chapter_id = EXCLUDED.chapter_id, title = EXCLUDED.title, slug = EXCLUDED.slug,
-           exam_theme = EXCLUDED.exam_theme, sort_order = EXCLUDED.sort_order`,
-        [t.id, t.chapter_id, t.title, t.slug, t.exam_theme, t.sort_order],
-      );
-    }
-
     for (const q of canonical.qnas) {
       await client.query(
-        `INSERT INTO qnas (id, topic_id, question, years, marks, earns_marks, sections, sort_order)
+        `INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, sort_order)
          VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)
          ON CONFLICT (id) DO UPDATE SET
-           topic_id = EXCLUDED.topic_id, question = EXCLUDED.question, years = EXCLUDED.years,
+           chapter_id = EXCLUDED.chapter_id, question = EXCLUDED.question, years = EXCLUDED.years,
            marks = EXCLUDED.marks, earns_marks = EXCLUDED.earns_marks, sections = EXCLUDED.sections,
            sort_order = EXCLUDED.sort_order`,
         [
           q.id,
-          q.topic_id,
+          q.chapter_id,
           q.question,
           q.years,
           q.marks,
@@ -103,21 +92,19 @@ export async function publishChapter(client, canonicalDir) {
     }
 
     // A republish is authoritative for its chapter: rows dropped from the
-    // canonical set are deleted (FK-safe order: images -> qnas -> topics).
+    // canonical set are deleted (FK-safe order: images -> qnas). Under the
+    // speciality ledger a qna moved to ANOTHER chapter has already been
+    // upserted with its new chapter_id by the batch, so the source chapter's
+    // delete never touches it (its chapter_id no longer matches $1).
     await client.query(
       `DELETE FROM images WHERE qna_id IN (
-         SELECT q.id FROM qnas q JOIN topics t ON q.topic_id = t.id WHERE t.chapter_id = $1
+         SELECT id FROM qnas WHERE chapter_id = $1
        ) AND id <> ALL($2::text[])`,
       [ch.id, canonical.images.map((i) => i.id)],
     );
     await client.query(
-      `DELETE FROM qnas WHERE topic_id IN (SELECT id FROM topics WHERE chapter_id = $1)
-       AND id <> ALL($2::text[])`,
+      `DELETE FROM qnas WHERE chapter_id = $1 AND id <> ALL($2::text[])`,
       [ch.id, canonical.qnas.map((q) => q.id)],
-    );
-    await client.query(
-      `DELETE FROM topics WHERE chapter_id = $1 AND id <> ALL($2::text[])`,
-      [ch.id, canonical.topics.map((t) => t.id)],
     );
 
     // ponytail: content_version bumps on EVERY publish, including a no-change
@@ -140,10 +127,10 @@ if (
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
   const args = process.argv.slice(2);
-  const dir = args.find((a) => !a.startsWith("--"));
-  if (!dir) {
+  const dirs = args.filter((a) => !a.startsWith("--"));
+  if (dirs.length === 0) {
     console.error(
-      "usage: LICENSE_SIGNED=true node src/publish.js <canonicalDir> --allow-publish",
+      "usage: LICENSE_SIGNED=true node src/publish.js <canonicalDir> [more dirs...] --allow-publish",
     );
     process.exit(2);
   }
@@ -159,10 +146,12 @@ if (
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
   try {
-    const { chapterId, contentVersion } = await publishChapter(client, dir);
-    console.log(
-      `published chapter ${chapterId} at content_version ${contentVersion}`,
-    );
+    for (const dir of dirs) {
+      const { chapterId, contentVersion } = await publishChapter(client, dir);
+      console.log(
+        `published chapter ${chapterId} at content_version ${contentVersion}`,
+      );
+    }
   } catch (err) {
     console.error(`ERROR ${err.message}`);
     process.exitCode = 1;
