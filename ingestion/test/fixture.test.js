@@ -22,7 +22,9 @@ test("committed canonical fixture has the shape lanes B/D rely on", async () => 
   const canonical = JSON.parse(
     await readFile(path.join(CANONICAL_DIR, "chapter.json"), "utf8"),
   );
-  assert.equal(canonical.topics.length, 2);
+  assert.equal(canonical.schema_version, 2);
+  assert.equal(canonical.speciality_slug, "anaesthesiology");
+  assert.equal("topics" in canonical, false);
   assert.equal(canonical.qnas.length, 3);
   assert.equal(canonical.images.length, 1);
 });
@@ -34,10 +36,6 @@ test("rebuilding the fixture reuses the committed ULIDs", async () => {
     await readFile(path.join(CANONICAL_DIR, "chapter.json"), "utf8"),
   );
   assert.equal(rebuilt.chapter.id, committed.chapter.id);
-  assert.deepEqual(
-    rebuilt.topics.map((t) => t.id),
-    committed.topics.map((t) => t.id),
-  );
   assert.deepEqual(
     rebuilt.qnas.map((q) => q.id),
     committed.qnas.map((q) => q.id),

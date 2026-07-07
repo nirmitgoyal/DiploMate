@@ -1,8 +1,6 @@
 {
-  "chapter": "01KWRJV8K4PVHZXZZZCQCRKVMP",
-  "topics": {
-    "spinal-anaesthesia": "01KWRJV8K5VR0JACJCB9SX1J4W",
-    "spinal-complications": "01KWRJV8KJ1BYQQ9S2EYTSWGG3"
+  "chapters": {
+    "regional-anaesthesia-sample": "01KWRJV8K4PVHZXZZZCQCRKVMP"
   },
   "qnas": {
     "pdph": "01KWRJV8KJACRNDSG9Y7XDBDTC",
