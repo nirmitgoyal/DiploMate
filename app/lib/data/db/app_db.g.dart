@@ -697,350 +697,6 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
   }
 }
 
-class $TopicsTable extends Topics with TableInfo<$TopicsTable, Topic> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $TopicsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _chapterIdMeta =
-      const VerificationMeta('chapterId');
-  @override
-  late final GeneratedColumn<String> chapterId = GeneratedColumn<String>(
-      'chapter_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _titleMeta = const VerificationMeta('title');
-  @override
-  late final GeneratedColumn<String> title = GeneratedColumn<String>(
-      'title', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _slugMeta = const VerificationMeta('slug');
-  @override
-  late final GeneratedColumn<String> slug = GeneratedColumn<String>(
-      'slug', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _examThemeMeta =
-      const VerificationMeta('examTheme');
-  @override
-  late final GeneratedColumn<String> examTheme = GeneratedColumn<String>(
-      'exam_theme', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _sortOrderMeta =
-      const VerificationMeta('sortOrder');
-  @override
-  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
-      'sort_order', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
-  @override
-  List<GeneratedColumn> get $columns =>
-      [id, chapterId, title, slug, examTheme, sortOrder];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'topics';
-  @override
-  VerificationContext validateIntegrity(Insertable<Topic> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('chapter_id')) {
-      context.handle(_chapterIdMeta,
-          chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta));
-    } else if (isInserting) {
-      context.missing(_chapterIdMeta);
-    }
-    if (data.containsKey('title')) {
-      context.handle(
-          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
-    } else if (isInserting) {
-      context.missing(_titleMeta);
-    }
-    if (data.containsKey('slug')) {
-      context.handle(
-          _slugMeta, slug.isAcceptableOrUnknown(data['slug']!, _slugMeta));
-    } else if (isInserting) {
-      context.missing(_slugMeta);
-    }
-    if (data.containsKey('exam_theme')) {
-      context.handle(_examThemeMeta,
-          examTheme.isAcceptableOrUnknown(data['exam_theme']!, _examThemeMeta));
-    }
-    if (data.containsKey('sort_order')) {
-      context.handle(_sortOrderMeta,
-          sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  Topic map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Topic(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      chapterId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}chapter_id'])!,
-      title: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
-      slug: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}slug'])!,
-      examTheme: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}exam_theme']),
-      sortOrder: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
-    );
-  }
-
-  @override
-  $TopicsTable createAlias(String alias) {
-    return $TopicsTable(attachedDatabase, alias);
-  }
-}
-
-class Topic extends DataClass implements Insertable<Topic> {
-  final String id;
-  final String chapterId;
-  final String title;
-  final String slug;
-  final String? examTheme;
-  final int sortOrder;
-  const Topic(
-      {required this.id,
-      required this.chapterId,
-      required this.title,
-      required this.slug,
-      this.examTheme,
-      required this.sortOrder});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['chapter_id'] = Variable<String>(chapterId);
-    map['title'] = Variable<String>(title);
-    map['slug'] = Variable<String>(slug);
-    if (!nullToAbsent || examTheme != null) {
-      map['exam_theme'] = Variable<String>(examTheme);
-    }
-    map['sort_order'] = Variable<int>(sortOrder);
-    return map;
-  }
-
-  TopicsCompanion toCompanion(bool nullToAbsent) {
-    return TopicsCompanion(
-      id: Value(id),
-      chapterId: Value(chapterId),
-      title: Value(title),
-      slug: Value(slug),
-      examTheme: examTheme == null && nullToAbsent
-          ? const Value.absent()
-          : Value(examTheme),
-      sortOrder: Value(sortOrder),
-    );
-  }
-
-  factory Topic.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Topic(
-      id: serializer.fromJson<String>(json['id']),
-      chapterId: serializer.fromJson<String>(json['chapterId']),
-      title: serializer.fromJson<String>(json['title']),
-      slug: serializer.fromJson<String>(json['slug']),
-      examTheme: serializer.fromJson<String?>(json['examTheme']),
-      sortOrder: serializer.fromJson<int>(json['sortOrder']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'chapterId': serializer.toJson<String>(chapterId),
-      'title': serializer.toJson<String>(title),
-      'slug': serializer.toJson<String>(slug),
-      'examTheme': serializer.toJson<String?>(examTheme),
-      'sortOrder': serializer.toJson<int>(sortOrder),
-    };
-  }
-
-  Topic copyWith(
-          {String? id,
-          String? chapterId,
-          String? title,
-          String? slug,
-          Value<String?> examTheme = const Value.absent(),
-          int? sortOrder}) =>
-      Topic(
-        id: id ?? this.id,
-        chapterId: chapterId ?? this.chapterId,
-        title: title ?? this.title,
-        slug: slug ?? this.slug,
-        examTheme: examTheme.present ? examTheme.value : this.examTheme,
-        sortOrder: sortOrder ?? this.sortOrder,
-      );
-  Topic copyWithCompanion(TopicsCompanion data) {
-    return Topic(
-      id: data.id.present ? data.id.value : this.id,
-      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
-      title: data.title.present ? data.title.value : this.title,
-      slug: data.slug.present ? data.slug.value : this.slug,
-      examTheme: data.examTheme.present ? data.examTheme.value : this.examTheme,
-      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Topic(')
-          ..write('id: $id, ')
-          ..write('chapterId: $chapterId, ')
-          ..write('title: $title, ')
-          ..write('slug: $slug, ')
-          ..write('examTheme: $examTheme, ')
-          ..write('sortOrder: $sortOrder')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, chapterId, title, slug, examTheme, sortOrder);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Topic &&
-          other.id == this.id &&
-          other.chapterId == this.chapterId &&
-          other.title == this.title &&
-          other.slug == this.slug &&
-          other.examTheme == this.examTheme &&
-          other.sortOrder == this.sortOrder);
-}
-
-class TopicsCompanion extends UpdateCompanion<Topic> {
-  final Value<String> id;
-  final Value<String> chapterId;
-  final Value<String> title;
-  final Value<String> slug;
-  final Value<String?> examTheme;
-  final Value<int> sortOrder;
-  final Value<int> rowid;
-  const TopicsCompanion({
-    this.id = const Value.absent(),
-    this.chapterId = const Value.absent(),
-    this.title = const Value.absent(),
-    this.slug = const Value.absent(),
-    this.examTheme = const Value.absent(),
-    this.sortOrder = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  TopicsCompanion.insert({
-    required String id,
-    required String chapterId,
-    required String title,
-    required String slug,
-    this.examTheme = const Value.absent(),
-    this.sortOrder = const Value.absent(),
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        chapterId = Value(chapterId),
-        title = Value(title),
-        slug = Value(slug);
-  static Insertable<Topic> custom({
-    Expression<String>? id,
-    Expression<String>? chapterId,
-    Expression<String>? title,
-    Expression<String>? slug,
-    Expression<String>? examTheme,
-    Expression<int>? sortOrder,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (chapterId != null) 'chapter_id': chapterId,
-      if (title != null) 'title': title,
-      if (slug != null) 'slug': slug,
-      if (examTheme != null) 'exam_theme': examTheme,
-      if (sortOrder != null) 'sort_order': sortOrder,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  TopicsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? chapterId,
-      Value<String>? title,
-      Value<String>? slug,
-      Value<String?>? examTheme,
-      Value<int>? sortOrder,
-      Value<int>? rowid}) {
-    return TopicsCompanion(
-      id: id ?? this.id,
-      chapterId: chapterId ?? this.chapterId,
-      title: title ?? this.title,
-      slug: slug ?? this.slug,
-      examTheme: examTheme ?? this.examTheme,
-      sortOrder: sortOrder ?? this.sortOrder,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (chapterId.present) {
-      map['chapter_id'] = Variable<String>(chapterId.value);
-    }
-    if (title.present) {
-      map['title'] = Variable<String>(title.value);
-    }
-    if (slug.present) {
-      map['slug'] = Variable<String>(slug.value);
-    }
-    if (examTheme.present) {
-      map['exam_theme'] = Variable<String>(examTheme.value);
-    }
-    if (sortOrder.present) {
-      map['sort_order'] = Variable<int>(sortOrder.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('TopicsCompanion(')
-          ..write('id: $id, ')
-          ..write('chapterId: $chapterId, ')
-          ..write('title: $title, ')
-          ..write('slug: $slug, ')
-          ..write('examTheme: $examTheme, ')
-          ..write('sortOrder: $sortOrder, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -1051,11 +707,11 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _topicIdMeta =
-      const VerificationMeta('topicId');
+  static const VerificationMeta _chapterIdMeta =
+      const VerificationMeta('chapterId');
   @override
-  late final GeneratedColumn<String> topicId = GeneratedColumn<String>(
-      'topic_id', aliasedName, false,
+  late final GeneratedColumn<String> chapterId = GeneratedColumn<String>(
+      'chapter_id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _questionMeta =
       const VerificationMeta('question');
@@ -1095,7 +751,7 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
       defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, topicId, question, years, marks, earnsMarks, sections, sortOrder];
+      [id, chapterId, question, years, marks, earnsMarks, sections, sortOrder];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1111,11 +767,11 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
     } else if (isInserting) {
       context.missing(_idMeta);
     }
-    if (data.containsKey('topic_id')) {
-      context.handle(_topicIdMeta,
-          topicId.isAcceptableOrUnknown(data['topic_id']!, _topicIdMeta));
+    if (data.containsKey('chapter_id')) {
+      context.handle(_chapterIdMeta,
+          chapterId.isAcceptableOrUnknown(data['chapter_id']!, _chapterIdMeta));
     } else if (isInserting) {
-      context.missing(_topicIdMeta);
+      context.missing(_chapterIdMeta);
     }
     if (data.containsKey('question')) {
       context.handle(_questionMeta,
@@ -1160,8 +816,8 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
     return Qna(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      topicId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}topic_id'])!,
+      chapterId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}chapter_id'])!,
       question: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}question'])!,
       years: attachedDatabase.typeMapping
@@ -1185,7 +841,7 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
 
 class Qna extends DataClass implements Insertable<Qna> {
   final String id;
-  final String topicId;
+  final String chapterId;
   final String question;
   final String? years;
   final int? marks;
@@ -1194,7 +850,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   final int sortOrder;
   const Qna(
       {required this.id,
-      required this.topicId,
+      required this.chapterId,
       required this.question,
       this.years,
       this.marks,
@@ -1205,7 +861,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['topic_id'] = Variable<String>(topicId);
+    map['chapter_id'] = Variable<String>(chapterId);
     map['question'] = Variable<String>(question);
     if (!nullToAbsent || years != null) {
       map['years'] = Variable<String>(years);
@@ -1222,7 +878,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   QnasCompanion toCompanion(bool nullToAbsent) {
     return QnasCompanion(
       id: Value(id),
-      topicId: Value(topicId),
+      chapterId: Value(chapterId),
       question: Value(question),
       years:
           years == null && nullToAbsent ? const Value.absent() : Value(years),
@@ -1239,7 +895,7 @@ class Qna extends DataClass implements Insertable<Qna> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Qna(
       id: serializer.fromJson<String>(json['id']),
-      topicId: serializer.fromJson<String>(json['topicId']),
+      chapterId: serializer.fromJson<String>(json['chapterId']),
       question: serializer.fromJson<String>(json['question']),
       years: serializer.fromJson<String?>(json['years']),
       marks: serializer.fromJson<int?>(json['marks']),
@@ -1253,7 +909,7 @@ class Qna extends DataClass implements Insertable<Qna> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'topicId': serializer.toJson<String>(topicId),
+      'chapterId': serializer.toJson<String>(chapterId),
       'question': serializer.toJson<String>(question),
       'years': serializer.toJson<String?>(years),
       'marks': serializer.toJson<int?>(marks),
@@ -1265,7 +921,7 @@ class Qna extends DataClass implements Insertable<Qna> {
 
   Qna copyWith(
           {String? id,
-          String? topicId,
+          String? chapterId,
           String? question,
           Value<String?> years = const Value.absent(),
           Value<int?> marks = const Value.absent(),
@@ -1274,7 +930,7 @@ class Qna extends DataClass implements Insertable<Qna> {
           int? sortOrder}) =>
       Qna(
         id: id ?? this.id,
-        topicId: topicId ?? this.topicId,
+        chapterId: chapterId ?? this.chapterId,
         question: question ?? this.question,
         years: years.present ? years.value : this.years,
         marks: marks.present ? marks.value : this.marks,
@@ -1285,7 +941,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   Qna copyWithCompanion(QnasCompanion data) {
     return Qna(
       id: data.id.present ? data.id.value : this.id,
-      topicId: data.topicId.present ? data.topicId.value : this.topicId,
+      chapterId: data.chapterId.present ? data.chapterId.value : this.chapterId,
       question: data.question.present ? data.question.value : this.question,
       years: data.years.present ? data.years.value : this.years,
       marks: data.marks.present ? data.marks.value : this.marks,
@@ -1300,7 +956,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   String toString() {
     return (StringBuffer('Qna(')
           ..write('id: $id, ')
-          ..write('topicId: $topicId, ')
+          ..write('chapterId: $chapterId, ')
           ..write('question: $question, ')
           ..write('years: $years, ')
           ..write('marks: $marks, ')
@@ -1313,13 +969,13 @@ class Qna extends DataClass implements Insertable<Qna> {
 
   @override
   int get hashCode => Object.hash(
-      id, topicId, question, years, marks, earnsMarks, sections, sortOrder);
+      id, chapterId, question, years, marks, earnsMarks, sections, sortOrder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Qna &&
           other.id == this.id &&
-          other.topicId == this.topicId &&
+          other.chapterId == this.chapterId &&
           other.question == this.question &&
           other.years == this.years &&
           other.marks == this.marks &&
@@ -1330,7 +986,7 @@ class Qna extends DataClass implements Insertable<Qna> {
 
 class QnasCompanion extends UpdateCompanion<Qna> {
   final Value<String> id;
-  final Value<String> topicId;
+  final Value<String> chapterId;
   final Value<String> question;
   final Value<String?> years;
   final Value<int?> marks;
@@ -1340,7 +996,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
   final Value<int> rowid;
   const QnasCompanion({
     this.id = const Value.absent(),
-    this.topicId = const Value.absent(),
+    this.chapterId = const Value.absent(),
     this.question = const Value.absent(),
     this.years = const Value.absent(),
     this.marks = const Value.absent(),
@@ -1351,7 +1007,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
   });
   QnasCompanion.insert({
     required String id,
-    required String topicId,
+    required String chapterId,
     required String question,
     this.years = const Value.absent(),
     this.marks = const Value.absent(),
@@ -1360,13 +1016,13 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
-        topicId = Value(topicId),
+        chapterId = Value(chapterId),
         question = Value(question),
         earnsMarks = Value(earnsMarks),
         sections = Value(sections);
   static Insertable<Qna> custom({
     Expression<String>? id,
-    Expression<String>? topicId,
+    Expression<String>? chapterId,
     Expression<String>? question,
     Expression<String>? years,
     Expression<int>? marks,
@@ -1377,7 +1033,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (topicId != null) 'topic_id': topicId,
+      if (chapterId != null) 'chapter_id': chapterId,
       if (question != null) 'question': question,
       if (years != null) 'years': years,
       if (marks != null) 'marks': marks,
@@ -1390,7 +1046,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
 
   QnasCompanion copyWith(
       {Value<String>? id,
-      Value<String>? topicId,
+      Value<String>? chapterId,
       Value<String>? question,
       Value<String?>? years,
       Value<int?>? marks,
@@ -1400,7 +1056,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
       Value<int>? rowid}) {
     return QnasCompanion(
       id: id ?? this.id,
-      topicId: topicId ?? this.topicId,
+      chapterId: chapterId ?? this.chapterId,
       question: question ?? this.question,
       years: years ?? this.years,
       marks: marks ?? this.marks,
@@ -1417,8 +1073,8 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
-    if (topicId.present) {
-      map['topic_id'] = Variable<String>(topicId.value);
+    if (chapterId.present) {
+      map['chapter_id'] = Variable<String>(chapterId.value);
     }
     if (question.present) {
       map['question'] = Variable<String>(question.value);
@@ -1448,7 +1104,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
   String toString() {
     return (StringBuffer('QnasCompanion(')
           ..write('id: $id, ')
-          ..write('topicId: $topicId, ')
+          ..write('chapterId: $chapterId, ')
           ..write('question: $question, ')
           ..write('years: $years, ')
           ..write('marks: $marks, ')
@@ -3655,7 +3311,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $SpecialitiesTable specialities = $SpecialitiesTable(this);
   late final $ChaptersTable chapters = $ChaptersTable(this);
-  late final $TopicsTable topics = $TopicsTable(this);
   late final $QnasTable qnas = $QnasTable(this);
   late final $ImagesTable images = $ImagesTable(this);
   late final $ImageBlobsTable imageBlobs = $ImageBlobsTable(this);
@@ -3673,7 +3328,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         specialities,
         chapters,
-        topics,
         qnas,
         images,
         imageBlobs,
@@ -4050,189 +3704,9 @@ typedef $$ChaptersTableProcessedTableManager = ProcessedTableManager<
     (Chapter, BaseReferences<_$AppDatabase, $ChaptersTable, Chapter>),
     Chapter,
     PrefetchHooks Function()>;
-typedef $$TopicsTableCreateCompanionBuilder = TopicsCompanion Function({
-  required String id,
-  required String chapterId,
-  required String title,
-  required String slug,
-  Value<String?> examTheme,
-  Value<int> sortOrder,
-  Value<int> rowid,
-});
-typedef $$TopicsTableUpdateCompanionBuilder = TopicsCompanion Function({
-  Value<String> id,
-  Value<String> chapterId,
-  Value<String> title,
-  Value<String> slug,
-  Value<String?> examTheme,
-  Value<int> sortOrder,
-  Value<int> rowid,
-});
-
-class $$TopicsTableFilterComposer
-    extends Composer<_$AppDatabase, $TopicsTable> {
-  $$TopicsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get chapterId => $composableBuilder(
-      column: $table.chapterId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get title => $composableBuilder(
-      column: $table.title, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get slug => $composableBuilder(
-      column: $table.slug, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get examTheme => $composableBuilder(
-      column: $table.examTheme, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get sortOrder => $composableBuilder(
-      column: $table.sortOrder, builder: (column) => ColumnFilters(column));
-}
-
-class $$TopicsTableOrderingComposer
-    extends Composer<_$AppDatabase, $TopicsTable> {
-  $$TopicsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get chapterId => $composableBuilder(
-      column: $table.chapterId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get title => $composableBuilder(
-      column: $table.title, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get slug => $composableBuilder(
-      column: $table.slug, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get examTheme => $composableBuilder(
-      column: $table.examTheme, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get sortOrder => $composableBuilder(
-      column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
-}
-
-class $$TopicsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $TopicsTable> {
-  $$TopicsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get chapterId =>
-      $composableBuilder(column: $table.chapterId, builder: (column) => column);
-
-  GeneratedColumn<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => column);
-
-  GeneratedColumn<String> get slug =>
-      $composableBuilder(column: $table.slug, builder: (column) => column);
-
-  GeneratedColumn<String> get examTheme =>
-      $composableBuilder(column: $table.examTheme, builder: (column) => column);
-
-  GeneratedColumn<int> get sortOrder =>
-      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
-}
-
-class $$TopicsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $TopicsTable,
-    Topic,
-    $$TopicsTableFilterComposer,
-    $$TopicsTableOrderingComposer,
-    $$TopicsTableAnnotationComposer,
-    $$TopicsTableCreateCompanionBuilder,
-    $$TopicsTableUpdateCompanionBuilder,
-    (Topic, BaseReferences<_$AppDatabase, $TopicsTable, Topic>),
-    Topic,
-    PrefetchHooks Function()> {
-  $$TopicsTableTableManager(_$AppDatabase db, $TopicsTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$TopicsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$TopicsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$TopicsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> chapterId = const Value.absent(),
-            Value<String> title = const Value.absent(),
-            Value<String> slug = const Value.absent(),
-            Value<String?> examTheme = const Value.absent(),
-            Value<int> sortOrder = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              TopicsCompanion(
-            id: id,
-            chapterId: chapterId,
-            title: title,
-            slug: slug,
-            examTheme: examTheme,
-            sortOrder: sortOrder,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String chapterId,
-            required String title,
-            required String slug,
-            Value<String?> examTheme = const Value.absent(),
-            Value<int> sortOrder = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              TopicsCompanion.insert(
-            id: id,
-            chapterId: chapterId,
-            title: title,
-            slug: slug,
-            examTheme: examTheme,
-            sortOrder: sortOrder,
-            rowid: rowid,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ));
-}
-
-typedef $$TopicsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $TopicsTable,
-    Topic,
-    $$TopicsTableFilterComposer,
-    $$TopicsTableOrderingComposer,
-    $$TopicsTableAnnotationComposer,
-    $$TopicsTableCreateCompanionBuilder,
-    $$TopicsTableUpdateCompanionBuilder,
-    (Topic, BaseReferences<_$AppDatabase, $TopicsTable, Topic>),
-    Topic,
-    PrefetchHooks Function()>;
 typedef $$QnasTableCreateCompanionBuilder = QnasCompanion Function({
   required String id,
-  required String topicId,
+  required String chapterId,
   required String question,
   Value<String?> years,
   Value<int?> marks,
@@ -4243,7 +3717,7 @@ typedef $$QnasTableCreateCompanionBuilder = QnasCompanion Function({
 });
 typedef $$QnasTableUpdateCompanionBuilder = QnasCompanion Function({
   Value<String> id,
-  Value<String> topicId,
+  Value<String> chapterId,
   Value<String> question,
   Value<String?> years,
   Value<int?> marks,
@@ -4264,8 +3738,8 @@ class $$QnasTableFilterComposer extends Composer<_$AppDatabase, $QnasTable> {
   ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get topicId => $composableBuilder(
-      column: $table.topicId, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get chapterId => $composableBuilder(
+      column: $table.chapterId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get question => $composableBuilder(
       column: $table.question, builder: (column) => ColumnFilters(column));
@@ -4297,8 +3771,8 @@ class $$QnasTableOrderingComposer extends Composer<_$AppDatabase, $QnasTable> {
   ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get topicId => $composableBuilder(
-      column: $table.topicId, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get chapterId => $composableBuilder(
+      column: $table.chapterId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get question => $composableBuilder(
       column: $table.question, builder: (column) => ColumnOrderings(column));
@@ -4331,8 +3805,8 @@ class $$QnasTableAnnotationComposer
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get topicId =>
-      $composableBuilder(column: $table.topicId, builder: (column) => column);
+  GeneratedColumn<String> get chapterId =>
+      $composableBuilder(column: $table.chapterId, builder: (column) => column);
 
   GeneratedColumn<String> get question =>
       $composableBuilder(column: $table.question, builder: (column) => column);
@@ -4377,7 +3851,7 @@ class $$QnasTableTableManager extends RootTableManager<
               $$QnasTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
-            Value<String> topicId = const Value.absent(),
+            Value<String> chapterId = const Value.absent(),
             Value<String> question = const Value.absent(),
             Value<String?> years = const Value.absent(),
             Value<int?> marks = const Value.absent(),
@@ -4388,7 +3862,7 @@ class $$QnasTableTableManager extends RootTableManager<
           }) =>
               QnasCompanion(
             id: id,
-            topicId: topicId,
+            chapterId: chapterId,
             question: question,
             years: years,
             marks: marks,
@@ -4399,7 +3873,7 @@ class $$QnasTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             required String id,
-            required String topicId,
+            required String chapterId,
             required String question,
             Value<String?> years = const Value.absent(),
             Value<int?> marks = const Value.absent(),
@@ -4410,7 +3884,7 @@ class $$QnasTableTableManager extends RootTableManager<
           }) =>
               QnasCompanion.insert(
             id: id,
-            topicId: topicId,
+            chapterId: chapterId,
             question: question,
             years: years,
             marks: marks,
@@ -5646,8 +5120,6 @@ class $AppDatabaseManager {
       $$SpecialitiesTableTableManager(_db, _db.specialities);
   $$ChaptersTableTableManager get chapters =>
       $$ChaptersTableTableManager(_db, _db.chapters);
-  $$TopicsTableTableManager get topics =>
-      $$TopicsTableTableManager(_db, _db.topics);
   $$QnasTableTableManager get qnas => $$QnasTableTableManager(_db, _db.qnas);
   $$ImagesTableTableManager get images =>
       $$ImagesTableTableManager(_db, _db.images);

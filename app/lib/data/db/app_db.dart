@@ -10,7 +10,6 @@ part 'app_db.g.dart';
 @DriftDatabase(tables: [
   Specialities,
   Chapters,
-  Topics,
   Qnas,
   Images,
   ImageBlobs,
@@ -24,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -39,6 +38,25 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(
                 pendingReviewEvents, pendingReviewEvents.syncAttempts);
             await m.addColumn(pendingAppEvents, pendingAppEvents.syncAttempts);
+          }
+          // to >= 3 guard: migration_test.dart still pins a historical
+          // "migrate to v2" check (to=2) to prove that step in isolation.
+          // Without the bound, `from < 3` is also true starting from v1, so
+          // this block would run there too and clobber the v2 snapshot that
+          // test compares against. Production always requests to ==
+          // schemaVersion (3), so the bound never affects a real device.
+          if (from < 3 && to >= 3) {
+            // Content pass 2026-07-06 (sql/0004 on the server): the pre-v3
+            // grouping layer is gone; qnas hang off chapters. Device content
+            // tables are CACHE (eng amendment 15) - drop and refetch on demand.
+            // Pending review/app events, bookmarks, and local settings are
+            // STATE and are untouched (migration_test asserts they survive).
+            await m.deleteTable('topics');
+            await m.deleteTable('qnas');
+            await m.createTable(qnas); // new shape: chapter_id, no legacy group column
+            await customStatement('DELETE FROM images');
+            await customStatement('DELETE FROM image_blobs');
+            await customStatement('DELETE FROM cached_chapters');
           }
         },
       );
@@ -112,10 +130,10 @@ class AppDatabase extends _$AppDatabase {
     ];
   }
 
-  /// `topicCount`/`qnaCount` are manifest-only counts (not drift columns);
-  /// pass the just-fetched `chapters[]` through so they ride along without a
-  /// second round trip. Falls back to a drift `COUNT(*)` when no manifest
-  /// snapshot is available (offline read of a previously cached chapter).
+  /// `qnaCount` is a manifest-only count (not a drift column); pass the
+  /// just-fetched `chapters[]` through so it rides along without a second
+  /// round trip. Falls back to a drift `COUNT(*)` when no manifest snapshot
+  /// is available (offline read of a previously cached chapter).
   Future<List<ChapterRow>> readChapters(String specialityId,
       [List<Map<String, dynamic>>? manifestChapters]) async {
     final rows = await (select(chapters)
@@ -136,15 +154,8 @@ class AppDatabase extends _$AppDatabase {
           sortOrder: r.sortOrder,
           examWeight: r.examWeight,
           contentVersion: r.contentVersion,
-          topicCount: counts[r.id]?['topic_count'] as int? ??
-              await (select(topics)..where((t) => t.chapterId.equals(r.id)))
-                  .get()
-                  .then((v) => v.length),
           qnaCount: counts[r.id]?['qna_count'] as int? ??
-              await (select(qnas)
-                    ..where((q) => existsQuery(select(topics)
-                      ..where((t) =>
-                          t.id.equalsExp(q.topicId) & t.chapterId.equals(r.id)))))
+              await (select(qnas)..where((q) => q.chapterId.equals(r.id)))
                   .get()
                   .then((v) => v.length),
         ),
@@ -165,58 +176,36 @@ class AppDatabase extends _$AppDatabase {
     return row?.contentVersion;
   }
 
-  /// One transaction per chapter refresh: replaces every topic/qna/image
-  /// scoped to `chapterId`, writes the response's honest `topics[]` rows
-  /// (never synthesized from a bare `topic_id`), then marks the chapter
-  /// cached at `version`.
-  Future<void> replaceChapterContent(String chapterId, int version,
-      List<Map<String, dynamic>> items, List<Map<String, dynamic>> topics) async {
+  /// One transaction per chapter refresh: replaces every qna/image scoped to
+  /// `chapterId`, then marks the chapter cached at `version`.
+  Future<void> replaceChapterContent(
+      String chapterId, int version, List<Map<String, dynamic>> items) async {
     await transaction(() async {
-      final topicIds = await (select(this.topics)
-            ..where((t) => t.chapterId.equals(chapterId)))
-          .map((t) => t.id)
+      final qnaIds = await (select(qnas)
+            ..where((q) => q.chapterId.equals(chapterId)))
+          .map((q) => q.id)
           .get();
-      if (topicIds.isNotEmpty) {
-        final qnaIds = await (select(qnas)..where((q) => q.topicId.isIn(topicIds)))
-            .map((q) => q.id)
+      if (qnaIds.isNotEmpty) {
+        // Purge cached bytes too, not just metadata: under stable ULIDs a
+        // reused image id with changed bytes would otherwise serve the OLD
+        // blob forever. Same transaction = atomic swap.
+        final imageIds = await (select(images)
+              ..where((i) => i.qnaId.isIn(qnaIds)))
+            .map((i) => i.id)
             .get();
-        if (qnaIds.isNotEmpty) {
-          // Purge the cached bytes too, not just the metadata: under stable
-          // ULIDs a reused image id with changed bytes would otherwise serve
-          // the OLD blob forever (imageBytes() reads image_blobs by id first).
-          // Same transaction = atomic swap.
-          final imageIds = await (select(images)
-                ..where((i) => i.qnaId.isIn(qnaIds)))
-              .map((i) => i.id)
-              .get();
-          if (imageIds.isNotEmpty) {
-            await (delete(imageBlobs)..where((b) => b.imageId.isIn(imageIds)))
-                .go();
-          }
-          await (delete(images)..where((i) => i.qnaId.isIn(qnaIds))).go();
+        if (imageIds.isNotEmpty) {
+          await (delete(imageBlobs)..where((b) => b.imageId.isIn(imageIds)))
+              .go();
         }
-        await (delete(qnas)..where((q) => q.topicId.isIn(topicIds))).go();
+        await (delete(images)..where((i) => i.qnaId.isIn(qnaIds))).go();
+        await (delete(qnas)..where((q) => q.chapterId.equals(chapterId))).go();
       }
-      await (delete(this.topics)..where((t) => t.chapterId.equals(chapterId)))
-          .go();
 
-      for (final t in topics) {
-        await into(this.topics).insertOnConflictUpdate(
-          TopicsCompanion.insert(
-            id: t['id'] as String,
-            chapterId: chapterId,
-            title: t['title'] as String,
-            slug: t['slug'] as String,
-            examTheme: Value(t['exam_theme'] as String?),
-            sortOrder: Value(t['sort_order'] as int),
-          ),
-        );
-      }
       for (final q in items) {
         await into(qnas).insertOnConflictUpdate(
           QnasCompanion.insert(
             id: q['id'] as String,
-            topicId: q['topic_id'] as String,
+            chapterId: q['chapter_id'] as String,
             question: q['question'] as String,
             years: Value(q['years'] as String?),
             marks: Value(q['marks'] as int?),
@@ -250,28 +239,10 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  Future<List<TopicRow>> readTopics(String chapterId) async {
-    final rows = await (select(topics)
-          ..where((t) => t.chapterId.equals(chapterId))
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
-        .get();
-    return [
-      for (final r in rows)
-        TopicRow(
-          id: r.id,
-          chapterId: r.chapterId,
-          title: r.title,
-          slug: r.slug,
-          examTheme: r.examTheme,
-          sortOrder: r.sortOrder,
-        ),
-    ];
-  }
-
-  Future<List<QnaRow>> readQnas(String topicId) async {
+  Future<List<QnaRow>> readQnasByChapter(String chapterId) async {
     final rows = await (select(qnas)
-          ..where((q) => q.topicId.equals(topicId))
-          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder)]))
+          ..where((q) => q.chapterId.equals(chapterId))
+          ..orderBy([(t) => OrderingTerm.asc(t.sortOrder), (t) => OrderingTerm.asc(t.id)]))
         .get();
     return [for (final r in rows) await _qnaFromRow(r)];
   }
@@ -289,7 +260,7 @@ class AppDatabase extends _$AppDatabase {
         .get();
     return QnaRow(
       id: r.id,
-      topicId: r.topicId,
+      chapterId: r.chapterId,
       question: r.question,
       years: r.years,
       marks: r.marks,

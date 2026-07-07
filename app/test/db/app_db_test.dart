@@ -9,8 +9,8 @@ void main() {
   setUp(() => db = AppDatabase(NativeDatabase.memory()));
   tearDown(() => db.close());
 
-  test('schemaVersion is 2', () {
-    expect(db.schemaVersion, 2);
+  test('schemaVersion is 3', () {
+    expect(db.schemaVersion, 3);
   });
 
   test('content mirror round-trips a qna row with contract column names', () async {
@@ -19,17 +19,14 @@ void main() {
     await db.into(db.chapters).insert(ChaptersCompanion.insert(
         id: '01CHAP', specialityId: '01SPEC', title: 'Airway Management',
         slug: 'airway-management'));
-    await db.into(db.topics).insert(TopicsCompanion.insert(
-        id: '01TOPIC', chapterId: '01CHAP', title: 'Difficult airway',
-        slug: 'difficult-airway'));
     await db.into(db.qnas).insert(QnasCompanion.insert(
-        id: '01QNA', topicId: '01TOPIC', question: 'Define TAP block.',
+        id: '01QNA', chapterId: '01CHAP', question: 'Define TAP block.',
         earnsMarks: '[]', sections: '[]'));
 
     final row = await (db.select(db.qnas)
           ..where((q) => q.id.equals('01QNA')))
         .getSingle();
-    expect(row.topicId, '01TOPIC');
+    expect(row.chapterId, '01CHAP');
     expect(row.question, 'Define TAP block.');
   });
 
