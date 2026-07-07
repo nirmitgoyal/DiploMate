@@ -13,11 +13,19 @@ const NON_ALNUM_RUN_RE = /[^a-z0-9]+/g;
 const TOC_LINE_RE = /^(\d+)\.\s+(.+?)\s*\.{2,}\s*(\d+)\s*$/;
 
 export function slugify(title) {
-  return title
+  const slug = title
     .replace(LEADING_NUMBER_RE, "")
     .toLowerCase()
     .replace(NON_ALNUM_RUN_RE, "-")
     .replace(/^-+|-+$/g, "");
+  // A punctuation-only or bare-"N." title collapses to "" (SLUG_RE needs >=1
+  // leading alnum). dedupe/precheck compare equality, not format, so an empty
+  // slug would emit unnoticed - fail loud here like the count/monotonic gates.
+  if (slug === "")
+    throw new Error(
+      `slugify: title ${JSON.stringify(title)} has no slug-able characters`,
+    );
+  return slug;
 }
 
 export function parseToc(tocText) {
@@ -33,11 +41,19 @@ export function parseToc(tocText) {
 }
 
 export function dedupeSlugs(chapters) {
-  const seen = new Map();
+  // Track EVERY assigned output slug (originals + generated), not just a
+  // per-base count: a generated "x-2" must also skip a pre-existing literal
+  // "x-2", or the deduper itself emits a collision.
+  const assigned = new Set();
   return chapters.map((c) => {
-    const count = (seen.get(c.slug) ?? 0) + 1;
-    seen.set(c.slug, count);
-    return count === 1 ? c : { ...c, slug: `${c.slug}-${count}` };
+    let candidate = c.slug;
+    let n = 1;
+    while (assigned.has(candidate)) {
+      n++;
+      candidate = `${c.slug}-${n}`;
+    }
+    assigned.add(candidate);
+    return candidate === c.slug ? c : { ...c, slug: candidate };
   });
 }
 
