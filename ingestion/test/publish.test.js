@@ -143,11 +143,11 @@ test(
     const client = await testClient();
     try {
       const { dir } = await copyCanonical((canonical) => {
-        canonical.speciality_slug = "cardiology";
+        canonical.speciality_slug = "nonexistent-speciality";
       });
       await assert.rejects(
         () => publishChapter(client, dir),
-        /unknown speciality slug "cardiology" - specialities are seeded by sql\/0002, never created by publish/,
+        /unknown speciality slug "nonexistent-speciality" - specialities are seeded by sql\/0002, never created by publish/,
       );
       const n = await client.query("SELECT count(*)::int AS n FROM chapters");
       assert.equal(n.rows[0].n, 0);
