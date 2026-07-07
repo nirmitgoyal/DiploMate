@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_providers.dart';
+import '../../data/repos/content_repository.dart';
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
 
@@ -20,6 +21,7 @@ class SyllabusScreen extends ConsumerStatefulWidget {
 class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
   bool _loading = true;
   bool _error = false;
+  bool _upgrade = false;
   SpecialityRow? _spec;
   List<ChapterRow> _chapters = const [];
 
@@ -51,8 +53,15 @@ class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
         _chapters = chapters;
         _loading = false;
       });
-    }).catchError((_) {
+    }).catchError((e) {
       if (!mounted) return;
+      if (e is UpgradeRequiredException) {
+        setState(() {
+          _upgrade = true;
+          _loading = false;
+        });
+        return;
+      }
       setState(() {
         _error = true;
         _loading = false;
@@ -83,6 +92,24 @@ class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
   Widget _body(DmColors dm) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    }
+    if (_upgrade) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(DmSpace.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Update DiploMate to continue',
+                  style: DmType.bodyUi.copyWith(color: dm.ink)),
+              const SizedBox(height: DmSpace.sm),
+              Text('This version is too old for the current content format.',
+                  style: DmType.meta.copyWith(color: dm.ink2),
+                  textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      );
     }
     if (_error) {
       return _Retry(onRetry: _fetch);

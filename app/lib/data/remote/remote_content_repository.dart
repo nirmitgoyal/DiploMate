@@ -28,6 +28,9 @@ class RemoteContentRepository implements ContentRepository {
     final res = await api.dio.get('/manifest',
         queryParameters: spec == null ? null : {'speciality': spec});
     final manifest = res.data as Map<String, dynamic>;
+    if ((manifest['min_app_version'] as int? ?? 1) > kSupportedSchemaVersion) {
+      throw UpgradeRequiredException();
+    }
     // chapters[] carries no speciality_id of its own (the wire scopes the
     // whole array to whatever ?speciality= was requested) - spec is the
     // only place that association is known, so it rides along here.
