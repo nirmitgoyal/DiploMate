@@ -11,40 +11,26 @@ const ULID_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
 function sourceChapter() {
   return {
-    speciality_slug: "anaesthesia",
+    speciality_slug: "anaesthesiology",
     chapter: {
+      key: "sample-chapter",
       title: "Sample Chapter",
       slug: "sample-chapter",
       sort_order: 1,
       exam_weight: 10,
     },
-    topics: [
+    qnas: [
       {
-        key: "topic-one",
-        title: "Topic One",
-        slug: "topic-one",
-        exam_theme: "Theme one",
+        key: "q-one",
+        question: "Question one?",
+        years: "2022",
+        marks: 10,
         sort_order: 1,
-        qnas: [
-          {
-            key: "q-one",
-            question: "Question one?",
-            years: "2022",
-            marks: 10,
-            sort_order: 1,
-            earns_marks: [
-              { label: "Definition point", section_key: "definition" },
-            ],
-            sections: [
-              {
-                key: "definition",
-                heading: "Definition",
-                body_md: "Body one.",
-              },
-            ],
-            images: [],
-          },
+        earns_marks: [{ label: "Definition point", section_key: "definition" }],
+        sections: [
+          { key: "definition", heading: "Definition", body_md: "Body one." },
         ],
+        images: [],
       },
     ],
   };
@@ -60,109 +46,126 @@ async function makeChapterDir(source) {
   return dir;
 }
 
+async function makeSpecialityDir(...sources) {
+  const parent = await mkdtemp(path.join(tmpdir(), "ingest-spec-"));
+  const dirs = [];
+  for (const [i, source] of sources.entries()) {
+    const dir = path.join(parent, `ch${i}`);
+    await mkdir(path.join(dir, "images"), { recursive: true });
+    await writeFile(
+      path.join(dir, "chapter.json"),
+      JSON.stringify(source, null, 2),
+    );
+    dirs.push(dir);
+  }
+  return { parent, dirs };
+}
+
 async function makeOutDir() {
   return mkdtemp(path.join(tmpdir(), "ingest-out-"));
 }
 
-test("build mints ULIDs and writes ids.lock", async () => {
-  const dir = await makeChapterDir(sourceChapter());
-  const canonical = await buildChapter(dir, await makeOutDir());
+test("build mints ULIDs into a speciality-level lock beside the chapter dirs", async () => {
+  const { parent, dirs } = await makeSpecialityDir(sourceChapter());
+  const out = await mkdtemp(path.join(tmpdir(), "ingest-out-"));
+  const canonical = await buildChapter(dirs[0], out);
+  assert.equal(canonical.schema_version, 2);
   assert.match(canonical.chapter.id, ULID_RE);
-  assert.match(canonical.topics[0].id, ULID_RE);
-  assert.match(canonical.qnas[0].id, ULID_RE);
-  assert.equal(canonical.topics[0].chapter_id, canonical.chapter.id);
-  assert.equal(canonical.qnas[0].topic_id, canonical.topics[0].id);
-  const lock = JSON.parse(await readFile(path.join(dir, "ids.lock"), "utf8"));
-  assert.equal(lock.chapter, canonical.chapter.id);
-  assert.equal(lock.topics["topic-one"], canonical.topics[0].id);
+  assert.equal(canonical.qnas[0].chapter_id, canonical.chapter.id);
+  assert.equal("topics" in canonical, false);
+  const lock = JSON.parse(
+    await readFile(path.join(parent, "ids.lock"), "utf8"),
+  );
+  assert.equal(lock.chapters["sample-chapter"], canonical.chapter.id);
   assert.equal(lock.qnas["q-one"], canonical.qnas[0].id);
+  assert.equal("topics" in lock, false);
 });
 
-test("rebuild reuses locked ids (stable across rebuilds)", async () => {
-  const dir = await makeChapterDir(sourceChapter());
-  const first = await buildChapter(dir, await makeOutDir());
-  const second = await buildChapter(dir, await makeOutDir());
-  assert.equal(second.chapter.id, first.chapter.id);
-  assert.deepEqual(
-    second.topics.map((t) => t.id),
-    first.topics.map((t) => t.id),
-  );
-  assert.deepEqual(
-    second.qnas.map((q) => q.id),
-    first.qnas.map((q) => q.id),
+test("re-run produces zero key churn (ledger stability)", async () => {
+  const { parent, dirs } = await makeSpecialityDir(sourceChapter());
+  const out = await mkdtemp(path.join(tmpdir(), "ingest-out-"));
+  await buildChapter(dirs[0], out);
+  const first = await readFile(path.join(parent, "ids.lock"), "utf8");
+  await buildChapter(dirs[0], out);
+  const second = await readFile(path.join(parent, "ids.lock"), "utf8");
+  assert.equal(
+    second,
+    first,
+    "second build must not re-mint or reorder anything",
   );
 });
 
-test("adding a qna preserves existing ids and mints only the new one", async () => {
-  const source = sourceChapter();
-  const dir = await makeChapterDir(source);
-  const first = await buildChapter(dir, await makeOutDir());
-  source.topics[0].qnas.push({
-    key: "q-two",
-    question: "Question two?",
-    years: null,
-    marks: 5,
-    sort_order: 2,
-    earns_marks: [],
-    sections: [{ key: "summary", heading: "Summary", body_md: "Body two." }],
-    images: [],
-  });
+test("a qna moved between chapters keeps its ULID (speciality ledger, amendment 1)", async () => {
+  const chapterA = sourceChapter();
+  const chapterB = {
+    ...sourceChapter(),
+    chapter: {
+      key: "other-chapter",
+      title: "Other",
+      slug: "other-chapter",
+      sort_order: 2,
+      exam_weight: 5,
+    },
+    qnas: [],
+  };
+  const { dirs } = await makeSpecialityDir(chapterA, chapterB);
+  const out1 = await mkdtemp(path.join(tmpdir(), "ingest-out-"));
+  const builtA = await buildChapter(dirs[0], out1);
+  const movedId = builtA.qnas[0].id;
+
+  // Move q-one: gone from A, present in B. Same speciality lock -> same ULID.
+  const aWithout = { ...chapterA, qnas: [] };
+  const bWith = { ...chapterB, qnas: chapterA.qnas };
   await writeFile(
-    path.join(dir, "chapter.json"),
-    JSON.stringify(source, null, 2),
+    path.join(dirs[0], "chapter.json"),
+    JSON.stringify(aWithout, null, 2),
   );
-  const second = await buildChapter(dir, await makeOutDir());
-  assert.equal(second.qnas[0].id, first.qnas[0].id);
-  assert.match(second.qnas[1].id, ULID_RE);
-  assert.notEqual(second.qnas[1].id, second.qnas[0].id);
+  await writeFile(
+    path.join(dirs[1], "chapter.json"),
+    JSON.stringify(bWith, null, 2),
+  );
+  const out2 = await mkdtemp(path.join(tmpdir(), "ingest-out-"));
+  const builtB = await buildChapter(dirs[1], out2);
+  assert.equal(
+    builtB.qnas[0].id,
+    movedId,
+    "reclassification must not re-mint identity",
+  );
+  assert.equal(builtB.qnas[0].chapter_id, builtB.chapter.id);
 });
 
-test("canonical text row shape matches the DB columns", async () => {
+test("missing chapter.key or qna.key fails loudly", async () => {
+  const noChapterKey = sourceChapter();
+  delete noChapterKey.chapter.key;
+  const dir1 = await makeChapterDir(noChapterKey);
+  await assert.rejects(
+    () => buildChapter(dir1, dir1 + "-out"),
+    /chapter .*missing "key"/,
+  );
+  const noQnaKey = sourceChapter();
+  delete noQnaKey.qnas[0].key;
+  const dir2 = await makeChapterDir(noQnaKey);
+  await assert.rejects(
+    () => buildChapter(dir2, dir2 + "-out"),
+    /qna .*missing "key"/,
+  );
+});
+
+test("an explicit lockPath overrides the default (generator hands the committed ledger in)", async () => {
   const dir = await makeChapterDir(sourceChapter());
-  const canonical = await buildChapter(dir, await makeOutDir());
-  assert.equal(canonical.schema_version, 1);
-  assert.equal(canonical.speciality_slug, "anaesthesia");
-  assert.deepEqual(Object.keys(canonical.chapter).sort(), [
-    "exam_weight",
-    "id",
-    "slug",
-    "sort_order",
-    "title",
-  ]);
-  assert.deepEqual(Object.keys(canonical.topics[0]).sort(), [
-    "chapter_id",
-    "exam_theme",
-    "id",
-    "slug",
-    "sort_order",
-    "title",
-  ]);
-  assert.deepEqual(Object.keys(canonical.qnas[0]).sort(), [
-    "earns_marks",
-    "id",
-    "marks",
-    "question",
-    "sections",
-    "sort_order",
-    "topic_id",
-    "years",
-  ]);
-  const out = JSON.parse(
-    await readFile(path.join(await (async () => dir)(), "ids.lock"), "utf8"),
+  const out = await mkdtemp(path.join(tmpdir(), "ingest-out-"));
+  const lockPath = path.join(
+    await mkdtemp(path.join(tmpdir(), "ledger-")),
+    "anaesthesiology.ids.lock",
   );
-  assert.ok(out.images);
-});
-
-test("a qna without a key fails the build", async () => {
-  const source = sourceChapter();
-  delete source.topics[0].qnas[0].key;
-  const dir = await makeChapterDir(source);
-  await assert.rejects(() => buildChapter(dir, ""), /missing "key"/);
+  const canonical = await buildChapter(dir, out, lockPath);
+  const lock = JSON.parse(await readFile(lockPath, "utf8"));
+  assert.equal(lock.chapters["sample-chapter"], canonical.chapter.id);
 });
 
 function sourceChapterWithImage(fileName) {
   const source = sourceChapter();
-  source.topics[0].qnas[0].images = [
+  source.qnas[0].images = [
     {
       file: fileName,
       caption: "Sample diagram",
