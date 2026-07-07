@@ -1,0 +1,83 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+import { probeTextLayer, extractQuestions } from "../src/extract.js";
+
+// Mirrors fixtures/make-paper.js's SAMPLE_QUESTIONS. Not imported from
+// there directly - that module's top level regenerates both PDFs (shells
+// to pdftoppm/magick) as a side effect of import, which would make every
+// test run re-run fixture generation. Fixtures are committed and static;
+// only re-run `node fixtures/make-paper.js` by hand to regenerate them.
+const SAMPLE_QUESTIONS = [
+  "Describe the pharmacology of local anaesthetics.",
+  "Discuss the management of a difficult airway in a trauma patient.",
+  "Write short notes on spinal anaesthesia.",
+];
+
+const TEXT_PDF = fileURLToPath(
+  new URL("../fixtures/sample-paper.pdf", import.meta.url),
+);
+const SCAN_PDF = fileURLToPath(
+  new URL("../fixtures/scan-paper.pdf", import.meta.url),
+);
+
+test("probe distinguishes a text PDF from a scanned image PDF", async () => {
+  assert.equal((await probeTextLayer(TEXT_PDF)).hasText, true);
+  assert.equal((await probeTextLayer(SCAN_PDF)).hasText, false);
+});
+
+test("extraction returns structured questions with a QA report", async () => {
+  const { questions, qa } = await extractQuestions(TEXT_PDF, { ocr: false });
+  assert.ok(questions.length >= 1);
+  assert.ok(questions[0].question_text.length > 0);
+  assert.ok(qa.garbleScore < 0.2, "clean text has low garble");
+});
+
+test("extraction splits all numbered questions and parses their marks", async () => {
+  const { questions, qa } = await extractQuestions(TEXT_PDF, { ocr: false });
+  assert.equal(questions.length, SAMPLE_QUESTIONS.length);
+  assert.deepEqual(
+    questions.map((q) => q.question_text),
+    SAMPLE_QUESTIONS,
+  );
+  assert.deepEqual(
+    questions.map((q) => q.marks),
+    [10, 10, 5],
+  );
+  assert.equal(qa.count, SAMPLE_QUESTIONS.length);
+});
+
+test("year and paper are stamped from the first-page header", async () => {
+  const { questions } = await extractQuestions(TEXT_PDF, { ocr: false });
+  for (const q of questions) {
+    assert.equal(q.year, 2021);
+    assert.equal(q.paper, "I");
+  }
+});
+
+test("an expected count mismatch is flagged loudly, not silently dropped", async () => {
+  const { qa } = await extractQuestions(TEXT_PDF, {
+    ocr: false,
+    expectedCount: 99,
+  });
+  assert.equal(qa.flagged, true);
+  assert.ok(qa.reasons.some((r) => /count-mismatch/.test(r)));
+});
+
+// Gated: exercises the real tesseract OCR path end to end. Skipped by
+// default so `npm test` stays fast (multi-second OCR invocation); run with
+// RUN_OCR_TEST=1 node --test generator/test/extract.test.js to check it.
+const skipOcr =
+  !process.env.RUN_OCR_TEST &&
+  "set RUN_OCR_TEST=1 to run the tesseract OCR smoke test (slow)";
+
+test(
+  "a scanned paper routes through tesseract and recovers the known questions",
+  { skip: skipOcr },
+  async () => {
+    const { questions, qa } = await extractQuestions(SCAN_PDF, { ocr: true });
+    assert.equal(questions.length, SAMPLE_QUESTIONS.length);
+    assert.match(questions[0].question_text, /pharmacology/i);
+    assert.ok(qa.garbleScore < 0.3, "ocr noise stays well under the floor");
+  },
+);
