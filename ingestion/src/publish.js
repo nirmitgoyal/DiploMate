@@ -93,9 +93,14 @@ export async function publishChapter(client, canonicalDir) {
 
     // A republish is authoritative for its chapter: rows dropped from the
     // canonical set are deleted (FK-safe order: images -> qnas). Under the
-    // speciality ledger a qna moved to ANOTHER chapter has already been
-    // upserted with its new chapter_id by the batch, so the source chapter's
-    // delete never touches it (its chapter_id no longer matches $1).
+    // speciality ledger a qna moved to ANOTHER chapter keeps its ULID across the
+    // batch. Target-first: the target's upsert has already re-homed the qna
+    // (chapter_id no longer matches $1), so the source delete skips it. Source-
+    // first: the source delete removes the moved qna and its images, and the
+    // target's upsert re-creates them under the new chapter_id - identity is
+    // preserved either way, at the cost of a transient absence inside the batch
+    // window (each chapter is its own transaction, by design; publish target-
+    // first to avoid the window).
     await client.query(
       `DELETE FROM images WHERE qna_id IN (
          SELECT id FROM qnas WHERE chapter_id = $1

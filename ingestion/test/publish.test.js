@@ -8,8 +8,10 @@ import {
   copyFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 import { gateCheck, publishChapter } from "../src/publish.js";
 import { testClient, TEST_SPECIALITY_ID } from "./db.js";
 
@@ -191,6 +193,15 @@ async function writeCanonical(canonical) {
   return dir;
 }
 
+// Like writeCanonical, but also drops the webp bytes at images/<imgId>.webp so
+// publishChapter's image path (readFile of img.file) has a real file to ingest.
+async function writeCanonicalWithImage(canonical, webpBytes, imgId) {
+  const dir = await writeCanonical(canonical);
+  await mkdir(path.join(dir, "images"), { recursive: true });
+  await writeFile(path.join(dir, "images", `${imgId}.webp`), webpBytes);
+  return dir;
+}
+
 const CH_A = "01ARZ3NDEKTSV4RRFFQ69G5CHA";
 const CH_B = "01ARZ3NDEKTSV4RRFFQ69G5CHB";
 const Q_MOVED = "01ARZ3NDEKTSV4RRFFQ69G5QMV";
@@ -288,6 +299,97 @@ test(
           moved.rows[0].chapter_id,
           CH_B,
           `qna belongs to the target (${order})`,
+        );
+      } finally {
+        await client.end();
+      }
+    }
+  },
+);
+
+test(
+  "a cross-chapter move preserves the moved qna's image in either order",
+  { skip: skipDb },
+  async () => {
+    const IMG = "01ARZ3NDEKTSV4RRFFQ69G5MG9"; // valid ULID (no I/L/O/U)
+    const webp = await sharp({
+      create: {
+        width: 8,
+        height: 8,
+        channels: 3,
+        background: { r: 1, g: 2, b: 3 },
+      },
+    })
+      .webp()
+      .toBuffer();
+    const sha = createHash("sha256").update(webp).digest("hex");
+    const imgEntry = (qna_id) => ({
+      id: IMG,
+      qna_id,
+      caption: "c",
+      content_description: "d",
+      file: `images/${IMG}.webp`,
+      byte_size: webp.length,
+      sha256: sha,
+      sort_order: 1,
+    });
+    for (const order of ["source-first", "target-first"]) {
+      const client = await testClient();
+      try {
+        const aWith = {
+          ...canonicalV2({
+            chapterKeyId: CH_A,
+            qnas: [{ id: Q_MOVED, question: "moving" }],
+          }),
+          images: [imgEntry(Q_MOVED)],
+        };
+        const bAnchor = canonicalV2({
+          chapterKeyId: CH_B,
+          qnas: [{ id: Q_STAYS, question: "anchor" }],
+        });
+        await publishChapter(
+          client,
+          await writeCanonicalWithImage(aWith, webp, IMG),
+        );
+        await publishChapter(client, await writeCanonical(bAnchor));
+        const aAfter = canonicalV2({
+          chapterKeyId: CH_A,
+          qnas: [{ id: "01ARZ3NDEKTSV4RRFFQ69G5QNW", question: "replacement" }],
+        });
+        const bAfter = {
+          ...canonicalV2({
+            chapterKeyId: CH_B,
+            qnas: [
+              { id: Q_STAYS, question: "anchor" },
+              { id: Q_MOVED, question: "moving" },
+            ],
+          }),
+          images: [imgEntry(Q_MOVED)],
+        };
+        const batch =
+          order === "source-first" ? [aAfter, bAfter] : [bAfter, aAfter];
+        for (const c of batch) {
+          await publishChapter(
+            client,
+            c.images.length
+              ? await writeCanonicalWithImage(c, webp, IMG)
+              : await writeCanonical(c),
+          );
+        }
+        const q = await client.query(
+          `SELECT chapter_id FROM qnas WHERE id = $1`,
+          [Q_MOVED],
+        );
+        assert.equal(q.rows[0]?.chapter_id, CH_B, `qna in target (${order})`);
+        const im = await client.query(
+          `SELECT qna_id FROM images WHERE id = $1`,
+          [IMG],
+        );
+        assert.equal(im.rowCount, 1, `moved qna's image survives (${order})`);
+        assert.equal(
+          im.rows[0].qna_id,
+          Q_MOVED,
+          `image still owned by moved qna (${order})`,
         );
       } finally {
         await client.end();
