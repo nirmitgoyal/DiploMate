@@ -18,6 +18,10 @@ export function normalize(text) {
 
 export function verifyQuote(quote, { index, map, bookPage }) {
   const nq = normalize(quote);
+  // An empty normalized quote means "no real quote here" - it must NOT verify.
+  // "".includes("") is true in JS, so without this guard an empty quote (or an
+  // unresolvable bookPage whose pageText is "") would always pass the gate.
+  if (nq === "") return { ok: false, reason: "quote-verification-failed" };
   const pdfPage = map.bookToPdf(bookPage);
   const pageN = pageText(index, pdfPage);
   if (normalize(pageN).includes(nq)) {

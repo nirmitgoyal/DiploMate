@@ -80,3 +80,18 @@ test("a quote absent from the page fails with quote-verification-failed", () => 
   assert.equal(r.ok, false);
   assert.equal(r.reason, "quote-verification-failed");
 });
+
+test("normalize joins EOL hyphenation and strips soft hyphens", () => {
+  assert.equal(normalize("laryn-\ngoscope"), "laryngoscope");
+  assert.equal(normalize("Pre­oxygenation"), "Preoxygenation");
+});
+
+test("an empty or whitespace-only quote never verifies", () => {
+  const index = idx(["The trachea bifurcates at the carina."]);
+  const empty = verifyQuote("", { index, map, bookPage: 1 });
+  assert.equal(empty.ok, false);
+  assert.equal(empty.reason, "quote-verification-failed");
+  const ws = verifyQuote("  \n ", { index, map, bookPage: 1 });
+  assert.equal(ws.ok, false);
+  assert.equal(ws.reason, "quote-verification-failed");
+});
