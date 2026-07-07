@@ -23,26 +23,12 @@ class ChapterRow {
       required this.sortOrder,
       required this.examWeight,
       required this.contentVersion,
-      required this.topicCount,
       required this.qnaCount,
       this.recalledCount = 0});
   final String id, specialityId, title, slug;
-  final int sortOrder, examWeight, contentVersion, topicCount, qnaCount;
+  final int sortOrder, examWeight, contentVersion, qnaCount;
   final int
       recalledCount; // fixture/UI aggregate; real value derives from plan 5 CardStates
-}
-
-class TopicRow {
-  const TopicRow(
-      {required this.id,
-      required this.chapterId,
-      required this.title,
-      required this.slug,
-      this.examTheme,
-      required this.sortOrder});
-  final String id, chapterId, title, slug;
-  final String? examTheme;
-  final int sortOrder;
 }
 
 class EarnRow {
@@ -75,7 +61,7 @@ class ImageRow {
 class QnaRow {
   const QnaRow(
       {required this.id,
-      required this.topicId,
+      required this.chapterId,
       required this.question,
       this.years,
       this.marks,
@@ -83,7 +69,7 @@ class QnaRow {
       required this.sections,
       required this.sortOrder,
       required this.images});
-  final String id, topicId, question;
+  final String id, chapterId, question;
   final String? years;
   final int? marks;
   final List<EarnRow> earnsMarks;
@@ -136,7 +122,8 @@ class AppEvent {
   });
 
   final String id;
-  final String eventType; // topic_opened | recall_shown | recall_revealed | recall_rated | session_start
+  final String eventType; // chapter_opened | recall_shown | recall_revealed | recall_rated | session_start
+  // (topic_opened stays legal in the sql/0004 CHECK for back-compat; this app never emits it.)
   final String? contentId;
   final int? hiddenMs; // recall_revealed only
   final DateTime occurredAt;
