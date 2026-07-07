@@ -70,7 +70,7 @@ void main() {
   });
 
   testWidgets('chapter row tap opens the reader directly at /reader/chapter/<id> '
-      '(topics nav level removed)', (t) async {
+      '(nav level removed)', (t) async {
     String? opened;
     final router = GoRouter(initialLocation: '/syllabus', routes: [
       GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
@@ -94,7 +94,7 @@ void main() {
     await t.pumpAndSettle();
 
     expect(opened, '01J0CHAPAIRWAY000000000001',
-        reason: 'one fewer tap - the row opens the Reader, not a topics list');
+        reason: 'one fewer tap - the row opens the Reader directly');
   });
 
   testWidgets('empty track renders the first-class no-content state (DESIGN.md State 9)',

@@ -55,7 +55,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   bool _rated = false;
   Object? _error;
 
-  // Queue mode resolves each currentQnaId on demand (no up-front topic list);
+  // Queue mode resolves each currentQnaId on demand (no up-front chapter list);
   // resolved rows are cached so an auto-advance doesn't re-fetch a seen card.
   final _qnaCache = <String, QnaRow>{};
 

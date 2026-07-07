@@ -262,8 +262,8 @@ gradient fills, no decorative color.
   (Today · Syllabus · Downloads · Account): Downloads is no surface at all -
   no tab, no screen, no Account row (struck 2026-07-03; since 2026-07-04 there
   is NO offline/download state anywhere - not even inline on syllabus rows;
-  content loads on demand) - and Topics/Bookmarks are stack
-  children of their parent tab (Topics under Syllabus, Bookmarks under Home) -
+  content loads on demand) - and Bookmarks is a stack
+  child of its parent tab (Bookmarks under Home) -
   a child screen lights its parent tab. The Reader has **no** bottom nav (full
   focus on recall).
 - **Thumb zone:** every primary loop action (Reveal, the rating tray, Continue,
@@ -342,7 +342,7 @@ it with app-speak or motivational filler.
 
 ## Screen Anatomy (canonical layouts)
 
-Nine screens + one sheet. Reference `prototype/index.html`.
+Eight screens + one sheet. Reference `prototype/index.html`.
 
 1. **Sign-in** - wordmark → serif lede ("Master DNB theory answers by recalling
    them, not rereading them") → **content specimen** (a cropped real model
@@ -360,19 +360,14 @@ Nine screens + one sheet. Reference `prototype/index.html`.
    bookmarks" → "This Week" (two honest stats) → **pinned resume row** (sticky
    above the nav, never scrolls away). No countdown, no epigraph - both struck
    (see Decisions Log 2026-07-03).
-4. **Syllabus** - chapter rows: title, topic count in the subtitle,
-   and **recall progress as the loud right-side signal** ("8/14 recalled" in
-   `--teal-ink`) - recall is the data; no download/offline state on rows
-   (feature removed 2026-07-04). Locked chapters
-   stay visible (title + count, never answer previews); the lock signal is
-   lock icon + `Locked` lozenge, nothing else (no third signal, no preview).
-   **Billing slice - not rendered in beta (PG3):** in the free beta every
-   chapter row is open and tappable; see the Free-Beta UI Contract section.
-5. **Topics** - chapter → topic rows, each with an aggregate recall pip
-   (Recalled / Due / New - bare status word + color, never color alone; no
-   date/interval copy as of 2026-07-04). Chapter
-   recall progress bar at top. Lights the **Syllabus** tab (stack child).
-6. **Reader / Recall** - one surface, two states:
+4. **Syllabus** - chapter rows: title, question count in the subtitle,
+   recall progress; tapping a chapter opens the Reader on its first
+   question. Locked chapters stay visible (title + count, never answer
+   previews); the lock signal is lock icon + `Locked` lozenge, nothing else
+   (no third signal, no preview). **Billing slice - not rendered in beta
+   (PG3):** in the free beta every chapter row is open and tappable; see the
+   Free-Beta UI Contract section.
+5. **Reader / Recall** - one surface, two states:
    - **Before:** question (24px serif) + year + marks; a plain attempt prompt
      (pen icon + one line, no card); Reveal Answer full-width in the thumb zone.
      No countdown, no hard lock - the ≥10s validity rule (D9) stays invisible.
@@ -387,11 +382,11 @@ Nine screens + one sheet. Reference `prototype/index.html`.
      In-answer fuzzy search appears
      **only after reveal** (never leaks answers). Diagram reproduction practice
      is post-v1 (D15).
-7. **Account** - identity → Exam speciality (one-time change) → daily
+6. **Account** - identity → Exam speciality (one-time change) → daily
    reminder → sign out → delete account (Play mandate).
-8. **Bookmarks** - saved questions as rows (question + `Chapter · Topic` source),
+7. **Bookmarks** - saved questions as rows (question + chapter title source),
    reached from Home, lights the Home tab.
-9. **Paywall sheet** - **Billing slice - not rendered in beta (PG3).**
+8. **Paywall sheet** - **Billing slice - not rendered in beta (PG3).**
    locked contents (titles + counts, never previews) →
    exact price (₹499 one-time) → what's included → **Purchase** → one support
    line ("Trouble? Mail us"). **No Restore row** - restore is implicit under
@@ -423,20 +418,21 @@ it supersedes any lock/paywall rendering described elsewhere in this document.
 - **No monetization UI anywhere:** no lock icons, no `Locked` lozenges, no
   Purchase/price/unlock copy, no "locked chapters" footer. Entitlement lives
   in the API schema (plan 2), never in beta widgets.
-- **Syllabus row contract:** every chapter row renders title + topic-count
-  subtitle (`N topics`) + recall progress as the loud right-side signal
+- **Syllabus row contract:** every chapter row renders title + question-count
+  subtitle (`N questions`) + recall progress as the loud right-side signal
   (`8/14` over `recalled`, `--teal-ink`) with a thin progress bar once
   recall has started. No download/offline state of any kind (feature removed
   2026-07-04): no lozenges, no percentages, no remove-download, no storage
   lines.
-- **Chapter tap contract:** tapping ANY chapter row navigates to Topics.
-  Content is fetched on demand on entry; while fetching, Topics shows a
-  centered progress indicator; on failure it shows the inline retry state
-  (below). No "download prep" percentage anywhere.
+- **Chapter tap contract:** tapping ANY chapter row opens the Reader in
+  browse mode on the chapter's first question. Content is fetched on demand
+  on entry; while fetching, the Reader shows its loading state; on failure
+  it shows the inline retry state (below). No "download prep" percentage
+  anywhere.
 - **Syllabus footer:** removed in beta. Its only job was selling the unlock;
   with nothing locked it says nothing true.
 - **Lock/paywall material elsewhere in this doc** (Screen Anatomy items 4
-  and 9, Copy Voice store-compliance lines) is annotated in place as
+  and 8, Copy Voice store-compliance lines) is annotated in place as
   "billing slice - not rendered in beta" and kept for the billing slice.
 
 ## State Specs (D6 edge inventory, amended 2026-07-04)
@@ -470,9 +466,9 @@ is exhaustive for lane B; each state ships with a widget test. Copy is exact.
 8. **Resume slot, day zero ("Start here"):** with no reading history the
    pinned row shows overline `Start here` + the highest-exam-weight
    chapter's title + subtitle `Begin with the highest-yield chapter`;
-   tapping routes into that chapter's Topics screen. No auto-download
-   exists. With history it shows overline `Pick up where you left off` +
-   chapter title + `Topic i of N · <topic title>`.
+   tapping opens the Reader on that chapter's first question. No
+   auto-download exists. With history it shows overline `Pick up where you
+left off` + chapter title + `Question i of N`.
 9. **Empty track (PG2, first-class screen):** when the chosen speciality
    has no published chapters, Syllabus renders (not a dialog, not a toast):
    heading `No answers here yet` (serif title size), body `<Speciality>
@@ -581,3 +577,4 @@ The prototype is a fixed 344x720 frame; the app is not. One set of rules:
 | 2026-07-04 | Responsive Rules + A11y Executable Pack sections added (design T5/T6); token tables completed from built CSS (teal-soft/amber-soft/nav-\* both themes, dark sunk/rule/rule-strong/ok); reveal scroll-preserve noted as law vs prototype clamp (T7)                                                                                                                                                                                                                                                                                                                 | /autoplan design review; lane B builds against written truth                                                                                                                                          |
 | 2026-07-04 | Flutter build (lane B) landed against this document: tokens transcribed to app/lib/theme/tokens.dart, 9 screens + shell built on fixtures, free-beta UI contract + no-downloads enforced by widget tests                                                                                                                                                                                                                                                                                                                                                           | Plan 2026-07-04-flutter-shell-screens.md; per-screen specs are the copy source of truth                                                                                                               |
 | 2026-07-05 | Responsive Rules (T5) + A11y Executable Pack (T6) closed out by the acceptance sweep: 320dp/short-landscape/textScale 1.3/600dp+ max-width, 48dp tap-target guideline, roving-radio ArrowDown/ArrowUp keyboard nav, TalkBack labels, reduced-motion instant swap, reveal scroll-preserve (T7) all test-enforced in `app/test/acceptance/`                                                                                                                                                                                                                          | Task 17, plan 2026-07-04-flutter-shell-screens.md; sweep found and fixed two real gaps: rating-tray semantics label collision and missing roving-radio keyboard handler                               |
+| 2026-07-06 | Topics nav level removed (content pass): syllabus chapter rows open the Reader directly (one fewer tap); subtitle = question count; crumb "Question i of N"; "Next in chapter"; activation event = chapter_opened on chapter open | Founder-approved book-grounded content pass (design doc jolly-banach-f5aef8 + eng amendments): chapters mirror Miller's own chapter list, questions hang directly off chapters |
