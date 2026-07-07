@@ -77,14 +77,12 @@ test(
         (
           await client.query(
             `SELECT (SELECT count(*) FROM chapters)::int AS chapters,
-              (SELECT count(*) FROM topics)::int AS topics,
               (SELECT count(*) FROM qnas)::int AS qnas,
               (SELECT count(*) FROM images)::int AS images`,
           )
         ).rows[0];
       assert.deepEqual(await counts(), {
         chapters: 1,
-        topics: 2,
         qnas: 3,
         images: 1,
       });
@@ -96,7 +94,6 @@ test(
       assert.equal(second.contentVersion, 2);
       assert.deepEqual(await counts(), {
         chapters: 1,
-        topics: 2,
         qnas: 3,
         images: 1,
       });
@@ -154,6 +151,147 @@ test(
       assert.equal(n.rows[0].n, 0);
     } finally {
       await client.end();
+    }
+  },
+);
+
+function canonicalV2({ chapterKeyId, qnas }) {
+  return {
+    schema_version: 2,
+    speciality_slug: "anaesthesiology",
+    chapter: {
+      id: chapterKeyId,
+      title: `Chapter ${chapterKeyId.slice(-2)}`,
+      slug: `chapter-${chapterKeyId.slice(-2).toLowerCase()}`,
+      sort_order: 1,
+      exam_weight: 1,
+    },
+    qnas: qnas.map((q, i) => ({
+      id: q.id,
+      chapter_id: chapterKeyId,
+      question: q.question,
+      years: null,
+      marks: null,
+      earns_marks: [],
+      sections: [
+        { key: "summary", heading: "Summary", body_md: "Owned sample text." },
+      ],
+      sort_order: i + 1,
+    })),
+    images: [],
+  };
+}
+
+async function writeCanonical(canonical) {
+  const dir = await mkdtemp(path.join(tmpdir(), "ingest-pub-"));
+  await writeFile(
+    path.join(dir, "chapter.json"),
+    JSON.stringify(canonical, null, 2),
+  );
+  return dir;
+}
+
+const CH_A = "01ARZ3NDEKTSV4RRFFQ69G5CHA";
+const CH_B = "01ARZ3NDEKTSV4RRFFQ69G5CHB";
+const Q_MOVED = "01ARZ3NDEKTSV4RRFFQ69G5QMV";
+const Q_STAYS = "01ARZ3NDEKTSV4RRFFQ69G5QST";
+
+test(
+  "REGRESSION: authoritative republish deletes dropped qnas + their images by chapter_id",
+  { skip: skipDb },
+  async () => {
+    const client = await testClient();
+    try {
+      const two = canonicalV2({
+        chapterKeyId: CH_A,
+        qnas: [
+          { id: Q_STAYS, question: "stays" },
+          { id: Q_MOVED, question: "dropped" },
+        ],
+      });
+      await publishChapter(client, await writeCanonical(two));
+      await client.query(
+        `INSERT INTO images (id, qna_id, caption, content_description, webp, byte_size, sha256, sort_order)
+       VALUES ('01ARZ3NDEKTSV4RRFFQ69G5IMG', $1, 'c', 'd', decode('52494646','hex'), 4, 'x', 1)`,
+        [Q_MOVED],
+      );
+      const one = canonicalV2({
+        chapterKeyId: CH_A,
+        qnas: [{ id: Q_STAYS, question: "stays" }],
+      });
+      await publishChapter(client, await writeCanonical(one));
+      const qnas = await client.query(
+        `SELECT id FROM qnas WHERE chapter_id = $1`,
+        [CH_A],
+      );
+      assert.deepEqual(
+        qnas.rows.map((r) => r.id),
+        [Q_STAYS],
+      );
+      const images = await client.query(
+        `SELECT id FROM images WHERE qna_id = $1`,
+        [Q_MOVED],
+      );
+      assert.equal(
+        images.rowCount,
+        0,
+        "orphaned image must be deleted with its qna",
+      );
+    } finally {
+      await client.end();
+    }
+  },
+);
+
+test(
+  "a cross-chapter move keeps the qna ULID in EITHER republish order (amendment 1)",
+  { skip: skipDb },
+  async () => {
+    for (const order of ["source-first", "target-first"]) {
+      const client = await testClient(); // fresh schema per order
+      try {
+        const aWith = canonicalV2({
+          chapterKeyId: CH_A,
+          qnas: [{ id: Q_MOVED, question: "moving" }],
+        });
+        const bEmptyPlaceholder = canonicalV2({
+          chapterKeyId: CH_B,
+          qnas: [{ id: Q_STAYS, question: "anchor" }],
+        });
+        await publishChapter(client, await writeCanonical(aWith));
+        await publishChapter(client, await writeCanonical(bEmptyPlaceholder));
+
+        // The move: q leaves A, joins B - same ULID. A' must still validate, so
+        // it keeps a replacement qna (empty chapters never publish).
+        const aAfter = canonicalV2({
+          chapterKeyId: CH_A,
+          qnas: [{ id: "01ARZ3NDEKTSV4RRFFQ69G5QNW", question: "replacement" }],
+        });
+        const bAfter = canonicalV2({
+          chapterKeyId: CH_B,
+          qnas: [
+            { id: Q_STAYS, question: "anchor" },
+            { id: Q_MOVED, question: "moving" },
+          ],
+        });
+        const batch =
+          order === "source-first" ? [aAfter, bAfter] : [bAfter, aAfter];
+        for (const canonical of batch) {
+          await publishChapter(client, await writeCanonical(canonical));
+        }
+        const moved = await client.query(
+          `SELECT chapter_id FROM qnas WHERE id = $1`,
+          [Q_MOVED],
+        );
+        assert.equal(moved.rowCount, 1, `qna row survives the move (${order})`);
+        assert.equal(
+          moved.rows[0].chapter_id,
+          CH_B,
+          `qna belongs to the target (${order})`,
+        );
+      } finally {
+        await client.end();
+      }
     }
   },
 );
