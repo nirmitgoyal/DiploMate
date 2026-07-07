@@ -63,6 +63,21 @@ function textSimilarity(a, b) {
 // multi-character OCR fix on a longer question.
 const SIMILARITY_THRESHOLD = 0.7;
 
+// Cross-slot reuse bar (no (paper,year,position) corroboration - text is
+// the ONLY signal). Measured against real DNB-shaped stems, all normalized:
+//   "Define spinal..." vs "Define epidural..."          -> 0.85
+//   "Define spinal..." vs "Define local..."             -> 0.84
+//   "...complications of spinal" vs "...of epidural"     -> 0.92
+//   verbatim reappearance (identical normalized text)    -> 1.00
+//   a single-character OCR slip on a full-length stem    -> 0.96
+// The one content word that differs ("spinal"/"epidural") IS the question
+// but barely moves Levenshtein on a long shared template, so any bar that
+// admits those templated pairs re-keys distinct questions. 0.95 sits above
+// every false-merge (max 0.92) and below a genuine verbatim repeat (>=0.96),
+// so cross-slot auto-reuse means "essentially the same text in a later
+// paper," never "same template." The 0.7-0.95 middle band is human review.
+const NEAR_IDENTICAL = 0.95;
+
 // Provenance-first reconciliation (amendment 2). `ledger` is accepted for
 // interface parity with Task 10's future orchestrator wiring against the
 // committed ids.lock; these self-contained tests drive everything off
@@ -72,6 +87,11 @@ export function reconcile(extracted, ledger, prevArtifacts) {
   const matched = [];
   const minted = [];
   const ambiguous = [];
+  // Keys already reused in THIS call. A published key backs exactly one
+  // question, so a second question can never silently claim it too (a
+  // many-to-one merge would serve one question's answer for another) - the
+  // collision goes to review instead.
+  const claimed = new Set();
 
   for (const q of extracted) {
     const norm = normalizeQuestion(q.text);
@@ -87,6 +107,7 @@ export function reconcile(extracted, ledger, prevArtifacts) {
     if (sameSlot) {
       const sim = textSimilarity(norm, normalizeQuestion(sameSlot.text));
       if (sim >= SIMILARITY_THRESHOLD) {
+        claimed.add(sameSlot.key);
         matched.push({ ...q, key: sameSlot.key });
       } else {
         ambiguous.push({ ...q, candidateKey: sameSlot.key, similarity: sim });
@@ -94,23 +115,29 @@ export function reconcile(extracted, ledger, prevArtifacts) {
       continue;
     }
 
-    // 2. No provenance hit at this slot: the same question may still exist
-    // under a different (paper, year, position) - e.g. repeated in a later
-    // exam. Best normalized-text match above the threshold -> reuse its key.
+    // 2. No provenance hit at this slot: the same question may still appear
+    // under a different (paper, year, position) - a verbatim reappearance in
+    // a later exam. Text is the ONLY signal here (no provenance to
+    // corroborate), so the bar to auto-reuse is NEAR_IDENTICAL, not mere
+    // template similarity. Best match by normalized text, then band it.
     let best = null;
     for (const p of prevArtifacts) {
       const sim = textSimilarity(norm, normalizeQuestion(p.text));
-      if (sim >= SIMILARITY_THRESHOLD && (!best || sim > best.sim)) {
-        best = { key: p.key, sim };
-      }
+      if (!best || sim > best.sim) best = { key: p.key, sim };
     }
-    if (best) {
+    if (best && best.sim >= NEAR_IDENTICAL && !claimed.has(best.key)) {
+      // Essentially the same text in another paper -> genuine reappearance.
+      claimed.add(best.key);
       matched.push({ ...q, key: best.key });
-      continue;
+    } else if (best && best.sim >= SIMILARITY_THRESHOLD) {
+      // Middle band (templated look-alike) OR a near-identical match whose
+      // key was already claimed this call (many-to-one) - a human decides,
+      // never auto-reuse over it, never auto-mint a duplicate under it.
+      ambiguous.push({ ...q, candidateKey: best.key, similarity: best.sim });
+    } else {
+      // 3. No match anywhere (or below the review floor): genuinely new.
+      minted.push({ ...q, key: questionKey(q.text) });
     }
-
-    // 3. No match anywhere: genuinely new question - mint a fresh key.
-    minted.push({ ...q, key: questionKey(q.text) });
   }
 
   return { matched, minted, ambiguous };
