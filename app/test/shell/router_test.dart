@@ -2,9 +2,11 @@ import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/main.dart';
 import 'package:diplomate/providers/study_providers.dart';
+import 'package:diplomate/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 const _onboarded = SessionUser(
     id: 'u1', email: 'a@b.c', name: 'Ananya', photoUrl: null,
@@ -72,5 +74,28 @@ void main() {
     expect(find.text('Continue with Google'), findsOneWidget,
         reason: 'live sign-out must return to Sign-in');
     expect(find.byType(NavigationBar), findsNothing);
+  });
+
+  test('no route to a topics screen exists (nav level removed)', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final router = container.read(routerProvider);
+
+    // A stale deep link to the old nested route must not crash go_router -
+    // unknown paths resolve to the error match rather than throwing.
+    expect(() => router.configuration.findMatch(Uri.parse('/syllabus/topics/CH1')),
+        returnsNormally);
+
+    // The load-bearing check: walk every route (including nested GoRoutes
+    // under StatefulShellBranches) and confirm none is a topics route.
+    // Note: RouteBase's own toString()/Diagnosticable output does NOT
+    // recurse into nested `routes:` lists, so `routes.toString().contains(...)`
+    // would pass whether or not a nested topics route exists - RouteBase's
+    // own `routesRecursively` helper is what actually walks the tree.
+    final allPaths = RouteBase.routesRecursively(router.configuration.routes)
+        .whereType<GoRoute>()
+        .map((r) => r.path);
+    expect(allPaths.any((p) => p.contains('topics')), isFalse,
+        reason: 'topics nav level removed - syllabus opens the reader directly');
   });
 }

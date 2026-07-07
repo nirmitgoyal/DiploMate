@@ -11,7 +11,6 @@ import 'ui/shell/app_shell.dart';
 import 'ui/signin/signin_screen.dart';
 import 'ui/speciality/speciality_screen.dart';
 import 'ui/syllabus/syllabus_screen.dart';
-import 'ui/topics/topics_screen.dart';
 
 /// GoRouter only reruns `redirect` on navigation events, not on Riverpod
 /// state changes - this bridges sessionUserProvider changes (sign-in,
@@ -51,10 +50,14 @@ GoRouter buildRouter(Ref ref) {
           path: '/reader/queue',
           builder: (_, __) => const ReaderScreen.queue()),
       GoRoute(
+          path: '/reader/chapter/:chapterId',
+          builder: (_, s) => ReaderScreen.chapter(
+              chapterId: s.pathParameters['chapterId']!)),
+      GoRoute(
           path: '/reader/:qnaId',
           builder: (_, s) => ReaderScreen.browse(
               qnaId: s.pathParameters['qnaId']!,
-              topicId: s.uri.queryParameters['topic'])),
+              chapterId: s.uri.queryParameters['chapter'])),
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -64,12 +67,7 @@ GoRouter buildRouter(Ref ref) {
             ]),
           ]),
           StatefulShellBranch(routes: [
-            GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen(), routes: [
-              GoRoute(
-                  path: 'topics/:chapterId',
-                  builder: (_, s) =>
-                      TopicsScreen(chapterId: s.pathParameters['chapterId']!)),
-            ]),
+            GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),

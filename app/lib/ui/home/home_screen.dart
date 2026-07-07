@@ -112,7 +112,7 @@ class HomeScreen extends ConsumerWidget {
               Material(
                 color: dm.elevated,
                 child: InkWell(
-                  onTap: () => context.go('/syllabus/topics/${resume.id}'),
+                  onTap: () => context.go('/reader/chapter/${resume.id}'),
                   child: Container(
                     decoration: BoxDecoration(
                         border: Border(top: BorderSide(color: dm.rule))),

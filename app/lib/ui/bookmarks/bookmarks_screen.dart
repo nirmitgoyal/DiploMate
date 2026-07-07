@@ -7,15 +7,14 @@ import '../../domain/models.dart';
 import '../../theme/tokens.dart';
 
 class _BookmarkRowData {
-  const _BookmarkRowData(
-      {required this.qna, required this.chapterTitle, required this.topicTitle});
+  const _BookmarkRowData({required this.qna, required this.chapterTitle});
   final QnaRow qna;
-  final String chapterTitle, topicTitle;
+  final String chapterTitle;
 }
 
-/// Joins bookmark entries (Task 14) to their QnA + Chapter/Topic titles
-/// (Task 5). Fixture-scale only (one speciality's chapters) - plan 6's real
-/// content repo will index qna->topic->chapter directly server-side.
+/// Joins bookmark entries (Task 14) to their QnA + Chapter titles (Task 5).
+/// Fixture-scale only (one speciality's chapters) - plan 6's real content
+/// repo will index qna->chapter directly server-side.
 final _bookmarkRowsProvider = StreamProvider<List<_BookmarkRowData>>((ref) {
   final repo = ref.watch(contentRepositoryProvider);
   return ref.watch(bookmarkRepositoryProvider).entries().asyncMap((entries) async {
@@ -28,18 +27,9 @@ final _bookmarkRowsProvider = StreamProvider<List<_BookmarkRowData>>((ref) {
     for (final e in entries) {
       final qna = await repo.qna(e.contentId);
       if (qna == null) continue;
-      String chapterTitle = '', topicTitle = '';
-      for (final c in chapters) {
-        final topics = await repo.topics(c.id);
-        for (final t in topics) {
-          if (t.id == qna.topicId) {
-            chapterTitle = c.title;
-            topicTitle = t.title;
-          }
-        }
-      }
-      rows.add(_BookmarkRowData(
-          qna: qna, chapterTitle: chapterTitle, topicTitle: topicTitle));
+      final chapterTitle =
+          chapters.where((c) => c.id == qna.chapterId).firstOrNull?.title ?? '';
+      rows.add(_BookmarkRowData(qna: qna, chapterTitle: chapterTitle));
     }
     return rows;
   });
@@ -122,7 +112,7 @@ class _BookmarkRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final dm = context.dm;
     return InkWell(
-      onTap: () => context.go('/reader/${row.qna.id}?topic=${row.qna.topicId}'),
+      onTap: () => context.go('/reader/${row.qna.id}?chapter=${row.qna.chapterId}'),
       child: Container(
         constraints: const BoxConstraints(minHeight: 56),
         decoration: BoxDecoration(border: Border(bottom: BorderSide(color: dm.rule))),
@@ -135,8 +125,7 @@ class _BookmarkRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: DmType.bodyUi.copyWith(color: dm.ink)),
             const SizedBox(height: 2),
-            Text('${row.chapterTitle} · ${row.topicTitle}',
-                style: DmType.meta.copyWith(color: dm.ink3)),
+            Text(row.chapterTitle, style: DmType.meta.copyWith(color: dm.ink3)),
           ],
         ),
       ),
