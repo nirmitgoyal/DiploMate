@@ -28,20 +28,9 @@ class Chapters extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-class Topics extends Table {
-  TextColumn get id => text()();
-  TextColumn get chapterId => text()();
-  TextColumn get title => text()();
-  TextColumn get slug => text()();
-  TextColumn get examTheme => text().nullable()();
-  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
-  @override
-  Set<Column> get primaryKey => {id};
-}
-
 class Qnas extends Table {
   TextColumn get id => text()();
-  TextColumn get topicId => text()();
+  TextColumn get chapterId => text()();
   TextColumn get question => text()();
   TextColumn get years => text().nullable()();
   IntColumn get marks => integer().nullable()();
