@@ -1,6 +1,6 @@
 {
-  "schema_version": 1,
-  "speciality_slug": "anaesthesia",
+  "schema_version": 2,
+  "speciality_slug": "anaesthesiology",
   "chapter": {
     "id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
     "title": "Regional Anaesthesia (Sample)",
@@ -8,28 +8,10 @@
     "sort_order": 1,
     "exam_weight": 10
   },
-  "topics": [
-    {
-      "id": "01KWRJV8K5VR0JACJCB9SX1J4W",
-      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
-      "title": "Spinal Anaesthesia",
-      "slug": "spinal-anaesthesia",
-      "exam_theme": "Regional techniques",
-      "sort_order": 1
-    },
-    {
-      "id": "01KWRJV8KJ1BYQQ9S2EYTSWGG3",
-      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
-      "title": "Complications of Spinal Anaesthesia",
-      "slug": "complications-of-spinal-anaesthesia",
-      "exam_theme": "Complications and safety",
-      "sort_order": 2
-    }
-  ],
   "qnas": [
     {
       "id": "01KWRJV8K50XTN4DYZWGH5JJ39",
-      "topic_id": "01KWRJV8K5VR0JACJCB9SX1J4W",
+      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
       "question": "Define spinal anaesthesia. List its indications and contraindications.",
       "years": "2019, 2022",
       "marks": 10,
@@ -56,7 +38,7 @@
         {
           "key": "indications",
           "heading": "Indications and contraindications",
-          "body_md": "Indications include lower-abdominal and lower-limb procedures where an awake technique is preferred. Contraindications include patient refusal, local infection at the puncture site, and uncorrected coagulopathy. Sample text, not licensed content."
+          "body_md": "Indications include lower-abdominal and lower-limb procedures where an awake technique is preferred, in contrast to surface procedures managed under topical anaesthesia. Contraindications include patient refusal, local infection at the puncture site, and uncorrected coagulopathy. Sample text, not licensed content."
         },
         {
           "key": "summary",
@@ -68,7 +50,7 @@
     },
     {
       "id": "01KWRJV8KJA7G3G8XRNHC9QZDT",
-      "topic_id": "01KWRJV8K5VR0JACJCB9SX1J4W",
+      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
       "question": "Describe the steps of performing a subarachnoid block.",
       "years": "2021",
       "marks": 5,
@@ -98,7 +80,7 @@
     },
     {
       "id": "01KWRJV8KJACRNDSG9Y7XDBDTC",
-      "topic_id": "01KWRJV8KJ1BYQQ9S2EYTSWGG3",
+      "chapter_id": "01KWRJV8K4PVHZXZZZCQCRKVMP",
       "question": "What is post dural puncture headache? Outline its management.",
       "years": "2018, 2023",
       "marks": 10,
@@ -129,7 +111,7 @@
           "body_md": "Recognise the postural pattern, start conservative measures, and escalate when the headache persists."
         }
       ],
-      "sort_order": 1
+      "sort_order": 3
     }
   ],
   "images": [
