@@ -34,7 +34,7 @@ void main() {
     expect(find.text('Saved · 1 question'), findsOneWidget);
   });
 
-  testWidgets('bookmark row tap opens the reader at ?chapter=<chapterId> (no topic param)',
+  testWidgets('bookmark row tap opens the reader at ?chapter=<chapterId>',
       (t) async {
     final repo = FakeBookmarkRepository();
     await repo.toggle('01J0QNATAPBLOCK00000000001');

@@ -97,7 +97,7 @@ void main() {
 
   test('PROPERTY content updates never touch scheduling: fold depends only on '
       'the event list (stable content IDs, A4)', () {
-    // A chapter refresh rewrites qnas/topics rows but never review events.
+    // A chapter refresh rewrites qnas rows but never review events.
     // Fold input is the event list alone, so state must be identical however
     // often "content metadata" changes around it. Modeled by folding the same
     // events twice with an unrelated mutation between - plus a db-level proof
