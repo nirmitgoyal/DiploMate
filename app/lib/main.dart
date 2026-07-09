@@ -31,9 +31,11 @@ Future<void> main() async {
       apiBaseUrl: const String.fromEnvironment('API_BASE_URL'),
       serverClientId: const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID'),
       api: api,
-      google: RealGoogleSignIn(
-          serverClientId:
-              const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID')),
+      google: const bool.fromEnvironment('DEV_FAKE_AUTH')
+          ? FakeGoogleSignIn() // dev-only: --dart-define=DEV_FAKE_AUTH=true
+          : RealGoogleSignIn(
+              serverClientId:
+                  const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID')),
     ),
     appDatabaseProvider.overrideWithValue(db),
   ]);

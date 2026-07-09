@@ -8,9 +8,9 @@ void main() {
     test('strips answer text, JWTs, and the request; keeps unrelated data',
         () async {
       final event = SentryEvent(
-        message: const SentryMessage('unrelated crash message survives'),
+        message: SentryMessage('unrelated crash message survives'),
         request: SentryRequest(url: 'https://api.diplomate.app/manifest'),
-        exceptions: const [
+        exceptions: [
           SentryException(
             type: 'DioException',
             value: 'auth failed, header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6',
@@ -66,7 +66,7 @@ void main() {
 
     test('redacts a bare Bearer token in the message field', () async {
       final event = SentryEvent(
-        message: const SentryMessage(
+        message: SentryMessage(
             'request failed with Bearer eyJhbGciOiJIUzI1NiJ9.abc-DEF_123'),
       );
 
