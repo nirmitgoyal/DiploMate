@@ -18,7 +18,7 @@ Widget host({ContentRepository? repo}) => ProviderScope(
       ],
       child: MaterialApp(
           theme: dmLightTheme(),
-          home: ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
+          home: const ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
     );
 
 /// qna() always returns null - exercises a successful fetch that finds no

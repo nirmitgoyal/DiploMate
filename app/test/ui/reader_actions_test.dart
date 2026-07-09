@@ -16,7 +16,7 @@ Widget host({bool online = true}) => ProviderScope(
       overrides: [isOnlineProvider.overrideWith((ref) => online)],
       child: MaterialApp(
           theme: dmLightTheme(),
-          home: ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
+          home: const ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
     );
 
 void main() {

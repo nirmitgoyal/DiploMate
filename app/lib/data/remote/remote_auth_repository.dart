@@ -33,6 +33,16 @@ class RealGoogleSignIn implements GoogleSignInLike {
   }
 }
 
+/// ponytail: dev-only fake, skips Google entirely on the simulator. Active only
+/// when built with --dart-define=DEV_FAKE_AUTH=true; the backend must ALSO run
+/// with DEV_FAKE_AUTH set or it rejects 'dev-fake-token'. Never wired in prod.
+class FakeGoogleSignIn implements GoogleSignInLike {
+  @override
+  Future<String?> idToken({required bool silent}) async => 'dev-fake-token';
+  @override
+  Future<void> signOut() async {}
+}
+
 class RemoteAuthRepository implements AuthRepository {
   RemoteAuthRepository({required this.api, required this.google});
   final ApiClient api;
