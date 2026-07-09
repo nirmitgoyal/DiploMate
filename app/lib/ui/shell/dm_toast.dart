@@ -6,6 +6,7 @@ import '../../theme/tokens.dart';
 /// Transient ack (DESIGN.md: feedback, not content; a named no-cards
 /// exception). 1500ms hold, bottom-center, announced to TalkBack.
 void showDmToast(BuildContext context, String message) {
+  // ignore: deprecated_member_use
   SemanticsService.announce(message, TextDirection.ltr);
   final overlay = Overlay.of(context);
   final dm = Theme.of(context).extension<DmTheme>()!.colors;

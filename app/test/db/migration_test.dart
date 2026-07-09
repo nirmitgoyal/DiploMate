@@ -1,5 +1,5 @@
 import 'package:drift/native.dart';
-import 'package:drift_dev/api/migrations.dart';
+import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:diplomate/data/db/app_db.dart';
 

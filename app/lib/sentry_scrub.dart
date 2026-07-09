@@ -2,6 +2,11 @@ import 'dart:async';
 
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+// This scrub deliberately reads and rewrites deprecated SentryEvent fields
+// (copyWith, extra) in order to redact them - suppress those notices file-wide
+// rather than per-line (sentry 9 deprecated both; behaviour is unchanged).
+// ignore_for_file: deprecated_member_use
+
 /// Keys whose presence on a breadcrumb's `data` map means the breadcrumb is
 /// carrying licensed answer text - the whole breadcrumb is dropped rather
 /// than redacted, since the answer content itself must never leave the
@@ -36,7 +41,6 @@ FutureOr<SentryEvent?> scrubEvent(SentryEvent event, Hint hint) {
       .map(_scrubBreadcrumb)
       .toList(growable: false);
 
-  // ignore: deprecated_member_use
   final extra = event.extra == null
       ? null
       : (Map<String, dynamic>.from(event.extra!)
@@ -76,7 +80,6 @@ FutureOr<SentryEvent?> scrubEvent(SentryEvent event, Hint hint) {
     level: event.level,
     culprit: event.culprit,
     tags: event.tags,
-    // ignore: deprecated_member_use
     extra: extra,
     fingerprint: event.fingerprint,
     user: event.user,
