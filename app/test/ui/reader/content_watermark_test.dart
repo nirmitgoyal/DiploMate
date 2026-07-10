@@ -4,6 +4,7 @@ import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/theme/app_theme.dart';
 import 'package:diplomate/ui/reader/content_watermark.dart';
+import 'package:diplomate/ui/reader/reader_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -89,5 +90,25 @@ void main() {
     // pixels; this floor is far above a stray antialiased pixel yet far
     // below the real count, so a font-rendering nudge will not trip it.
     expect(inkedPixels, greaterThan(2000), reason: 'inked=$inkedPixels');
+  });
+
+  testWidgets('reader view renders the watermark over content', (t) async {
+    // Tall surface: idiomatic for the reader's long-form content
+    // (see reader_surface_test.dart).
+    await t.binding.setSurfaceSize(const Size(800, 2600));
+    addTearDown(() => t.binding.setSurfaceSize(null));
+    await t.pumpWidget(ProviderScope(
+      overrides: [sessionUserProvider.overrideWith((ref) => _user)],
+      child: MaterialApp(
+        theme: dmLightTheme(),
+        home: const ReaderScreen.browse(
+            qnaId: '01J0QNATAPBLOCK00000000001',
+            chapterId: '01J0CHAPREGIONAL0000000001'),
+      ),
+    ));
+    await t.pumpAndSettle();
+    expect(find.textContaining('transversus abdominis plane'), findsOneWidget,
+        reason: 'content rendered');
+    expect(_painterOf(t).text, 'ananya@example.com');
   });
 }
