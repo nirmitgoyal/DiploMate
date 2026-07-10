@@ -1,8 +1,10 @@
 import 'package:diplomate/domain/models.dart';
 import 'package:diplomate/theme/app_theme.dart';
+import 'package:diplomate/ui/reader/content_watermark.dart';
 import 'package:diplomate/ui/reader/diagram_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _img = ImageRow(
@@ -21,10 +23,11 @@ final _bytes = Uint8List.fromList(const [
   0x03, 0x70, 0x00, 0xFE, 0xFD, 0xC0, 0x80, 0x00
 ]);
 
-Widget host() => MaterialApp(
-    theme: dmLightTheme(),
-    home: Scaffold(
-        body: DiagramPlate(image: _img, bytesLoader: () async => _bytes)));
+Widget host() => ProviderScope(
+    child: MaterialApp(
+        theme: dmLightTheme(),
+        home: Scaffold(
+            body: DiagramPlate(image: _img, bytesLoader: () async => _bytes))));
 
 void main() {
   // Image.memory decodes go into the global imageCache, which otherwise
@@ -86,5 +89,18 @@ void main() {
     expect(plateFocus.hasFocus, isTrue,
         reason: 'closing the dialog must restore focus to the plate');
     expect(t.binding.focusManager.primaryFocus, same(plateFocus));
+  });
+
+  testWidgets('viewer overlays the identity watermark on the image', (t) async {
+    await t.pumpWidget(host());
+    await t.pumpAndSettle();
+    await t.tap(find.text('Tap to enlarge'));
+    await t.pumpAndSettle();
+    final paint = t.widget<CustomPaint>(find.descendant(
+        of: find.byType(ContentWatermark),
+        matching: find.byType(CustomPaint)));
+    // No session override in this host: fallback text proves the viewer
+    // never depends on auth state to render.
+    expect((paint.painter! as WatermarkPainter).text, 'DiploMate');
   });
 }

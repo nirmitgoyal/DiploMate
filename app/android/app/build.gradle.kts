@@ -14,6 +14,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // AGP 8+ defaults buildConfig generation off; MainActivity reads
+    // BuildConfig.DEBUG to gate FLAG_SECURE, so re-enable it here.
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.diplomate.diplomate"

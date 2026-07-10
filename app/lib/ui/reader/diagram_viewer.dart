@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
+import 'content_watermark.dart';
 
 class DiagramPlate extends StatefulWidget {
   const DiagramPlate({super.key, required this.image, required this.bytesLoader});
@@ -162,7 +163,8 @@ class _DiagramViewerState extends State<_DiagramViewer> {
                   ),
                 ),
                 Expanded(
-                  child: GestureDetector(
+                  child: WatermarkedContent(
+                      child: GestureDetector(
                     onDoubleTap: _doubleTap,
                     child: InteractiveViewer(
                       transformationController: _controller,
@@ -179,7 +181,7 @@ class _DiagramViewerState extends State<_DiagramViewer> {
                         ),
                       ),
                     ),
-                  ),
+                  )),
                 ),
                 OutlinedButton(
                   onPressed: _toggleRotate,

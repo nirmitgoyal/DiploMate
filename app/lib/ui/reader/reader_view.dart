@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
+import 'content_watermark.dart';
 
 class ReaderView extends StatefulWidget {
   const ReaderView({
@@ -133,7 +134,8 @@ class _ReaderViewState extends State<ReaderView> {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     return Scaffold(
-      body: SafeArea(
+      body: WatermarkedContent(
+          child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -425,7 +427,7 @@ class _ReaderViewState extends State<ReaderView> {
               ),
           ],
         ),
-      ),
+      )),
     );
   }
 }
