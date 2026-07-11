@@ -1,0 +1,6 @@
+# Copy to android/key.properties (gitignored) and fill in.
+# Generate the keystore first - see docs/android-release-runbook.md.
+storeFile=/Users/nirmit/keystores/diplomate-upload.jks
+storePassword=CHANGE-ME
+keyPassword=CHANGE-ME
+keyAlias=upload

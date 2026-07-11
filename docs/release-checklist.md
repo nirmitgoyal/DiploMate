@@ -19,11 +19,15 @@ ENG-T19 (Data Safety, consent screen, account-type gate, store listing).
 - [ ] The WEB client id is also the app's `GOOGLE_SERVER_CLIENT_ID`
       dart-define value used at build time:
       `flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id>.apps.googleusercontent.com`.
-- [ ] One **ANDROID** OAuth client exists for package `com.diplomate.diplomate`
+- [ ] One **ANDROID** OAuth client exists for package `com.diplomate.app`
       with the **debug** signing key's SHA-1 registered. Get it with
       `cd android && ./gradlew signingReport`. Copy the `SHA1:` value from
       the `debug` variant block and confirm it matches the SHA-1
       fingerprint on the ANDROID client in Google Cloud Console.
+- [ ] The **upload keystore's** SHA-1 is also registered on the ANDROID
+      OAuth client. Get it with
+      `keytool -list -v -keystore ~/keystores/diplomate-upload.jks -alias upload | grep "SHA1:"`
+      (see `docs/android-release-runbook.md` section 1).
 - [ ] A second **ANDROID** OAuth client entry (or an additional SHA-1 on the
       same client) exists for the **Play App Signing** key's SHA-1. Get it
       from Play Console -> Setup -> App integrity -> App signing key
@@ -35,6 +39,10 @@ ENG-T19 (Data Safety, consent screen, account-type gate, store listing).
       Store, because Play re-signs the AAB with its own key before
       distributing it (ENG-T4). Do not skip this step because local sign-in
       already works.
+- [ ] An **iOS** OAuth client exists for bundle id `com.diplomate.app`, and
+      its client id matches both `GIDClientID` and the reversed-id URL
+      scheme in `app/ios/Runner/Info.plist` (see
+      `docs/android-release-runbook.md` section 2).
 
 ## 2. OAuth consent screen
 
@@ -51,7 +59,7 @@ ENG-T19 (Data Safety, consent screen, account-type gate, store listing).
 ## 3. Play Console: app + account-type gate
 
 - [ ] The app is created in Play Console under package
-      `com.diplomate.diplomate`.
+      `com.diplomate.app`.
 - [ ] **Account-type check (blocking, do not skip):** open Play Console ->
       Settings -> Developer account -> Account details and record whether
       this is a **personal** or **organization** developer account, and
