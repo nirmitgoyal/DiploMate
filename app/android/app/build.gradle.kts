@@ -12,6 +12,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // flutter_local_notifications 17.x uses java.time; AGP requires
+        // desugaring for it below API 26.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     // AGP 8+ defaults buildConfig generation off; MainActivity reads
@@ -48,4 +51,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

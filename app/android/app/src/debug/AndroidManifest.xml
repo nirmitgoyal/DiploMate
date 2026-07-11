@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Dev loop talks to a local API server over plain http on the LAN
+         (same intent as iOS NSAllowsLocalNetworking). Debug builds only -
+         this overlay never reaches a release artifact. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>
