@@ -1,3 +1,12 @@
+import java.util.Properties
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -35,11 +44,24 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            // No else: a guard task below fails release builds instead of
+            // letting them debug-sign or emit an unsigned artifact.
         }
     }
 }
@@ -56,4 +78,24 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+// Release artifacts must never fall back to debug signing: the first Play
+// upload permanently enrolls the upload key. Fail with a pointer instead.
+//
+// This hooks the whole task graph (not doFirst on assembleRelease/bundleRelease
+// themselves): those two are lifecycle tasks whose real work happens in
+// upstream dependencies (packageRelease, packageReleaseBundle/signReleaseBundle)
+// that already run - and already write an unsigned artifact to disk - before
+// the lifecycle task's own doFirst would fire. whenReady runs once the full
+// graph is resolved but before any task executes, so it blocks those
+// upstream tasks too.
+gradle.taskGraph.whenReady {
+    val requestsRelease = allTasks.any { it.name == "assembleRelease" || it.name == "bundleRelease" }
+    if (requestsRelease && !keystorePropertiesFile.exists()) {
+        throw GradleException(
+            "android/key.properties not found - release builds must be signed " +
+                "with the upload keystore. See docs/android-release-runbook.md."
+        )
+    }
 }
