@@ -1,0 +1,110 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { generateAnswer, validateAnswer, parseAnswer } from "../src/bedrock.js";
+
+const VALID = {
+  chapter_title: "Airway Management",
+  sections: [{ key: "definition", heading: "Definition", body_md: "..." }],
+  earns_marks: [{ label: "Defines airway", section_key: "definition" }],
+};
+
+function fakeFetch(
+  payloadText,
+  usage = { input_tokens: 100, output_tokens: 200 },
+) {
+  return async () => ({
+    ok: true,
+    json: async () => ({
+      content: [{ type: "text", text: payloadText }],
+      usage,
+    }),
+  });
+}
+
+test("generateAnswer parses valid JSON and returns usage", async () => {
+  const r = await generateAnswer(
+    { speciality: "Anaesthesiology", question: "Difficult airway?", marks: 10 },
+    { fetchImpl: fakeFetch(JSON.stringify(VALID)), token: "x" },
+  );
+  assert.equal(r.answer.chapter_title, "Airway Management");
+  assert.equal(r.usage.output_tokens, 200);
+  assert.equal(r.flag, undefined);
+});
+
+test("generateAnswer flags after two invalid responses and sums usage", async () => {
+  const r = await generateAnswer(
+    { speciality: "X", question: "?", marks: 5 },
+    { fetchImpl: fakeFetch("not json at all"), token: "x" },
+  );
+  assert.equal(r.answer, null);
+  assert.equal(r.flag, "invalid-json");
+  // both failed attempts were billed; usage must be the sum of the two calls
+  assert.equal(r.usage.input_tokens, 200);
+  assert.equal(r.usage.output_tokens, 400);
+});
+
+test("validateAnswer rejects every invalid shape", () => {
+  assert.throws(() => validateAnswer({ ...VALID, chapter_title: "" }));
+  assert.throws(() => validateAnswer({ ...VALID, sections: "x" }));
+  assert.throws(() => validateAnswer({ ...VALID, sections: [] }));
+  assert.throws(() =>
+    validateAnswer({ ...VALID, sections: [{ key: "k", heading: "h" }] }),
+  );
+  assert.throws(() => validateAnswer({ ...VALID, earns_marks: "x" }));
+  assert.throws(() =>
+    validateAnswer({ ...VALID, earns_marks: [{ label: "l" }] }),
+  );
+});
+
+test("parseAnswer strips markdown code fences", () => {
+  const fencedJson = `\`\`\`json
+${JSON.stringify(VALID)}
+\`\`\``;
+  const parsed = parseAnswer(fencedJson);
+  assert.deepEqual(parsed, VALID);
+});
+
+test("parseAnswer recovers JSON from surrounding prose", () => {
+  const proseWithJson = `Here is your answer: ${JSON.stringify(VALID)} done`;
+  const parsed = parseAnswer(proseWithJson);
+  assert.deepEqual(parsed, VALID);
+});
+
+test("generateAnswer retries on invalid JSON then succeeds, summing usage and sending the corrective turn", async () => {
+  let callCount = 0;
+  let secondBody = null;
+  const statefulFetch = async (_url, opts) => {
+    callCount++;
+    if (callCount === 1) {
+      return {
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: "not valid json" }],
+          usage: { input_tokens: 100, output_tokens: 50 },
+        }),
+      };
+    } else {
+      secondBody = JSON.parse(opts.body);
+      return {
+        ok: true,
+        json: async () => ({
+          content: [{ type: "text", text: JSON.stringify(VALID) }],
+          usage: { input_tokens: 100, output_tokens: 200 },
+        }),
+      };
+    }
+  };
+
+  const r = await generateAnswer(
+    { speciality: "Anaesthesiology", question: "Test?", marks: 10 },
+    { fetchImpl: statefulFetch, token: "x" },
+  );
+  assert.equal(r.answer.chapter_title, "Airway Management");
+  assert.equal(r.flag, undefined);
+  assert.equal(callCount, 2);
+  // usage must be the SUM of both billed attempts, not just the last one
+  assert.equal(r.usage.input_tokens, 200);
+  assert.equal(r.usage.output_tokens, 250);
+  // the corrective turn was actually sent: original user + assistant + reprompt
+  assert.equal(secondBody.messages.length, 3);
+});
