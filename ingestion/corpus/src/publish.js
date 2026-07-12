@@ -12,6 +12,18 @@ export async function getSpecialityId(client, slug) {
   return rows[0]?.id ?? null;
 }
 
+// Every qna id already published for a speciality, so a resumed run skips
+// generation (not just insertion) and never re-pays Bedrock for done rows.
+export async function getExistingQnaIds(client, specialityId) {
+  const { rows } = await client.query(
+    `SELECT q.id FROM qnas q
+       JOIN chapters c ON q.chapter_id = c.id
+      WHERE c.speciality_id = $1`,
+    [specialityId],
+  );
+  return new Set(rows.map((r) => r.id));
+}
+
 // Chapter id is deterministic from (speciality, slug) so re-runs and the
 // UNIQUE(speciality_id, slug) constraint agree. content_version starts at 0.
 export async function upsertChapter(client, specialityId, title, slug) {

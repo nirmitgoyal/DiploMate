@@ -5,7 +5,12 @@ import { SLUGS, QS_ROOT } from "./slugs.js";
 import { createMeter, worstCaseCall } from "./meter.js";
 import { generateAnswer } from "./bedrock.js";
 import { canonicalizeChapters, slugify, dedupeSlugs } from "./canonicalize.js";
-import { getSpecialityId, upsertChapter, insertQna } from "./publish.js";
+import {
+  getSpecialityId,
+  getExistingQnaIds,
+  upsertChapter,
+  insertQna,
+} from "./publish.js";
 
 const MAX_TOKENS = 2000;
 
@@ -13,7 +18,7 @@ const MAX_TOKENS = 2000;
 function nameFromSlug(slug) {
   return slug
     .split("-")
-    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .map((w) => (w[0]?.toUpperCase() ?? "") + w.slice(1))
     .join(" ");
 }
 
@@ -24,6 +29,7 @@ export async function processSpeciality(client, slug, rows, deps) {
   const {
     specialityName,
     getSpecialityId,
+    getExistingQnaIds,
     generate,
     canonicalize,
     upsertChapter,
@@ -40,6 +46,7 @@ export async function processSpeciality(client, slug, rows, deps) {
   // (reserve worst before dispatch, reconcile actual usage after).
   const worst = worstCaseCall(MAX_TOKENS, deps.rateOut ?? 5);
   const specialityId = await getSpecialityId(client, slug);
+  const existing = await getExistingQnaIds(client, specialityId);
   const generated = [];
   let flagged = 0;
   let spendStopped = false;
@@ -51,6 +58,7 @@ export async function processSpeciality(client, slug, rows, deps) {
     rows,
     concurrency,
     async (row) => {
+      if (existing.has(row.key)) return; // already generated + published: skip, no re-spend
       if (meter.wouldExceed(worst)) {
         spendStopped = true;
         return;
@@ -146,9 +154,12 @@ export async function main(argv = process.argv.slice(2)) {
 
   const deps = {
     getSpecialityId,
+    getExistingQnaIds,
     generate: (q) => generateAnswer(q, { maxTokens: MAX_TOKENS }),
     canonicalize: (titles) =>
-      canonicalizeChapters(titles, { callModel: chapterMergeModel }),
+      canonicalizeChapters(titles, {
+        callModel: (t) => chapterMergeModel(t, meter),
+      }),
     upsertChapter,
     insertQna,
     meter,
@@ -211,9 +222,9 @@ export async function main(argv = process.argv.slice(2)) {
 // canonical names. Reuses generateAnswer's transport indirectly via a small
 // dedicated request. Kept here (not in canonicalize.js) so canonicalize stays
 // model-agnostic and unit-testable.
-async function chapterMergeModel(titles) {
+async function chapterMergeModel(titles, meter) {
   try {
-    const { answer } = await generateAnswer(
+    const { answer, usage } = await generateAnswer(
       {
         speciality: "chapter-canonicalization",
         question:
@@ -225,6 +236,7 @@ async function chapterMergeModel(titles) {
       },
       { maxTokens: MAX_TOKENS },
     );
+    if (meter) meter.add(usage);
     return JSON.parse(answer.sections[0].body_md);
   } catch {
     // any failure (transport 429/5xx, null answer, bad JSON) -> identity:

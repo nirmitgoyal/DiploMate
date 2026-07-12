@@ -4,6 +4,7 @@ import { testClient, TEST_SPECIALITY_ID } from "../../test/db.js";
 import {
   id16,
   getSpecialityId,
+  getExistingQnaIds,
   upsertChapter,
   insertQna,
 } from "../src/publish.js";
@@ -62,6 +63,38 @@ test("chapter + qna writes are idempotent", { skip }, async () => {
     await client.end();
   }
 });
+
+test(
+  "getExistingQnaIds returns published qna keys for a speciality",
+  { skip },
+  async () => {
+    const client = await testClient();
+    try {
+      const specId = await getSpecialityId(client, "anaesthesiology");
+      const chId = await upsertChapter(
+        client,
+        specId,
+        "Airway Management",
+        "airway-management",
+      );
+      const key = id16("q|existing-ids-test");
+      await insertQna(client, {
+        key,
+        chapterId: chId,
+        question: "Existing ids question.",
+        years: "2023",
+        marks: 5,
+        earnsMarks: [],
+        sections: [{ key: "s", heading: "S", body_md: "b" }],
+      });
+      const ids = await getExistingQnaIds(client, specId);
+      assert.ok(ids instanceof Set);
+      assert.ok(ids.has(key), "published qna key must be reported as existing");
+    } finally {
+      await client.end();
+    }
+  },
+);
 
 test("unknown speciality returns null", { skip }, async () => {
   const client = await testClient();
