@@ -12,10 +12,11 @@ SQL_DIR="$SCRIPT_DIR/../../sql"
 
 heroku create "$APP"
 heroku addons:create heroku-postgresql:essential-0 -a "$APP"
-# Wait for the DB to provision, then apply every numbered migration in order
-# (same contract as tools/db/apply.sh and test/db.js testClient()).
-for f in "$SQL_DIR/0001_content_v0.sql" "$SQL_DIR/0002_seed_specialities.sql" \
-         "$SQL_DIR/0003_users_events.sql" "$SQL_DIR/0004_drop_topics.sql"; do
+# Wait for the DB to provision, then apply every numbered migration in sorted
+# order (same contract as tools/db/apply.sh and test/db.js testClient()). The
+# glob picks up a future 000N migration automatically, so the corpus DB never
+# drifts from the app schema.
+for f in "$SQL_DIR"/[0-9][0-9][0-9][0-9]_*.sql; do
   echo "applying $f"
   heroku pg:psql -a "$APP" < "$f"
 done
