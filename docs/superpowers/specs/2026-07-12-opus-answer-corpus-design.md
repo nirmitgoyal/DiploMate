@@ -1,232 +1,228 @@
-# Opus-Generated Answer Corpus -> New Heroku DB
+# Bedrock-Generated Answer Corpus -> New Heroku DB (26 specialities, <=$100)
 
 **Date:** 2026-07-12
 **Status:** DESIGN (awaiting spec review)
 
 ## Goal
 
-For every question in every paper of every speciality in `Qs/`, generate a
-structured DNB-style model answer with Claude Opus 4.8 (effort=max), group the
-questions into chapters that emerge from the questions themselves, and store
+For every question in every paper of 26 selected specialities in `Qs/`, generate
+a structured DNB-style model answer with Claude on Amazon Bedrock, group the
+questions into chapters that emerge from the questions, and store
 `speciality -> chapter -> qna(answer)` in a NEW Heroku Postgres app so the
-DiploMate app can render the answers.
+DiploMate app can render the answers. Total Anthropic/Bedrock spend must stay
+UNDER $100.
 
 ## Decisions locked with founder (2026-07-12)
 
-These OVERRIDE the documented content strategy for this run. The founder was
-shown the conflicts (see "Deliberate departures") and chose each anyway.
+Later decisions here SUPERSEDE the first-pass ones (Opus/all-57/Batches). The
+founder was shown cost math at each step and chose each explicitly.
 
-1. **Answer source: free Opus generation.** Opus writes each answer from its own
-   knowledge. No textbook, no license gate, no verbatim quote verifier.
-2. **Scope: all 57 specialities** in `Qs/` (the full corpus), not the
-   Anaesthesia-only pilot.
-3. **DB target: a NEW Heroku app + Postgres**, isolated from the existing
-   DiploMate production DB.
-4. **Answer shape: structured exam answer** (`sections[]` + `earns_marks[]`) -
-   the exact shape `server/src/routes/chapters.js` already serves.
-5. **Run mode: Batches API** (50% cheaper, async, <=24h, unordered).
+1. **Provider: Amazon Bedrock**, authed by `AWS_BEARER_TOKEN_BEDROCK` (already in
+   `~/.zshrc`). NOT the first-party Anthropic API.
+2. **Model: Claude Haiku 4.5** (`claude-haiku-4-5` family; exact Bedrock model id
+   resolved at the canary). It is the only Claude tier that fits the $100 cap at
+   this scale: Opus 4.8 max ~= $6,000, Sonnet ~= $160, Haiku 4.5 ~= $60-75.
+   Tradeoff accepted: shallower reasoning than Opus; adequate for factual DNB
+   answers; canary verifies quality. No `effort` param (Haiku rejects it).
+3. **Hard cost cap: $100**, enforced by a running cost meter that HALTS at a $90
+   ceiling (margin) plus `max_tokens` ~= 2000 per answer. The token cap is exact
+   even though the real Bedrock Haiku price is masked in the available reference.
+4. **Scope: 26 specialities** (list below), NOT all 57.
+5. **DB target: a NEW Heroku app + Postgres**, isolated from production.
+6. **Answer shape: structured exam answer** (`sections[]` + `earns_marks[]`) - the
+   exact shape `server/src/routes/chapters.js` serves.
+7. **Run mode: live concurrent calls** (Batches dropped; Bedrock live is simpler
+   and the cost fits without the 50% batch discount).
+
+### The 26 specialities (slugs reconciled to real `Qs/` folders)
+
+anaesthesiology, anatomy, biochemistry, cardiac-anaesthesia,
+clinical-immunology-and-rheumatology, critical-care-medicine,
+dermatology-venereology-and-leprosy, emergency-medicine, endocrinology,
+forensic-medicine, general-medicine, general-surgery, microbiology,
+**neuro-anaesthesia** (list said "neuro-anesthesia"), neurosurgery,
+obstetrics-and-gynaecology, orthopaedics, otorhinolaryngology-ent,
+palliative-medicine, pathology, **paediatrics** (list said "pediatrics"),
+physiology, radiation-oncology, **radio-diagnosis** (list said "radiology";
+founder picked radio-diagnosis), respiratory-medicine, urology.
+
+Corpus size: 1,359 PDF papers -> ~13.6k gross questions -> ~6.8k unique after
+dedup (measured 2026-07-12).
 
 ## Deliberate departures from existing strategy (recorded, not re-litigated)
 
-- The documented moat is verbatim, license-gated Miller quotes with a mechanical
-  substring verifier (`ingestion/generator/` plan D, memory
-  `diplomate-content-pass-design`). This run discards that: answers are
+- The documented moat is verbatim, license-gated Miller quotes with a substring
+  verifier (`ingestion/generator/` plan D). This run discards that: answers are
   unverified LLM output. Founder accepts.
-- The approved plan is Anaesthesia beachhead, pilot-first. This run is 30x that.
 - A second DB the app does not read from is inert until the app is repointed.
-  Isolation is intentional (staging / fork / teardown-safe experiment).
+  Isolation is intentional.
 
 ## Architecture
 
 One resumable Node ESM tool under `ingestion/corpus/` (new folder; the existing
-`ingestion/generator/` verbatim stages are NOT used). Reuses the built
-extraction + dedup modules; adds Opus generation, chapter canonicalization, and
-Postgres publish.
+`ingestion/generator/` verbatim stages are NOT used). Reuses the built extraction
+
+- dedup modules; adds Bedrock generation, chapter canonicalization, Postgres
+  publish, and the cost meter.
 
 ```
-Qs/<speciality-slug>/<year>/*.pdf
+Qs/<speciality-slug>/<year>/*.pdf   (26 slugs only)
   |
-  |  STAGE 1  extract (local, hours; OCR for scans)         [REUSE extract.js]
-  v
-  { question_text, year, paper, position, marks? } per paper
+  |  STAGE 1  extract (local, hours; OCR for scans)        [REUSE extract.js]
+  v  { question_text, year, paper, position, marks? } per paper
   |
   |  STAGE 2  dedup to unique questions                     [REUSE ledger.js]
-  v
-  manifest.jsonl: { key, speciality_slug, question, years, marks? }
-  |            (key = sha256-16 of normalized question text)
+  v  manifest.jsonl: { key, speciality_slug, question, years, marks? }
   |
-  |  STAGE 3  Opus 4.8 effort=max, Batches API              [NEW]
-  v          one request per unique key ->
-  { key, chapter_title, sections[], earns_marks[] }
+  |  STAGE 3  Bedrock Haiku 4.5, LIVE concurrent            [NEW]
+  v  cost meter gates every dispatch; one call per unique key ->
+  |  { key, chapter_title, sections[], earns_marks[] }
   |
   |  STAGE 4  canonicalize chapters per speciality          [NEW]
-  v          (merge synonym/near-dup titles -> chapter set)
+  v  (one cheap Haiku call/speciality merges synonym titles)
   |
   |  STAGE 5  publish to new Heroku Postgres                [NEW]
-  v          upsert speciality, upsert chapter, insert qna (idempotent)
+  v  upsert speciality, upsert chapter, insert qna (idempotent by key)
 new DB: specialities -> chapters -> qnas
 ```
 
 ### Stage 1 - extraction (reuse)
 
-`extractQuestions(pdfPath)` from `ingestion/generator/src/extract.js` already
-handles text PDFs and OCR fallback (poppler + tesseract, both present), splits
-numbered questions, stamps year/paper, and emits a per-paper QA report that
-flags zero-question / high-garble / count-mismatch papers. Walk all
-`Qs/<slug>/<year>/*.pdf`. Scanned papers OCR slowly (per-page render + tesseract)
-so Stage 1 may run for hours; the QA report is the loud gate for bad papers.
+`extractQuestions(pdfPath)` from `ingestion/generator/src/extract.js` handles text
+PDFs and OCR fallback (poppler + tesseract, both present), splits numbered
+questions, stamps year/paper, and emits a per-paper QA report flagging
+zero-question / high-garble / count-mismatch papers. Walk only the 26
+`Qs/<slug>/<year>/*.pdf` trees. Scanned papers OCR slowly, so Stage 1 may run for
+hours; the QA report is the loud gate for bad papers.
 
 ### Stage 2 - dedup (reuse)
 
-DNB repeats questions across years. `ledger.js` provides `normalizeQuestion` and
+DNB repeats questions across years. `ledger.js` gives `normalizeQuestion` and
 `questionKey` (sha256-16 of normalized text). Collapse duplicates within a
-speciality to one unique question; accumulate the set of years it appeared into a
-`years` string. `key` is the stable identity used everywhere downstream and as
-the `qnas.id` primary key, which makes every later step idempotent.
+speciality to one unique question; accumulate its years into a `years` string.
+`key` is the stable identity used downstream and as `qnas.id`, making every later
+step idempotent.
 
-### Stage 3 - Opus generation (new)
+### Stage 3 - Bedrock generation (new)
 
-One Batches API request per unique question. Per-request params:
+Live concurrent calls (concurrency ~= 8), each a Messages request to the Bedrock
+runtime with bearer-token auth:
 
-```js
-{
-  custom_id: key,
-  params: {
-    model: "claude-opus-4-8",
-    max_tokens: 16000,
-    thinking: { type: "adaptive" },
-    output_config: {
-      effort: "max",
-      format: { /* JSON schema below */ }
-    },
-    messages: [{ role: "user", content: PROMPT }]
-  }
-}
-```
+- Endpoint: `POST https://bedrock-runtime.<region>.amazonaws.com/model/<modelId>/invoke`
+  with header `Authorization: Bearer $AWS_BEARER_TOKEN_BEDROCK`.
+- Body: native Anthropic Messages shape with `anthropic_version: "bedrock-2023-05-31"`,
+  `max_tokens: 2000`, the prompt, and NO `effort`/`thinking` (Haiku rejects effort;
+  keep it simple and cheap).
+- Region default `us-east-1`; canary confirms Haiku 4.5 model access is enabled
+  and pins the exact Bedrock model id.
+- SDK vs raw: the canary decides. Preference is `@anthropic-ai/bedrock-sdk`
+  (`AnthropicBedrockMantle`) IF it honors `AWS_BEARER_TOKEN_BEDROCK`; otherwise a
+  raw `https` POST with the Bearer header. Do not block the design on SDK auth
+  behavior; the canary proves one working call first.
 
-Structured-output schema each answer must match:
+Structured output: do NOT depend on the `output_config.format` beta on Bedrock.
+The prompt instructs Haiku to return STRICT JSON matching this schema; the tool
+parses + validates it, retries once on parse failure, else flags the question:
 
 ```jsonc
 {
   "chapter_title": "string", // e.g. "Airway Management"
-  "sections": [
-    // the answer body the app renders
-    { "key": "string", "heading": "string", "body_md": "string" },
-  ],
-  "earns_marks": [
-    // mark-scheme anchors -> section keys
-    { "label": "string", "section_key": "string" },
-  ],
+  "sections": [{ "key": "string", "heading": "string", "body_md": "string" }],
+  "earns_marks": [{ "label": "string", "section_key": "string" }],
 }
 ```
 
-`PROMPT` gives Opus: the speciality name, the exam context (DNB/DrNB theory
-paper, structured model answer with a marks scheme), the question text and its
-marks, and instructs it to (a) name the single best chapter/topic the question
-belongs to and (b) write the answer as titled sections with `earns_marks`
-anchoring each scoring point to a section. Batch chunks respect the API limits
-(<=100k requests / 256MB per batch); the full corpus is chunked across batches.
+`PROMPT` gives Haiku the speciality name, DNB exam context (structured model
+answer with a marks scheme, be concise to respect the 2000-token budget), the
+question text and marks, and asks it to (a) name the single best chapter and
+(b) write titled sections with `earns_marks` anchoring each scoring point.
 
-- API facts (from claude-api skill): effort=max is supported on Opus 4.8 via
-  `output_config.effort`; adaptive thinking only (no `budget_tokens`);
-  structured output via `output_config.format` + `messages.parse()`; batch
-  results are UNORDERED, keyed by `custom_id`. SDK: `@anthropic-ai/sdk`.
+### The cost meter (money-safety, tested)
+
+- Rates are configurable (`RATE_IN`, `RATE_OUT` per 1M tokens; default to public
+  Haiku 4.5 ~= $1 in / $5 out, since the reference is masked). After each response,
+  read `usage.input_tokens` / `usage.output_tokens`, add
+  `in*RATE_IN + out*RATE_OUT` to a running total persisted to `spend.json`.
+- Before dispatching any new call, if `total + worstCaseNext >= CEILING` ($90
+  default), STOP dispatching and drain in-flight calls. Worst-case overshoot =
+  concurrency _ (2000 out _ RATE_OUT) ~= $0.08, so the true stop is far under $100.
+- A halt is resumable: qnas already inserted are skipped (idempotency), so a later
+  run with fresh budget continues where it stopped.
+- This meter is the hard guarantee. The canary-derived tokens/question is the
+  soft pre-check that the full 26 will fit before we start them.
 
 ### Stage 4 - chapter canonicalization (new)
 
-The Batches choice creates a real tension: batch requests are submitted
-all-at-once and unordered, so the chapter list CANNOT grow live "as each Q is
-encountered." Each request independently proposes a `chapter_title`, so the same
-topic drifts across names ("Airway", "Difficult Airway", "Airway Management").
-
-Resolution, per speciality, after its batch returns:
-
-1. Collect the distinct proposed `chapter_title`s.
-2. One cheap Opus call (effort high, small input) returns a canonical mapping
-   `{ raw_title -> canonical_title }` that merges synonyms and near-duplicates.
-   57 such calls total, negligible cost.
-3. `slugify(canonical_title)` -> chapter slug; dedupe slugs deterministically.
-
-Chapters therefore still come from the questions ("created as encountered"),
-just reconciled after the batch rather than grown live. **Alternative considered:**
-live-incremental generation (process questions sequentially, pass the growing
-chapter list into each prompt) yields cleaner emergent chapters but forfeits
-batching, roughly doubling cost. Rejected given the Batches decision; revisit
-only if canonicalization proves weak on the canary.
+Concurrent generation cannot grow the chapter list live, so each answer proposes a
+free-form `chapter_title` that drifts across names. Per speciality, after its
+questions are generated: collect distinct titles, one cheap Haiku call returns a
+canonical mapping `{ raw -> canonical }` merging synonyms, then `slugify` +
+dedupe. Chapters still come from the questions, reconciled after generation. 26
+cleanup calls, negligible cost. Canary checks this is good enough.
 
 ### Stage 5 - publish (new)
 
-New DB schema = the existing app schema, applied verbatim so the app renders
-unchanged: run `sql/0001_content_v0.sql` then `sql/0004_drop_topics.sql` on the
-new database (net: `specialities`, `chapters`, `qnas`, `images`, `app_config`;
-`topics` dropped; indexes added). No new DDL invented.
+New DB schema = the existing app schema applied verbatim: run
+`sql/0001_content_v0.sql` then `sql/0004_drop_topics.sql` (net: `specialities`,
+`chapters`, `qnas`, `images`, `app_config`; `topics` dropped; indexes added). No
+new DDL.
 
-- Seed specialities: reuse `sql/0002_seed_specialities.sql` (61 rows, slugs match
-  `Qs/` dir names). For any `Qs/` dir whose slug is absent from the seed, mint a
-  speciality row (slug = dir name, name = title-cased, exam_type = 'DNB').
-- Upsert chapter: deterministic `id = sha256-16(speciality_id + '|' + slug)`;
+- Seed specialities: reuse `sql/0002_seed_specialities.sql`; the 26 slugs all
+  exist in that seed, so no minting needed.
+- Upsert chapter: `id = sha256-16(speciality_id + '|' + slug)`;
   `ON CONFLICT (speciality_id, slug) DO NOTHING`.
-- Insert qna: `id = key` (Stage 2), `chapter_id`, `question`, `years`, `marks`,
-  `earns_marks` (JSONB), `sections` (JSONB), `sort_order`. `ON CONFLICT (id) DO
-NOTHING` -> re-runs never duplicate, the whole pipeline is resumable.
+- Insert qna: `id = key`, plus `chapter_id`, `question`, `years`, `marks`,
+  `earns_marks` (JSONB), `sections` (JSONB), `sort_order`;
+  `ON CONFLICT (id) DO NOTHING` -> re-runs never duplicate; pipeline is resumable.
 
-## Resumability
+## Canary-first ladder
 
-- Stage 1/2 write `manifest.jsonl` (all unique questions). Regenerating is cheap
-  and deterministic; delete to force a re-extract.
-- A local `batches.jsonl` ledger maps `batch_id -> {speciality, status}` so a
-  restart resumes polling instead of resubmitting.
-- Stage 5 idempotency (qnas.id = key, ON CONFLICT DO NOTHING) means an
-  interrupted publish resumes by re-streaming batch results; already-inserted
-  rows are skipped.
+1. **1 paper** (~10 questions): proves the whole Bedrock path end to end - bearer
+   auth, region, exact model id, JSON parse, sections/earns_marks shape. Measures
+   real tokens/question. Cost ~cents.
+2. **1 speciality** (anaesthesiology, ~500 unique questions): proves extraction
+   coverage, chapter canonicalization, publish, and the cost meter. Extrapolate
+   tokens/question across the other 25 and CONFIRM the full 26 stays < $100 before
+   proceeding.
+3. **Remaining 25 specialities**, under the live meter (auto-halts at $90).
 
-## Canary-first ladder (the spend is real)
+## Preconditions
 
-1. **1 paper** (~10 questions, live calls not batch, for speed): eyeball answer
-   quality and the sections/earns_marks shape. Measures real tokens/question.
-2. **1 speciality** (Anaesthesiology, ~500 unique questions, via Batches):
-   proves extraction coverage, chapter canonicalization, and end-to-end publish.
-3. **All 57 specialities** (Batches), only after 1-2 look right.
-
-**Cost:** Opus 4.8 pricing is masked in the available API reference, so no dollar
-figure is quoted here. The canary reports actual input+output tokens per
-question; multiply by the founder's Opus rate (batch = 50% off) for the real
-number before authorizing the full run. Order-of-magnitude corpus size:
-~15k-30k unique questions after dedup.
-
-## Preconditions (blockers before Stage 3 can run)
-
-1. **`ANTHROPIC_API_KEY`.** No `ant` CLI and no profile on this machine, so there
-   are genuinely no credentials. Founder sets the key in the env or a gitignored
-   `.env` the tool reads. Not pasted in chat.
-2. **Cost ceiling approved** after the canary reports real tokens/question.
-3. **Heroku account.** CLI is authed as `parth.mitblr2023@learner.manipal.edu`
+1. **`AWS_BEARER_TOKEN_BEDROCK`** - present in `~/.zshrc`. The tool reads it from
+   the env. Never printed or committed.
+2. **Bedrock region + model access** - default `us-east-1`; canary confirms Haiku
+   4.5 is enabled for the account there (else enable access or fall back to Haiku
+   3.5 / another enabled model).
+3. **Heroku account** - CLI is authed as `parth.mitblr2023@learner.manipal.edu`
    (not the founder's Google email). The new app and its Postgres monthly charge
-   land on that account unless the founder switches first.
+   land there unless the founder switches first.
+4. **Cost ceiling** - $90 meter default; confirm real tokens/question after the
+   canary before the remaining 25.
 
 ## Out of scope (explicitly skipped)
 
-Miller ingestion, the quote verifier, the license gate, figure extraction, the
-`images` table population, ULID minting via `build.js`, and the existing
-`ingestion/generator/` classify/generate stages. None apply to free generation.
-DESIGN.md answer-on-white / examiner-red rendering is the app's concern; this
-run only produces the `sections` data it renders.
+Opus 4.8, `effort=max`, the Batches API, Miller ingestion, the quote verifier, the
+license gate, figure extraction, `images` population, ULID minting via `build.js`,
+and the existing `ingestion/generator/` classify/generate stages. None apply.
 
 ## Success criteria
 
-- `pdftotext`/OCR extraction produces a QA report per paper; flagged papers are
-  listed, not silently dropped.
+- Extraction produces a QA report per paper; flagged papers are listed, not
+  silently dropped.
 - Canary answers render in the app's qna shape (sections + earns_marks) and read
   as DNB model answers to a human check.
-- Re-running any stage inserts zero duplicate qnas (idempotency proven).
-- Full run: every non-flagged unique question across 57 specialities has a qna
-  row under an emergent chapter, in the new DB.
+- The cost meter provably stops before $100 (unit test on the halt logic).
+- Re-running any stage inserts zero duplicate qnas.
+- Full run: every non-flagged unique question across the 26 specialities has a
+  qna row under an emergent chapter in the new DB, for total spend < $100.
 
 ## Open risks
 
-- Extraction quality on scanned/garbled papers caps corpus completeness; the QA
-  report surfaces it but does not fix it.
-- Free-generated answers are unverified medical content. No verifier exists in
-  this path by design; correctness is the founder's editorial risk.
-- Chapter canonicalization is heuristic + one cleanup call; messy taxonomies may
-  need a second pass. Canary is the checkpoint.
+- Extraction quality on scanned/garbled papers caps completeness; the QA report
+  surfaces it, does not fix it.
+- Free-generated Haiku answers are unverified medical content; correctness is the
+  founder's editorial risk, and Haiku is shallower than Opus.
+- If real Haiku tokens/question run high, the $90 meter may stop before all 26
+  finish; the run is resumable but may need the founder to raise the ceiling
+  (still their call, still under their $100 intent).
+- Bedrock bearer-token auth path (SDK vs raw) unproven until the canary.
