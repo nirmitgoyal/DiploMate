@@ -75,6 +75,62 @@ test("position is the printed item number even when the printed numbers skip", (
   );
 });
 
+// NBE digital-export papers (2021+) delimit questions with "Question Number : N"
+// and carry per-question engine metadata (Question Id, Question Type, ...,
+// Correct Marks : N) before the stem, instead of the older "N." numbering.
+// Owned synthetic text (same approach as the printed-number test above) so the
+// two real variants are exercised without a second binary fixture.
+test("splitQuestionBlocks handles the NBE digital-export metadata variant", () => {
+  const metadataVariant =
+    "National Board of Examinations\n" +
+    "Question Number : 1 Question Id : 999 Question Type : SUBJECTIVE Consider As\n" +
+    "Subjective : Yes Calculator : None Minimum Instruction Time : 0\n\n" +
+    "Correct Marks : 10\n\n" +
+    "Rotameters: types, arrangement and safety features. [3+2+2+3]\n" +
+    "Question Number : 2 Question Id : 1000 Question Type : SUBJECTIVE\n" +
+    "Correct Marks : 10\n\n" +
+    "a) Define dyspnoea. Differentiate cardiac and respiratory origin. [2+3]\n";
+  const blocks = splitQuestionBlocks(metadataVariant);
+  assert.equal(blocks.length, 2);
+  assert.deepEqual(
+    blocks.map((b) => b.position),
+    [1, 2],
+    "position is the printed Question Number",
+  );
+  assert.deepEqual(
+    blocks.map((b) => b.marks),
+    [10, 10],
+    "marks come from Correct Marks",
+  );
+  assert.match(blocks[0].text, /^Rotameters:/, "engine metadata stripped");
+  assert.doesNotMatch(
+    blocks[0].text,
+    /Question Id|Correct Marks|SUBJECTIVE/,
+    "no engine metadata leaks into the stem",
+  );
+});
+
+test("splitQuestionBlocks handles the clean digital-export variant (no metadata)", () => {
+  const clean =
+    "National Board of Examinations\n" +
+    "Question Number : 1\n" +
+    "What are the routes of administration of morphine? [3+3+4]\n" +
+    "Question Number : 2\n" +
+    "a) Describe a method of preoxygenation. [4]\n";
+  const blocks = splitQuestionBlocks(clean);
+  assert.equal(blocks.length, 2);
+  assert.deepEqual(
+    blocks.map((b) => b.position),
+    [1, 2],
+  );
+  assert.match(blocks[0].text, /^What are the routes/);
+  assert.equal(
+    blocks[0].marks,
+    undefined,
+    "no Correct Marks -> marks undefined",
+  );
+});
+
 test("year and paper are stamped from the first-page header", async () => {
   const { questions } = await extractQuestions(TEXT_PDF, { ocr: false });
   for (const q of questions) {
