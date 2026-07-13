@@ -3,7 +3,7 @@ import pg from "pg";
 import { buildManifest } from "./manifest.js";
 import { SLUGS, QS_ROOT } from "./slugs.js";
 import { createMeter, worstCaseCall } from "./meter.js";
-import { generateAnswer } from "./bedrock.js";
+import { generateAnswer, callJson } from "./bedrock.js";
 import { canonicalizeChapters, slugify, dedupeSlugs } from "./canonicalize.js";
 import {
   getSpecialityId,
@@ -158,7 +158,8 @@ export async function main(argv = process.argv.slice(2)) {
     generate: (q) => generateAnswer(q, { maxTokens: MAX_TOKENS }),
     canonicalize: (titles) =>
       canonicalizeChapters(titles, {
-        callModel: (t) => chapterMergeModel(t, meter),
+        buildTaxonomy: (t) => buildTaxonomy(t, meter),
+        classify: (batch, taxonomy) => classifyTitles(batch, taxonomy, meter),
       }),
     upsertChapter,
     insertQna,
@@ -218,31 +219,52 @@ export async function main(argv = process.argv.slice(2)) {
   }
 }
 
-// One Bedrock call that merges a speciality's proposed chapter titles into
-// canonical names. Reuses generateAnswer's transport indirectly via a small
-// dedicated request. Kept here (not in canonicalize.js) so canonicalize stays
-// model-agnostic and unit-testable.
-async function chapterMergeModel(titles, meter) {
+// Phase 1 of canonicalization: ONE Bedrock call that reads every proposed title
+// and returns a compact canonical chapter list. The output is just the chapter
+// names (small), so hundreds of titles fit in one call without truncating.
+// Any failure returns [] so canonicalizeChapters falls back to identity - a paid
+// run is never crashed or aborted by best-effort grouping. Usage is metered.
+async function buildTaxonomy(titles, meter) {
   try {
-    const { answer, usage } = await generateAnswer(
-      {
-        speciality: "chapter-canonicalization",
-        question:
-          "Merge these chapter titles into canonical names. Return JSON with " +
-          "chapter_title='map', sections=[{key:'map',heading:'map',body_md:JSON " +
-          "string of {original: canonical}}], earns_marks=[]. Titles: " +
-          JSON.stringify(titles),
-        marks: null,
-      },
+    const { value, usage } = await callJson(
+      "You are organizing a medical exam question bank. Below are chapter " +
+        "titles proposed for individual questions. Return ONLY a JSON array of " +
+        "30 to 60 canonical chapter names that together cover all of them, " +
+        "grouping synonyms and closely-related topics under one broad chapter. " +
+        "No prose, just the JSON array. Titles: " +
+        JSON.stringify(titles),
       { maxTokens: MAX_TOKENS },
     );
     if (meter) meter.add(usage);
-    return JSON.parse(answer.sections[0].body_md);
+    return Array.isArray(value)
+      ? value.filter((s) => typeof s === "string" && s.trim())
+      : [];
   } catch {
-    // any failure (transport 429/5xx, null answer, bad JSON) -> identity:
-    // each title stays its own chapter. Canonicalization is best-effort and
-    // must never abort or crash a paid run.
-    return Object.fromEntries(titles.map((t) => [t, t]));
+    return [];
+  }
+}
+
+// Phase 2 of canonicalization: assign a batch of titles to the fixed taxonomy.
+// One Bedrock call per batch (output-bounded). Any failure returns {} so each
+// unclassified title keeps its own name (never dropped). Usage is metered.
+async function classifyTitles(titles, taxonomy, meter) {
+  try {
+    const { value, usage } = await callJson(
+      "Assign each question title to the single best-matching chapter from the " +
+        "allowed list. Use ONLY chapter names from the list, verbatim. Return " +
+        "ONLY a JSON object mapping each title to its chapter, no prose. " +
+        "Allowed chapters: " +
+        JSON.stringify(taxonomy) +
+        " Titles: " +
+        JSON.stringify(titles),
+      { maxTokens: MAX_TOKENS },
+    );
+    if (meter) meter.add(usage);
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+  } catch {
+    return {};
   }
 }
 

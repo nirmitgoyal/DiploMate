@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { generateAnswer, validateAnswer, parseAnswer } from "../src/bedrock.js";
+import {
+  generateAnswer,
+  validateAnswer,
+  parseAnswer,
+  callJson,
+} from "../src/bedrock.js";
 
 const VALID = {
   chapter_title: "Airway Management",
@@ -86,6 +91,45 @@ test("generateAnswer gives up (throws) on a non-retryable 4xx", async () => {
     ),
     /bedrock 400/,
   );
+});
+
+test("callJson parses a bare JSON array and returns usage", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({
+      content: [{ type: "text", text: '["A","B","C"]' }],
+      usage: { input_tokens: 10, output_tokens: 5 },
+    }),
+  });
+  const r = await callJson("prompt", { fetchImpl, token: "x" });
+  assert.deepEqual(r.value, ["A", "B", "C"]);
+  assert.equal(r.usage.output_tokens, 5);
+});
+
+test("callJson salvages a JSON object wrapped in fences/prose", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({
+      content: [
+        { type: "text", text: 'Here:\n```json\n{"t1":"Chapter A"}\n```' },
+      ],
+      usage: {},
+    }),
+  });
+  const r = await callJson("p", { fetchImpl, token: "x" });
+  assert.deepEqual(r.value, { t1: "Chapter A" });
+});
+
+test("callJson returns null value on unparseable text", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({
+      content: [{ type: "text", text: "no json here" }],
+      usage: {},
+    }),
+  });
+  const r = await callJson("p", { fetchImpl, token: "x" });
+  assert.equal(r.value, null);
 });
 
 test("validateAnswer rejects every invalid shape", () => {

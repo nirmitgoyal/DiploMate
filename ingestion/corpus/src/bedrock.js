@@ -149,3 +149,60 @@ export async function generateAnswer(
     }
   }
 }
+
+// Lightweight JSON call for auxiliary tasks (chapter taxonomy + classification)
+// that do NOT fit the strict answer schema. Asks for a bare JSON value and
+// parses it (array or object), sharing the same bearer transport + 429 backoff.
+// Returns { value, usage }; value is null if the model text is not parseable.
+export async function callJson(
+  prompt,
+  {
+    fetchImpl = fetch,
+    token = process.env.AWS_BEARER_TOKEN_BEDROCK,
+    region = process.env.AWS_REGION || "us-east-1",
+    model = process.env.BEDROCK_MODEL_ID ||
+      "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    maxTokens = 2000,
+    retryBaseMs = 500,
+    maxTransportRetries = 6,
+  } = {},
+) {
+  const url = `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(
+    model,
+  )}/invoke`;
+  const res = await postWithBackoff(
+    fetchImpl,
+    url,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        anthropic_version: "bedrock-2023-05-31",
+        max_tokens: maxTokens,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    },
+    { retryBaseMs, maxTransportRetries },
+  );
+  const data = await res.json();
+  const usage = data.usage || {};
+  const text = (data.content || []).map((b) => b.text || "").join("");
+  const cleaned = text
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
+  try {
+    return { value: JSON.parse(cleaned), usage };
+  } catch {
+    const m = cleaned.match(/[[{][\s\S]*[\]}]/); // salvage the first array/object
+    try {
+      return { value: m ? JSON.parse(m[0]) : null, usage };
+    } catch {
+      return { value: null, usage };
+    }
+  }
+}
