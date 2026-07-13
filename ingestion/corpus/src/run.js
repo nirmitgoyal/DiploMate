@@ -219,26 +219,45 @@ export async function main(argv = process.argv.slice(2)) {
   }
 }
 
+// Canonicalization runs right after a speciality's whole generation burst has
+// saturated the Bedrock rate limit, so its few calls MUST out-wait the throttle
+// - a failed taxonomy call falls back to identity (no grouping at all). Give the
+// aux calls a much larger retry budget than a single generation call.
+const AUX_CALL_OPTS = {
+  maxTokens: MAX_TOKENS,
+  maxTransportRetries: 10,
+  retryBaseMs: 1000,
+};
+
 // Phase 1 of canonicalization: ONE Bedrock call that reads every proposed title
 // and returns a compact canonical chapter list. The output is just the chapter
-// names (small), so hundreds of titles fit in one call without truncating.
-// Any failure returns [] so canonicalizeChapters falls back to identity - a paid
-// run is never crashed or aborted by best-effort grouping. Usage is metered.
+// names (small), so hundreds of titles fit in one call without truncating. One
+// pass often overshoots the 30-60 ask on a large, varied input, so a second
+// pass over the result compacts it. Any failure returns [] so canonicalize falls
+// back to identity - a paid run is never crashed by best-effort grouping.
 async function buildTaxonomy(titles, meter) {
-  try {
+  const ask = async (items) => {
     const { value, usage } = await callJson(
       "You are organizing a medical exam question bank. Below are chapter " +
         "titles proposed for individual questions. Return ONLY a JSON array of " +
         "30 to 60 canonical chapter names that together cover all of them, " +
         "grouping synonyms and closely-related topics under one broad chapter. " +
         "No prose, just the JSON array. Titles: " +
-        JSON.stringify(titles),
-      { maxTokens: MAX_TOKENS },
+        JSON.stringify(items),
+      AUX_CALL_OPTS,
     );
     if (meter) meter.add(usage);
     return Array.isArray(value)
       ? value.filter((s) => typeof s === "string" && s.trim())
       : [];
+  };
+  try {
+    let tax = await ask(titles);
+    if (tax.length > 70) {
+      const tighter = await ask(tax); // re-merge the taxonomy onto itself
+      if (tighter.length >= 20 && tighter.length < tax.length) tax = tighter;
+    }
+    return tax;
   } catch {
     return [];
   }
@@ -257,7 +276,7 @@ async function classifyTitles(titles, taxonomy, meter) {
         JSON.stringify(taxonomy) +
         " Titles: " +
         JSON.stringify(titles),
-      { maxTokens: MAX_TOKENS },
+      AUX_CALL_OPTS,
     );
     if (meter) meter.add(usage);
     return value && typeof value === "object" && !Array.isArray(value)
