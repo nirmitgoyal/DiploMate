@@ -16,3 +16,13 @@ a new Heroku Postgres. Idempotent, resumable, hard cost cap.
 node src/run.js --canary-paper "<path-to-one.pdf>" # prove the Bedrock path
 node src/run.js --speciality anaesthesiology # one speciality
 node src/run.js --all --ceiling 90 # remaining, meter-gated
+
+## Throughput
+
+Default `--concurrency 1` (serial). The Bedrock on-demand Haiku tokens/min cap
+throttles hard above it - a run at 4 lost ~25-30% of calls to 429 and starved
+chapter grouping; serial stays under the cap (651 published / 13 flagged, 60
+chapters, ~$6 for anaesthesiology). The full 26 specialities run ~8-9 hours at
+concurrency 1, but the run is resumable + idempotent - re-run the same command to
+continue after a stop and to retry any flagged questions. Raise `--concurrency`
+only after obtaining a higher Bedrock Haiku quota.
