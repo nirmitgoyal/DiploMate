@@ -62,6 +62,33 @@ export function validateAnswer(obj) {
   return obj;
 }
 
+// Bedrock on-demand Haiku throttles hard under sustained load (HTTP 429). Retry
+// 429 and transient 5xx with exponential backoff + jitter, honoring Retry-After,
+// so a throttled call waits and succeeds instead of being dropped. Non-retryable
+// statuses and exhausted retries throw (the orchestrator flags that question).
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+async function postWithBackoff(
+  fetchImpl,
+  url,
+  init,
+  { retryBaseMs, maxTransportRetries },
+) {
+  for (let a = 0; ; a++) {
+    const res = await fetchImpl(url, init);
+    if (res.ok) return res;
+    if (!RETRYABLE_STATUS.has(res.status) || a >= maxTransportRetries) {
+      throw new Error(`bedrock ${res.status}: ${await res.text()}`);
+    }
+    const ra = Number(res.headers?.get?.("retry-after"));
+    const waitMs =
+      Number.isFinite(ra) && ra > 0
+        ? ra * 1000
+        : Math.min(2 ** a * retryBaseMs, 20000) + Math.random() * 250;
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
+}
+
 export async function generateAnswer(
   { speciality, question, marks },
   {
@@ -71,6 +98,8 @@ export async function generateAnswer(
     model = process.env.BEDROCK_MODEL_ID ||
       "us.anthropic.claude-haiku-4-5-20251001-v1:0",
     maxTokens = 2000,
+    retryBaseMs = 500,
+    maxTransportRetries = 6,
   } = {},
 ) {
   const url = `https://bedrock-runtime.${region}.amazonaws.com/model/${encodeURIComponent(
@@ -81,21 +110,25 @@ export async function generateAnswer(
   ];
   let usage = { input_tokens: 0, output_tokens: 0 };
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await fetchImpl(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const res = await postWithBackoff(
+      fetchImpl,
+      url,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          anthropic_version: "bedrock-2023-05-31",
+          max_tokens: maxTokens,
+          system: SYSTEM,
+          messages,
+        }),
       },
-      body: JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
-        max_tokens: maxTokens,
-        system: SYSTEM,
-        messages,
-      }),
-    });
-    if (!res.ok) throw new Error(`bedrock ${res.status}: ${await res.text()}`);
+      { retryBaseMs, maxTransportRetries },
+    );
     const data = await res.json();
     const u = data.usage || {};
     usage = {

@@ -35,13 +35,13 @@ export async function processSpeciality(client, slug, rows, deps) {
     upsertChapter,
     insertQna,
     meter,
-    concurrency = 8,
+    concurrency = 4,
   } = deps;
 
   // ponytail: bounded overshoot - up to (concurrency-1) in-flight calls can each
   // pass this pre-check before their spend registers via meter.add(), so real
-  // spend can exceed the ceiling by at most (concurrency-1)*worst (~$0.08 at
-  // defaults 8 / 2000 / $5), absorbed by the ceiling-to-cap margin ($90 vs $100).
+  // spend can exceed the ceiling by at most (concurrency-1)*worst (~$0.03 at
+  // defaults 4 / 2000 / $5), absorbed by the ceiling-to-cap margin ($90 vs $100).
   // If MAX_TOKENS/rateOut/concurrency grow, switch to a reservation model
   // (reserve worst before dispatch, reconcile actual usage after).
   const worst = worstCaseCall(MAX_TOKENS, deps.rateOut ?? 5);
@@ -140,7 +140,7 @@ export async function main(argv = process.argv.slice(2)) {
   const rateIn = Number(process.env.RATE_IN || 1);
   const rateOut = Number(process.env.RATE_OUT || 5);
   const ceiling = Number(values.ceiling || 90);
-  const concurrency = Number(values.concurrency || 8);
+  const concurrency = Number(values.concurrency || 4);
   const meter = createMeter({
     rateIn,
     rateOut,

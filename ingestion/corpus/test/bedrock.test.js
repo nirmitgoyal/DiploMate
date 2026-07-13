@@ -43,6 +43,51 @@ test("generateAnswer flags after two invalid responses and sums usage", async ()
   assert.equal(r.usage.output_tokens, 400);
 });
 
+test("generateAnswer retries a 429 with backoff then succeeds", async () => {
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls++;
+    if (calls === 1) {
+      return {
+        ok: false,
+        status: 429,
+        headers: { get: () => null },
+        text: async () => "throttled",
+      };
+    }
+    return {
+      ok: true,
+      json: async () => ({
+        content: [{ type: "text", text: JSON.stringify(VALID) }],
+        usage: { input_tokens: 100, output_tokens: 200 },
+      }),
+    };
+  };
+  const r = await generateAnswer(
+    { speciality: "X", question: "?", marks: 5 },
+    { fetchImpl, token: "x", retryBaseMs: 1 },
+  );
+  assert.equal(calls, 2, "retried after the 429");
+  assert.equal(r.answer.chapter_title, "Airway Management");
+  assert.equal(r.flag, undefined);
+});
+
+test("generateAnswer gives up (throws) on a non-retryable 4xx", async () => {
+  const fetchImpl = async () => ({
+    ok: false,
+    status: 400,
+    headers: { get: () => null },
+    text: async () => "bad request",
+  });
+  await assert.rejects(
+    generateAnswer(
+      { speciality: "X", question: "?", marks: 5 },
+      { fetchImpl, token: "x", retryBaseMs: 1 },
+    ),
+    /bedrock 400/,
+  );
+});
+
 test("validateAnswer rejects every invalid shape", () => {
   assert.throws(() => validateAnswer({ ...VALID, chapter_title: "" }));
   assert.throws(() => validateAnswer({ ...VALID, sections: "x" }));
