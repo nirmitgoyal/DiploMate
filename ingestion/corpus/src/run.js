@@ -35,15 +35,17 @@ export async function processSpeciality(client, slug, rows, deps) {
     upsertChapter,
     insertQna,
     meter,
-    concurrency = 4,
+    concurrency = 1,
   } = deps;
 
-  // ponytail: bounded overshoot - up to (concurrency-1) in-flight calls can each
-  // pass this pre-check before their spend registers via meter.add(), so real
-  // spend can exceed the ceiling by at most (concurrency-1)*worst (~$0.03 at
-  // defaults 4 / 2000 / $5), absorbed by the ceiling-to-cap margin ($90 vs $100).
-  // If MAX_TOKENS/rateOut/concurrency grow, switch to a reservation model
-  // (reserve worst before dispatch, reconcile actual usage after).
+  // ponytail: default concurrency 1 - the Bedrock on-demand Haiku tokens/min cap
+  // throttles hard above it (a live run at 4 lost ~25-30% of calls to 429 and
+  // starved canonicalization; serial stays under the cap: 651 published / 13
+  // flagged). Raise --concurrency only with a higher quota. Overshoot note: up to
+  // (concurrency-1) in-flight calls can pass this pre-check before their spend
+  // registers, so spend can exceed the ceiling by at most (concurrency-1)*worst
+  // (0 at the default 1), absorbed by the ceiling-to-cap margin ($90 vs $100). If
+  // MAX_TOKENS/rateOut/concurrency grow, switch to a reservation model.
   const worst = worstCaseCall(MAX_TOKENS, deps.rateOut ?? 5);
   const specialityId = await getSpecialityId(client, slug);
   const existing = await getExistingQnaIds(client, specialityId);
@@ -140,7 +142,7 @@ export async function main(argv = process.argv.slice(2)) {
   const rateIn = Number(process.env.RATE_IN || 1);
   const rateOut = Number(process.env.RATE_OUT || 5);
   const ceiling = Number(values.ceiling || 90);
-  const concurrency = Number(values.concurrency || 4);
+  const concurrency = Number(values.concurrency || 1);
   const meter = createMeter({
     rateIn,
     rateOut,
