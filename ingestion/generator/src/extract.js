@@ -78,12 +78,20 @@ function buildQaReport(questions, fullText, expectedCount) {
 
 const QUESTION_START_RE = /^\s*(\d{1,2})\.\s+/gm;
 const MARKS_SUFFIX_RE = /\(\s*(\d+)\s*marks?\s*\)\s*$/i;
+// NBE digital-export papers (2021+) delimit with "Question Number : N" instead
+// of "N.", optionally preceded by engine metadata ending in "Correct Marks : N".
+const DIGITAL_DETECT_RE = /Question Number\s*:\s*\d+/;
+const DIGITAL_START_RE = /Question Number\s*:\s*(\d+)/g;
+const CORRECT_MARKS_RE = /Correct Marks\s*:\s*(\d+)/;
 
 // Exported for the discriminating position test: printed number vs array
 // index only diverge when the printed numbers skip, and the committed
 // sample PDF numbers 1,2,3 consecutively, so the split is exercised on a
 // hand-written gapped text input rather than a second binary fixture.
 export function splitQuestionBlocks(text) {
+  // Digital-export papers carry the "Question Number : N" delimiter; route them
+  // to a dedicated splitter that strips the per-question engine metadata.
+  if (DIGITAL_DETECT_RE.test(text)) return splitDigitalExport(text);
   const starts = [...text.matchAll(QUESTION_START_RE)];
   const blocks = [];
   for (let i = 0; i < starts.length; i++) {
@@ -102,6 +110,31 @@ export function splitQuestionBlocks(text) {
       marks = Number(marksMatch[1]);
       body = body.slice(0, marksMatch.index).trim();
     }
+    if (body) blocks.push({ text: body, marks, position });
+  }
+  return blocks;
+}
+
+// NBE digital-export splitter: split on "Question Number : N", drop the engine
+// metadata block (everything up to and including "Correct Marks : N", when
+// present) and keep the stem. The clean variant has no metadata, so the stem
+// follows the delimiter directly. Header noise before the first delimiter is
+// ignored because iteration only covers text between delimiters.
+function splitDigitalExport(text) {
+  const starts = [...text.matchAll(DIGITAL_START_RE)];
+  const blocks = [];
+  for (let i = 0; i < starts.length; i++) {
+    const start = starts[i].index + starts[i][0].length;
+    const end = i + 1 < starts.length ? starts[i + 1].index : text.length;
+    const position = Number(starts[i][1]);
+    let body = text.slice(start, end);
+    let marks;
+    const cm = body.match(CORRECT_MARKS_RE);
+    if (cm) {
+      marks = Number(cm[1]);
+      body = body.slice(cm.index + cm[0].length);
+    }
+    body = body.trim();
     if (body) blocks.push({ text: body, marks, position });
   }
   return blocks;
