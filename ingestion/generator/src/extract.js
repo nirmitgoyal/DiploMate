@@ -83,6 +83,14 @@ const MARKS_SUFFIX_RE = /\(\s*(\d+)\s*marks?\s*\)\s*$/i;
 const DIGITAL_DETECT_RE = /Question Number\s*:\s*\d+/;
 const DIGITAL_START_RE = /Question Number\s*:\s*(\d+)/g;
 const CORRECT_MARKS_RE = /Correct Marks\s*:\s*(\d+)/;
+// A single per-question engine-metadata field: a capitalised label (up to four
+// words, wrapping across a line break is fine) followed by " : " and a short
+// metadata-shaped value (number / Yes / No / None / an ALL-CAPS type / an id).
+// ponytail: value-shape heuristic, not an exhaustive field list, so it strips
+// fields this code has never seen. Ceiling: a stem that literally opens with
+// "Capitalised Words : 5" would be over-trimmed - unseen in NBE papers.
+const META_FIELD_RE =
+  /^\s*[A-Z][a-z]+(?:\s+[A-Za-z]+){0,3}\s*:\s*(?:\d+|Yes|No|None|[A-Z]{2,})(?=\s|$)/;
 
 // Exported for the discriminating position test: printed number vs array
 // index only diverge when the printed numbers skip, and the committed
@@ -115,11 +123,13 @@ export function splitQuestionBlocks(text) {
   return blocks;
 }
 
-// NBE digital-export splitter: split on "Question Number : N", drop the engine
-// metadata block (everything up to and including "Correct Marks : N", when
-// present) and keep the stem. The clean variant has no metadata, so the stem
-// follows the delimiter directly. Header noise before the first delimiter is
-// ignored because iteration only covers text between delimiters.
+// NBE digital-export splitter: split on "Question Number : N", strip the leading
+// per-question engine-metadata run field by field and keep the stem. Papers vary
+// in which fields they carry (subjective papers have no "Correct Marks" line), so
+// the strip is driven by field shape, not by anchoring on any one field. The
+// clean variant has no metadata, so the stem follows the delimiter directly.
+// Header noise before the first delimiter is ignored because iteration only
+// covers text between delimiters.
 function splitDigitalExport(text) {
   const starts = [...text.matchAll(DIGITAL_START_RE)];
   const blocks = [];
@@ -128,12 +138,13 @@ function splitDigitalExport(text) {
     const end = i + 1 < starts.length ? starts[i + 1].index : text.length;
     const position = Number(starts[i][1]);
     let body = text.slice(start, end);
-    let marks;
+    // marks come from Correct Marks when the paper carries it; captured before
+    // the strip since the strip removes that field too.
     const cm = body.match(CORRECT_MARKS_RE);
-    if (cm) {
-      marks = Number(cm[1]);
-      body = body.slice(cm.index + cm[0].length);
-    }
+    const marks = cm ? Number(cm[1]) : undefined;
+    // Peel leading metadata fields until the stem (first non-metadata text).
+    let m;
+    while ((m = body.match(META_FIELD_RE))) body = body.slice(m[0].length);
     body = body.trim();
     if (body) blocks.push({ text: body, marks, position });
   }

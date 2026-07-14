@@ -110,6 +110,33 @@ test("splitQuestionBlocks handles the NBE digital-export metadata variant", () =
   );
 });
 
+// Regression for the prod leak (PR #8 follow-up): subjective digital-export
+// papers carry engine metadata (Question Id, Consider As Subjective, ...) but
+// NO "Correct Marks" line. The old splitter anchored its strip on Correct
+// Marks, so with that anchor absent the whole metadata block leaked into the
+// stem and rendered in the app as
+// "Question Id : 32718736771 Consider As Subjective : Yes a) Outline...".
+test("splitQuestionBlocks strips metadata even when Correct Marks is absent", () => {
+  const subjectiveNoMarks =
+    "National Board of Examinations\n" +
+    "Question Number : 1 Question Id : 32718736771 Question Type : SUBJECTIVE\n" +
+    "Consider As Subjective : Yes Calculator : None\n" +
+    "a) Outline the principles of the WHO surgical safety checklist. [5]\n";
+  const blocks = splitQuestionBlocks(subjectiveNoMarks);
+  assert.equal(blocks.length, 1);
+  assert.match(blocks[0].text, /^a\) Outline the principles/);
+  assert.doesNotMatch(
+    blocks[0].text,
+    /Question Id|Consider As|Subjective|Calculator/,
+    "no engine metadata leaks into the stem",
+  );
+  assert.equal(
+    blocks[0].marks,
+    undefined,
+    "no Correct Marks -> marks undefined",
+  );
+});
+
 test("splitQuestionBlocks handles the clean digital-export variant (no metadata)", () => {
   const clean =
     "National Board of Examinations\n" +
