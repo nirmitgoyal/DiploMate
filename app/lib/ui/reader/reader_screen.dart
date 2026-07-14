@@ -21,26 +21,14 @@ final bookmarkedIdsProvider = StreamProvider<Set<String>>(
 /// controller so ratings persist local-first before any UI ack (D4).
 class ReaderScreen extends ConsumerStatefulWidget {
   const ReaderScreen.browse({super.key, required this.qnaId, this.chapterId})
-      : queueMode = false,
-        entryChapterId = null;
+      : queueMode = false;
   const ReaderScreen.queue({super.key})
       : qnaId = null,
         chapterId = null,
-        entryChapterId = null,
         queueMode = true;
-
-  /// Chapter entry (2026-07-06 content pass): the syllabus row lands HERE -
-  /// ensure the chapter is cached, record chapter_opened, browse from the
-  /// first question.
-  const ReaderScreen.chapter({super.key, required String chapterId})
-      : qnaId = null,
-        chapterId = chapterId,
-        entryChapterId = chapterId,
-        queueMode = false;
 
   final String? qnaId;
   final String? chapterId;
-  final String? entryChapterId; // non-null only for chapter entry
   final bool queueMode;
 
   @override
@@ -125,16 +113,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     try {
       final repo = ref.read(contentRepositoryProvider);
       final chapterId = widget.chapterId;
-      // Cache the chapter first: chapter entry always, deep-linked browse when
-      // the ?chapter= param is present.
+      // Cache the chapter for deep-linked browse when the ?chapter= param is
+      // present (chapter entry now caches via the question-list screen).
       if (chapterId != null) await repo.ensureChapterCached(chapterId);
-      // Chapter entry only (rewrite 4): record the activation BEFORE the
-      // controller (which fires recall_shown). Fire-and-forget, same as
-      // recall_shown - the reader must not wait on an analytics write.
-      if (widget.entryChapterId != null) {
-        ref.read(studyRepositoryProvider).recordAppEvent(
-            eventType: 'chapter_opened', contentId: widget.entryChapterId);
-      }
       final chapterQnas =
           chapterId == null ? const <QnaRow>[] : await repo.qnas(chapterId);
       // Crumb title: find the chapter by id via the spec -> chapters walk.
@@ -147,21 +128,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           }
         }
       }
-      // Deep-linked browse keeps its own row lookup (a stale bookmark id
-      // resolves to null -> retry, not a crash). Chapter entry starts at the
-      // first question; a chapter with zero qnas (server excludes these) also
-      // routes into retry rather than throwing on .first.
-      final QnaRow? qna;
-      if (widget.qnaId != null) {
-        qna = await repo.qna(widget.qnaId!);
-      } else {
-        qna = chapterQnas.isEmpty ? null : chapterQnas.first;
-      }
+      // Browse always opens a specific row; a stale bookmark id resolves to
+      // null -> retry, not a crash.
+      final qna = await repo.qna(widget.qnaId!);
       setState(() {
         _qna = qna;
-        // No error but no row (stale/deleted deep link, or an empty chapter)
-        // must not fall through to the loading spinner forever - route it into
-        // the same retry UI.
+        // No error but no row (stale/deleted deep link) must not fall through
+        // to the loading spinner forever - route it into the same retry UI.
         _error = qna == null ? StateError('qna not found') : null;
         _chapterQnas = chapterQnas;
         _chapterTitle = chapterTitle;
@@ -293,12 +266,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               setState(() => _rated = false);
             }
           : null,
+      // Breadcrumb Chapter / Question N: the chapter crumb goes UP to the
+      // question list; the trailing position crumb is the you-are-here marker
+      // (ReaderView renders the last crumb non-tappable). Absent for a
+      // deep-linked bookmark with no chapter context.
       crumb: [
-        if (_chapterTitle != null)
+        if (_chapterTitle != null && widget.chapterId != null) ...[
           (
             label: _chapterTitle!,
-            onTap: () => context.go('/syllabus'),
+            onTap: () => context.go('/reader/chapter/${widget.chapterId}'),
           ),
+          (label: 'Question ${controller.position}', onTap: () {}),
+        ],
       ],
       trailingCrumbAction: Row(mainAxisSize: MainAxisSize.min, children: [
         if (_revealed)
