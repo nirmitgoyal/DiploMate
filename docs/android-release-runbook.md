@@ -50,7 +50,7 @@ into `app/ios/Runner/Info.plist` still belongs to the old
 ```bash
 cd app
 flutter build appbundle --release \
-  --dart-define=API_BASE_URL=https://diplomate-api.herokuapp.com \
+  --dart-define=API_BASE_URL=https://diplomate-api-05ad7adbd176.herokuapp.com \
   --dart-define=GOOGLE_SERVER_CLIENT_ID=<web-client-id>.apps.googleusercontent.com
 ```
 
