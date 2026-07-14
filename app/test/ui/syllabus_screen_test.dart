@@ -69,8 +69,8 @@ void main() {
     expect(find.textContaining('ownload'), findsNothing, reason: 'no download copy');
   });
 
-  testWidgets('chapter row tap opens the reader directly at /reader/chapter/<id> '
-      '(nav level removed)', (t) async {
+  testWidgets('chapter row tap opens the chapter question list at /reader/chapter/<id> '
+      '(nav level restored 2026-07-14)', (t) async {
     String? opened;
     final router = GoRouter(initialLocation: '/syllabus', routes: [
       GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
@@ -94,7 +94,7 @@ void main() {
     await t.pumpAndSettle();
 
     expect(opened, '01J0CHAPAIRWAY000000000001',
-        reason: 'one fewer tap - the row opens the Reader directly');
+        reason: 'the row opens the chapter question list');
   });
 
   testWidgets('empty track renders the first-class no-content state (DESIGN.md State 9)',

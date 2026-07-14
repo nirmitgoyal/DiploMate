@@ -362,7 +362,8 @@ Eight screens + one sheet. Reference `prototype/index.html`.
    above the nav, never scrolls away). No countdown, no epigraph - both struck
    (see Decisions Log 2026-07-03).
 4. **Syllabus** - chapter rows: title, question count in the subtitle,
-   recall progress; tapping a chapter opens the Reader on its first
+   recall progress; tapping a chapter opens its **question list** (breadcrumb
+   `Syllabus / <chapter>`), and tapping a question opens the Reader on that
    question. Locked chapters stay visible (title + count, never answer
    previews); the lock signal is lock icon + `Locked` lozenge, nothing else
    (no third signal, no preview). **Billing slice - not rendered in beta
@@ -413,9 +414,10 @@ Eight screens + one sheet. Reference `prototype/index.html`.
 The beta is a fully free app. This section is the render contract for lane B;
 it supersedes any lock/paywall rendering described elsewhere in this document.
 
-- **Beta screen inventory (8):** Sign-in, Speciality onboarding (+ change
-  mode), Home, Syllabus, Reader/Recall, Bookmarks, Account, and the
-  fullscreen diagram viewer. The paywall sheet is NOT in the beta widget tree.
+- **Beta screen inventory (9):** Sign-in, Speciality onboarding (+ change
+  mode), Home, Syllabus, Chapter question list, Reader/Recall, Bookmarks,
+  Account, and the fullscreen diagram viewer. The paywall sheet is NOT in the
+  beta widget tree.
 - **No monetization UI anywhere:** no lock icons, no `Locked` lozenges, no
   Purchase/price/unlock copy, no "locked chapters" footer. Entitlement lives
   in the API schema (plan 2), never in beta widgets.
@@ -425,10 +427,14 @@ it supersedes any lock/paywall rendering described elsewhere in this document.
   recall has started. No download/offline state of any kind (feature removed
   2026-07-04): no lozenges, no percentages, no remove-download, no storage
   lines.
-- **Chapter tap contract:** tapping ANY chapter row opens the Reader in
-  browse mode on the chapter's first question. Content is fetched on demand
-  on entry; while fetching, the Reader shows its loading state; on failure
-  it shows the inline retry state (below). No "download prep" percentage
+- **Chapter tap contract (revised 2026-07-14):** tapping ANY chapter row
+  opens the chapter's **question list**, not the Reader. The list caches the
+  chapter on demand, records `chapter_opened`, and shows a `Syllabus / <chapter>`
+  breadcrumb over the question rows (question stem + year/marks meta); while
+  fetching it shows its loading state, on failure the inline retry state
+  (below). Tapping a question row opens the Reader in browse mode on that
+  question (`/reader/:qnaId?chapter=`), which carries the `<chapter> /
+Question N` breadcrumb and "Next in chapter". No "download prep" percentage
   anywhere.
 - **Syllabus footer:** removed in beta. Its only job was selling the unlock;
   with nothing locked it says nothing true.
@@ -467,9 +473,9 @@ is exhaustive for lane B; each state ships with a widget test. Copy is exact.
 8. **Resume slot, day zero ("Start here"):** with no reading history the
    pinned row shows overline `Start here` + the highest-exam-weight
    chapter's title + subtitle `Begin with the highest-yield chapter`;
-   tapping opens the Reader on that chapter's first question. No
-   auto-download exists. With history it shows overline `Pick up where you
-left off` + chapter title + `Question i of N`.
+   tapping opens that chapter's question list (per the Chapter tap
+   contract). No auto-download exists. With history it shows overline `Pick
+up where you left off` + chapter title + `Question i of N`.
 9. **Empty track (PG2, first-class screen):** when the chosen speciality
    has no published chapters, Syllabus renders (not a dialog, not a toast):
    heading `No answers here yet` (serif title size), body `<Speciality>
@@ -579,4 +585,5 @@ The prototype is a fixed 344x720 frame; the app is not. One set of rules:
 | 2026-07-04 | Flutter build (lane B) landed against this document: tokens transcribed to app/lib/theme/tokens.dart, 9 screens + shell built on fixtures, free-beta UI contract + no-downloads enforced by widget tests                                                                                                                                                                                                                                                                                                                                                           | Plan 2026-07-04-flutter-shell-screens.md; per-screen specs are the copy source of truth                                                                                                               |
 | 2026-07-05 | Responsive Rules (T5) + A11y Executable Pack (T6) closed out by the acceptance sweep: 320dp/short-landscape/textScale 1.3/600dp+ max-width, 48dp tap-target guideline, roving-radio ArrowDown/ArrowUp keyboard nav, TalkBack labels, reduced-motion instant swap, reveal scroll-preserve (T7) all test-enforced in `app/test/acceptance/`                                                                                                                                                                                                                          | Task 17, plan 2026-07-04-flutter-shell-screens.md; sweep found and fixed two real gaps: rating-tray semantics label collision and missing roving-radio keyboard handler                               |
 | 2026-07-06 | Topics nav level removed (content pass): syllabus chapter rows open the Reader directly (one fewer tap); subtitle = question count; crumb "Question i of N"; "Next in chapter"; activation event = chapter_opened on chapter open                                                                                                                                                                                                                                                                                                                                  | Founder-approved book-grounded content pass (design doc jolly-banach-f5aef8 + eng amendments): chapters mirror Miller's own chapter list, questions hang directly off chapters                        |
+| 2026-07-14 | Chapter question list restored (reverses 2026-07-06): chapter tap opens a question list (breadcrumb `Syllabus / <chapter>`) instead of dropping into Q1; question tap opens the Reader with crumb `<chapter> / Question N`; `chapter_opened` fires on list open; the Home resume slot opens the list too                                                                                                                                                                                                                                                           | Founder request - an examiner-style question index to browse/pick from beats auto-opening the first question; the "one fewer tap" saving wasn't worth losing the chapter overview                     |
 | 2026-07-14 | Reader moved inside the shell: bottom nav (Home · Syllabus · Account) visible on QnA pages; queue lights Home, chapter/browse light Syllabus; crumb header unchanged                                                                                                                                                                                                                                                                                                                                                                                               | Founder request - reverses the "Reader has no bottom nav" rule; navigation escape from the reading surface beats full-focus isolation                                                                 |

@@ -10,6 +10,7 @@ import 'ui/reader/reader_screen.dart';
 import 'ui/shell/app_shell.dart';
 import 'ui/signin/signin_screen.dart';
 import 'ui/speciality/speciality_screen.dart';
+import 'ui/syllabus/chapter_questions_screen.dart';
 import 'ui/syllabus/syllabus_screen.dart';
 
 /// GoRouter only reruns `redirect` on navigation events, not on Riverpod
@@ -62,9 +63,11 @@ GoRouter buildRouter(Ref ref) {
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
+            // Chapter tap -> question list (2026-07-14), not the Reader. The
+            // list routes on to /reader/:qnaId?chapter= per question.
             GoRoute(
                 path: '/reader/chapter/:chapterId',
-                builder: (_, s) => ReaderScreen.chapter(
+                builder: (_, s) => ChapterQuestionsScreen(
                     chapterId: s.pathParameters['chapterId']!)),
             GoRoute(
                 path: '/reader/:qnaId',
