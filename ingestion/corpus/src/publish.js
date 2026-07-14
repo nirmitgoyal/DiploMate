@@ -25,13 +25,19 @@ export async function getExistingQnaIds(client, specialityId) {
 }
 
 // Chapter id is deterministic from (speciality, slug) so re-runs and the
-// UNIQUE(speciality_id, slug) constraint agree. content_version starts at 0.
+// UNIQUE(speciality_id, slug) constraint agree. A chapter is only ever upserted
+// right before a qna is inserted into it, so content_version must land >0 -
+// the manifest gates `has_content` on content_version > 0, and 0 hides the
+// whole chapter from the app. Fresh insert = 1; each later qna in the same
+// chapter increments it, so a resumed run bumps the version and invalidates
+// the app's cached copy.
 export async function upsertChapter(client, specialityId, title, slug) {
   const id = id16(`${specialityId}|${slug}`);
   await client.query(
     `INSERT INTO chapters (id, speciality_id, title, slug, sort_order, exam_weight, content_version)
-     VALUES ($1, $2, $3, $4, 0, 0, 0)
-     ON CONFLICT (speciality_id, slug) DO NOTHING`,
+     VALUES ($1, $2, $3, $4, 0, 0, 1)
+     ON CONFLICT (speciality_id, slug)
+     DO UPDATE SET content_version = chapters.content_version + 1`,
     [id, specialityId, title, slug],
   );
   return id;

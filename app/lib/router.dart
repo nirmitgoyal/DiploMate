@@ -46,18 +46,6 @@ GoRouter buildRouter(Ref ref) {
           path: '/speciality',
           builder: (_, s) => SpecialityScreen(
               changeMode: s.uri.queryParameters['mode'] == 'change')),
-      GoRoute(
-          path: '/reader/queue',
-          builder: (_, __) => const ReaderScreen.queue()),
-      GoRoute(
-          path: '/reader/chapter/:chapterId',
-          builder: (_, s) => ReaderScreen.chapter(
-              chapterId: s.pathParameters['chapterId']!)),
-      GoRoute(
-          path: '/reader/:qnaId',
-          builder: (_, s) => ReaderScreen.browse(
-              qnaId: s.pathParameters['qnaId']!,
-              chapterId: s.uri.queryParameters['chapter'])),
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -65,9 +53,24 @@ GoRouter buildRouter(Ref ref) {
             GoRoute(path: '/home', builder: (_, __) => const HomeScreen(), routes: [
               GoRoute(path: 'bookmarks', builder: (_, __) => const BookmarksScreen()),
             ]),
+            // Reader lives inside the shell (2026-07-14): bottom nav stays
+            // visible on QnA pages. Queue is entered from Home, so it lights
+            // the Home tab; chapter/browse light Syllabus below.
+            GoRoute(
+                path: '/reader/queue',
+                builder: (_, __) => const ReaderScreen.queue()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/syllabus', builder: (_, __) => const SyllabusScreen()),
+            GoRoute(
+                path: '/reader/chapter/:chapterId',
+                builder: (_, s) => ReaderScreen.chapter(
+                    chapterId: s.pathParameters['chapterId']!)),
+            GoRoute(
+                path: '/reader/:qnaId',
+                builder: (_, s) => ReaderScreen.browse(
+                    qnaId: s.pathParameters['qnaId']!,
+                    chapterId: s.uri.queryParameters['chapter'])),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/account', builder: (_, __) => const AccountScreen()),

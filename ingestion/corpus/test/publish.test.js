@@ -50,7 +50,7 @@ test("chapter + qna writes are idempotent", { skip }, async () => {
     await insertQna(client, qna); // second insert must not duplicate
 
     const chapters = await client.query(
-      "SELECT count(*)::int n FROM chapters WHERE id = $1",
+      "SELECT count(*)::int n, max(content_version) cv FROM chapters WHERE id = $1",
       [chId],
     );
     const qnas = await client.query(
@@ -59,6 +59,9 @@ test("chapter + qna writes are idempotent", { skip }, async () => {
     );
     assert.equal(chapters.rows[0].n, 1);
     assert.equal(qnas.rows[0].n, 1);
+    // content_version must land >0 or the manifest hides the whole chapter
+    // (has_content gates on content_version > 0). Two upserts -> 2.
+    assert.equal(chapters.rows[0].cv, 2);
   } finally {
     await client.end();
   }
