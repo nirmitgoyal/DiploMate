@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 import '../../domain/models.dart';
 import '../../theme/tokens.dart';
 import 'content_watermark.dart';
+
+// SourceSerif4 is variable; bump the weight axis so `**bold**` actually renders
+// heavier (fontWeight alone doesn't move a variable-font axis).
+const _serif600 = [FontVariation('wght', 600)];
 
 class ReaderView extends StatefulWidget {
   const ReaderView({
@@ -86,8 +91,11 @@ class _ReaderViewState extends State<ReaderView> {
       return [
         Text(s.heading, style: DmType.section.copyWith(color: dm.ink)),
         const SizedBox(height: DmSpace.xs),
+        // body_md is LLM-authored markdown (bullet lists, **bold**, etc.);
+        // render it visually. Search highlighting takes the spans branch below
+        // because its char-offset marks can't survive markdown parsing.
         if (s.bodyMd.isNotEmpty)
-          Text(s.bodyMd, style: DmType.body.copyWith(color: dm.ink)),
+          MarkdownBody(data: s.bodyMd, styleSheet: _answerBodyStyle(dm)),
       ];
     }
     final combined = spans(s);
@@ -122,6 +130,33 @@ class _ReaderViewState extends State<ReaderView> {
       const SizedBox(height: DmSpace.xs),
       if (s.bodyMd.isNotEmpty) Text.rich(TextSpan(children: bodySpans)),
     ];
+  }
+
+  /// Answer-body markdown mapped onto the DESIGN.md type scale: prose and list
+  /// items at 17px serif (body), headings at section, links teal-ink, all on
+  /// [DmColors.ink] to match the answer-on-white block. Structural spacing and
+  /// rare elements (code/blockquote) inherit the theme.
+  // ponytail: only the elements the corpus actually emits are overridden; a
+  // stray code/blockquote would fall back to theme colors.
+  MarkdownStyleSheet _answerBodyStyle(DmColors dm) {
+    final body = DmType.body.copyWith(color: dm.ink);
+    final heading = DmType.section.copyWith(color: dm.ink);
+    return MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+      p: body,
+      pPadding: EdgeInsets.zero,
+      strong:
+          body.copyWith(fontWeight: FontWeight.w600, fontVariations: _serif600),
+      em: body.copyWith(fontStyle: FontStyle.italic),
+      a: body.copyWith(color: dm.tealInk),
+      listBullet: body,
+      blockSpacing: DmSpace.sm,
+      h1: heading,
+      h2: heading,
+      h3: heading,
+      h4: heading,
+      h5: heading,
+      h6: heading,
+    );
   }
 
   @override
