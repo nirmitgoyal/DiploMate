@@ -1,0 +1,11 @@
+{
+  "name": "diplomate",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "heroku-postbuild": "npm ci --prefix server --omit=dev",
+    "start": "node server/src/index.js"
+  }
+}

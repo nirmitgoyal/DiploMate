@@ -3,7 +3,7 @@
 Blocking checklist for every internal-track rollout of DiploMate. Every step
 is a hard gate - if a box isn't checked, the rollout is not internal-track
 ready. Placeholders: `<app>` = the Heroku app name (e.g. `diplomate-api`,
-giving `https://diplomate-api.herokuapp.com`); `<web-client-id>` = the Google
+giving `https://diplomate-api-05ad7adbd176.herokuapp.com`); `<web-client-id>` = the Google
 Cloud WEB OAuth client id (e.g. `<web-client-id>.apps.googleusercontent.com`).
 
 This checklist covers ENG-T4 (Play App Signing SHA-1) and the rest of
