@@ -42,6 +42,13 @@ void main() {
     expect(find.textContaining('QUESTION 1 OF'), findsNothing,
         reason: 'the list, not the Reader');
 
+    // Each row carries the answer's Summary one-liner under the stem so the
+    // list reads as a browsable index, not a bare list of stems.
+    expect(
+        find.text(
+            'Declare difficulty early; prioritise oxygenation over intubation at every branch.'),
+        findsOneWidget);
+
     // Metrics regression: the activation event still fires exactly once on
     // chapter open, carrying the CHAPTER ULID (moved off the Reader).
     final events = await db.unsyncedAppEvents();

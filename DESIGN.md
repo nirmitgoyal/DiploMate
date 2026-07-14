@@ -430,7 +430,8 @@ it supersedes any lock/paywall rendering described elsewhere in this document.
 - **Chapter tap contract (revised 2026-07-14):** tapping ANY chapter row
   opens the chapter's **question list**, not the Reader. The list caches the
   chapter on demand, records `chapter_opened`, and shows a `Syllabus / <chapter>`
-  breadcrumb over the question rows (question stem + year/marks meta); while
+  breadcrumb over the question rows (question stem + the answer's `Summary`
+  one-liner + year/marks meta); while
   fetching it shows its loading state, on failure the inline retry state
   (below). Tapping a question row opens the Reader in browse mode on that
   question (`/reader/:qnaId?chapter=`), which carries the `<chapter> /

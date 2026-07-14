@@ -164,6 +164,12 @@ class _QuestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dm = context.dm;
+    // The examiner-voice one-liner every answer carries (unnumbered `Summary`
+    // section) - shown under the stem so the list reads as a browsable index.
+    final summary = qna.sections
+        .where((s) => s.heading.toLowerCase() == 'summary')
+        .firstOrNull
+        ?.bodyMd;
     final meta = [
       if (qna.years != null && qna.years!.isNotEmpty) qna.years!,
       if (qna.marks != null) '${qna.marks} marks',
@@ -182,6 +188,13 @@ class _QuestionRow extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: DmType.bodyUi.copyWith(color: dm.ink)),
+            if (summary != null && summary.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(summary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: DmType.meta.copyWith(color: dm.ink2)),
+            ],
             if (meta.isNotEmpty) ...[
               const SizedBox(height: 2),
               Text(meta, style: DmType.meta.copyWith(color: dm.ink3)),
