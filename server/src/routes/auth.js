@@ -27,7 +27,18 @@ router.post("/auth/google", async (req, res, next) => {
     try {
       g = await verifyGoogleToken(idToken);
     } catch (err) {
-      console.warn(`auth-google-verify-failed: ${err?.message}`);
+      // Decode aud (unverified) purely for diagnostics: an aud mismatch means
+      // the app build shipped the wrong/empty GOOGLE_SERVER_CLIENT_ID, so the
+      // token's aud is the native client, not our web client. See D5.
+      let aud;
+      try {
+        aud = JSON.parse(
+          Buffer.from(idToken.split(".")[1], "base64").toString(),
+        ).aud;
+      } catch (_) {}
+      console.warn(
+        `auth-google-verify-failed: ${err?.message} (token aud=${aud})`,
+      );
       return res.status(401).json({ error: "invalid_google_token" });
     }
 
