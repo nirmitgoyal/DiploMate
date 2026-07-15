@@ -36,6 +36,7 @@ class Qnas extends Table {
   IntColumn get marks => integer().nullable()();
   TextColumn get earnsMarks => text()(); // JSON string, same shape as Postgres JSONB
   TextColumn get sections => text()(); // JSON string, same shape as Postgres JSONB
+  TextColumn get summary => text().nullable()(); // list-page gist; null = derive
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   @override
   Set<Column> get primaryKey => {id};

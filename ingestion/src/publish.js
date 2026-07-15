@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { validateCanonical } from "./validate.js";
+import { summarize } from "./summarize.js";
 
 export function gateCheck(args, env) {
   if (!args.includes("--allow-publish")) {
@@ -50,11 +51,12 @@ export async function publishChapter(client, canonicalDir) {
 
     for (const q of canonical.qnas) {
       await client.query(
-        `INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, sort_order)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8)
+        `INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, summary, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9)
          ON CONFLICT (id) DO UPDATE SET
            chapter_id = EXCLUDED.chapter_id, question = EXCLUDED.question, years = EXCLUDED.years,
            marks = EXCLUDED.marks, earns_marks = EXCLUDED.earns_marks, sections = EXCLUDED.sections,
+           summary = EXCLUDED.summary,
            sort_order = EXCLUDED.sort_order`,
         [
           q.id,
@@ -64,6 +66,7 @@ export async function publishChapter(client, canonicalDir) {
           q.marks,
           JSON.stringify(q.earns_marks),
           JSON.stringify(q.sections),
+          q.summary ?? summarize(q.sections),
           q.sort_order,
         ],
       );

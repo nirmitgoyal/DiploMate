@@ -51,11 +51,22 @@ void main() {
     await db.close();
   });
 
-  test('v2 database migrates to v3 and matches the dumped v3 snapshot',
+  test('v2 database migrates to v4 and matches the dumped v4 snapshot',
       () async {
     final connection = await verifier.startAt(2);
     final db = AppDatabase(connection);
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
+    await db.close();
+  });
+
+  // schemaVersion 4 (2026-07-14): `qnas.summary` added. From v3 the content
+  // tables already exist, so this hop is a plain addColumn (not the v3
+  // drop+recreate) - this pins that branch in isolation.
+  test('v3 database migrates to v4 and matches the dumped v4 snapshot',
+      () async {
+    final connection = await verifier.startAt(3);
+    final db = AppDatabase(connection);
+    await verifier.migrateAndValidate(db, 4);
     await db.close();
   });
 
@@ -69,7 +80,7 @@ void main() {
   // is the first use; `rawDatabase.execute` writes OLD-shape rows at v2 before
   // the migration runs. If the installed drift_dev version names these
   // differently, check `SchemaVerifier` in the drift_dev api/migrations.dart.
-  test('v2 -> v3 keeps review/queue/bookmark state, wipes content cache',
+  test('v2 -> v4 keeps review/queue/bookmark state, wipes content cache',
       () async {
     final schema = await verifier.schemaAt(2);
 
@@ -106,7 +117,7 @@ void main() {
     ''');
 
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 3);
+    await verifier.migrateAndValidate(db, 4);
 
     // STATE survives.
     final reviews = await db.select(db.pendingReviewEvents).get();

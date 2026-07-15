@@ -141,7 +141,13 @@ class FixtureContentRepository implements ContentRepository {
     _cached.add(chapterId);
   }
 
-  QnaRow _qnaFromJson(Map<String, dynamic> q) => QnaRow(
+  QnaRow _qnaFromJson(Map<String, dynamic> q) {
+    final sections = [
+      for (final s in (q['sections'] as List).cast<Map<String, dynamic>>())
+        AnswerSection(key: s['key'] as String, heading: s['heading'] as String,
+            bodyMd: s['body_md'] as String, marks: s['marks'] as int?)
+    ];
+    return QnaRow(
         id: q['id'] as String, chapterId: q['chapter_id'] as String,
         question: q['question'] as String, years: q['years'] as String?,
         marks: q['marks'] as int?,
@@ -149,11 +155,8 @@ class FixtureContentRepository implements ContentRepository {
           for (final e in (q['earns_marks'] as List).cast<Map<String, dynamic>>())
             EarnRow(label: e['label'] as String, sectionKey: e['section_key'] as String)
         ],
-        sections: [
-          for (final s in (q['sections'] as List).cast<Map<String, dynamic>>())
-            AnswerSection(key: s['key'] as String, heading: s['heading'] as String,
-                bodyMd: s['body_md'] as String, marks: s['marks'] as int?)
-        ],
+        sections: sections,
+        summary: (q['summary'] as String?) ?? summarizeSections(sections),
         sortOrder: q['sort_order'] as int,
         images: [
           for (final i in (q['images'] as List).cast<Map<String, dynamic>>())
@@ -163,6 +166,7 @@ class FixtureContentRepository implements ContentRepository {
                 sortOrder: i['sort_order'] as int)
         ],
       );
+  }
 
   @override
   Future<List<QnaRow>> qnas(String chapterId) async {

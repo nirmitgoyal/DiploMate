@@ -23,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -57,6 +57,15 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DELETE FROM images');
             await customStatement('DELETE FROM image_blobs');
             await customStatement('DELETE FROM cached_chapters');
+          }
+          // v4 (2026-07-14): persist the question-list summary. Additive
+          // nullable column; cached rows backfill to NULL and the list derives
+          // on the fly until the chapter is re-cached (which writes the stored
+          // value). Only the v3->v4 hop needs it: from <3 the block above
+          // recreates `qnas` from the live (v4) definition, which already has
+          // the column, so adding it again there would throw duplicate-column.
+          if (from == 3 && to >= 4) {
+            await m.addColumn(qnas, qnas.summary);
           }
         },
       );
@@ -178,6 +187,22 @@ class AppDatabase extends _$AppDatabase {
 
   /// One transaction per chapter refresh: replaces every qna/image scoped to
   /// `chapterId`, then marks the chapter cached at `version`.
+  // Prefer a server-authored `summary`; else derive from the answer sections
+  // (the same rule the list would use) so the stored column is never empty
+  // when sections exist. Computed once here, at cache-write.
+  static String? _summaryOf(Map<String, dynamic> q) {
+    final given = q['summary'] as String?;
+    if (given != null && given.trim().isNotEmpty) return given;
+    return summarizeSections([
+      for (final s in (q['sections'] as List).cast<Map<String, dynamic>>())
+        AnswerSection(
+            key: s['key'] as String,
+            heading: s['heading'] as String,
+            bodyMd: s['body_md'] as String,
+            marks: s['marks'] as int?),
+    ]);
+  }
+
   Future<void> replaceChapterContent(
       String chapterId, int version, List<Map<String, dynamic>> items) async {
     await transaction(() async {
@@ -211,6 +236,7 @@ class AppDatabase extends _$AppDatabase {
             marks: Value(q['marks'] as int?),
             earnsMarks: jsonEncode(q['earns_marks']),
             sections: jsonEncode(q['sections']),
+            summary: Value(_summaryOf(q)),
             sortOrder: Value(q['sort_order'] as int),
           ),
         );
@@ -264,6 +290,7 @@ class AppDatabase extends _$AppDatabase {
       question: r.question,
       years: r.years,
       marks: r.marks,
+      summary: r.summary,
       earnsMarks: [
         for (final e in (jsonDecode(r.earnsMarks) as List).cast<Map<String, dynamic>>())
           EarnRow(label: e['label'] as String, sectionKey: e['section_key'] as String),

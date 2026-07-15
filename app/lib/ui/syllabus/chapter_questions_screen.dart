@@ -164,12 +164,9 @@ class _QuestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dm = context.dm;
-    // The examiner-voice one-liner every answer carries (unnumbered `Summary`
-    // section) - shown under the stem so the list reads as a browsable index.
-    final summary = qna.sections
-        .where((s) => s.heading.toLowerCase() == 'summary')
-        .firstOrNull
-        ?.bodyMd;
+    // Persisted at cache-write (drift `qnas.summary`); derive only covers rows
+    // cached before the column existed.
+    final summary = qna.summary ?? summarizeSections(qna.sections);
     final meta = [
       if (qna.years != null && qna.years!.isNotEmpty) qna.years!,
       if (qna.marks != null) '${qna.marks} marks',

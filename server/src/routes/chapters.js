@@ -41,7 +41,7 @@ router.get(
       // the id tiebreak keeps LIMIT/OFFSET pages stable forever after (C1).
       const { rows: items } = await pool.query(
         `SELECT q.id, q.chapter_id, q.question, q.years, q.marks, q.earns_marks,
-                q.sections, q.sort_order,
+                q.sections, q.summary, q.sort_order,
                 COALESCE((
                   SELECT json_agg(json_build_object(
                     'id', i.id, 'caption', i.caption,

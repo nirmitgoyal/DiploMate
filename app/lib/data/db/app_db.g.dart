@@ -741,6 +741,12 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
   late final GeneratedColumn<String> sections = GeneratedColumn<String>(
       'sections', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _summaryMeta =
+      const VerificationMeta('summary');
+  @override
+  late final GeneratedColumn<String> summary = GeneratedColumn<String>(
+      'summary', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _sortOrderMeta =
       const VerificationMeta('sortOrder');
   @override
@@ -750,8 +756,17 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, chapterId, question, years, marks, earnsMarks, sections, sortOrder];
+  List<GeneratedColumn> get $columns => [
+        id,
+        chapterId,
+        question,
+        years,
+        marks,
+        earnsMarks,
+        sections,
+        summary,
+        sortOrder
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -801,6 +816,10 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
     } else if (isInserting) {
       context.missing(_sectionsMeta);
     }
+    if (data.containsKey('summary')) {
+      context.handle(_summaryMeta,
+          summary.isAcceptableOrUnknown(data['summary']!, _summaryMeta));
+    }
     if (data.containsKey('sort_order')) {
       context.handle(_sortOrderMeta,
           sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta));
@@ -828,6 +847,8 @@ class $QnasTable extends Qnas with TableInfo<$QnasTable, Qna> {
           .read(DriftSqlType.string, data['${effectivePrefix}earns_marks'])!,
       sections: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}sections'])!,
+      summary: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}summary']),
       sortOrder: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}sort_order'])!,
     );
@@ -847,6 +868,7 @@ class Qna extends DataClass implements Insertable<Qna> {
   final int? marks;
   final String earnsMarks;
   final String sections;
+  final String? summary;
   final int sortOrder;
   const Qna(
       {required this.id,
@@ -856,6 +878,7 @@ class Qna extends DataClass implements Insertable<Qna> {
       this.marks,
       required this.earnsMarks,
       required this.sections,
+      this.summary,
       required this.sortOrder});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -871,6 +894,9 @@ class Qna extends DataClass implements Insertable<Qna> {
     }
     map['earns_marks'] = Variable<String>(earnsMarks);
     map['sections'] = Variable<String>(sections);
+    if (!nullToAbsent || summary != null) {
+      map['summary'] = Variable<String>(summary);
+    }
     map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
@@ -886,6 +912,9 @@ class Qna extends DataClass implements Insertable<Qna> {
           marks == null && nullToAbsent ? const Value.absent() : Value(marks),
       earnsMarks: Value(earnsMarks),
       sections: Value(sections),
+      summary: summary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(summary),
       sortOrder: Value(sortOrder),
     );
   }
@@ -901,6 +930,7 @@ class Qna extends DataClass implements Insertable<Qna> {
       marks: serializer.fromJson<int?>(json['marks']),
       earnsMarks: serializer.fromJson<String>(json['earnsMarks']),
       sections: serializer.fromJson<String>(json['sections']),
+      summary: serializer.fromJson<String?>(json['summary']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
@@ -915,6 +945,7 @@ class Qna extends DataClass implements Insertable<Qna> {
       'marks': serializer.toJson<int?>(marks),
       'earnsMarks': serializer.toJson<String>(earnsMarks),
       'sections': serializer.toJson<String>(sections),
+      'summary': serializer.toJson<String?>(summary),
       'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
@@ -927,6 +958,7 @@ class Qna extends DataClass implements Insertable<Qna> {
           Value<int?> marks = const Value.absent(),
           String? earnsMarks,
           String? sections,
+          Value<String?> summary = const Value.absent(),
           int? sortOrder}) =>
       Qna(
         id: id ?? this.id,
@@ -936,6 +968,7 @@ class Qna extends DataClass implements Insertable<Qna> {
         marks: marks.present ? marks.value : this.marks,
         earnsMarks: earnsMarks ?? this.earnsMarks,
         sections: sections ?? this.sections,
+        summary: summary.present ? summary.value : this.summary,
         sortOrder: sortOrder ?? this.sortOrder,
       );
   Qna copyWithCompanion(QnasCompanion data) {
@@ -948,6 +981,7 @@ class Qna extends DataClass implements Insertable<Qna> {
       earnsMarks:
           data.earnsMarks.present ? data.earnsMarks.value : this.earnsMarks,
       sections: data.sections.present ? data.sections.value : this.sections,
+      summary: data.summary.present ? data.summary.value : this.summary,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
@@ -962,14 +996,15 @@ class Qna extends DataClass implements Insertable<Qna> {
           ..write('marks: $marks, ')
           ..write('earnsMarks: $earnsMarks, ')
           ..write('sections: $sections, ')
+          ..write('summary: $summary, ')
           ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, chapterId, question, years, marks, earnsMarks, sections, sortOrder);
+  int get hashCode => Object.hash(id, chapterId, question, years, marks,
+      earnsMarks, sections, summary, sortOrder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -981,6 +1016,7 @@ class Qna extends DataClass implements Insertable<Qna> {
           other.marks == this.marks &&
           other.earnsMarks == this.earnsMarks &&
           other.sections == this.sections &&
+          other.summary == this.summary &&
           other.sortOrder == this.sortOrder);
 }
 
@@ -992,6 +1028,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
   final Value<int?> marks;
   final Value<String> earnsMarks;
   final Value<String> sections;
+  final Value<String?> summary;
   final Value<int> sortOrder;
   final Value<int> rowid;
   const QnasCompanion({
@@ -1002,6 +1039,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     this.marks = const Value.absent(),
     this.earnsMarks = const Value.absent(),
     this.sections = const Value.absent(),
+    this.summary = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1013,6 +1051,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     this.marks = const Value.absent(),
     required String earnsMarks,
     required String sections,
+    this.summary = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
@@ -1028,6 +1067,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     Expression<int>? marks,
     Expression<String>? earnsMarks,
     Expression<String>? sections,
+    Expression<String>? summary,
     Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
@@ -1039,6 +1079,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
       if (marks != null) 'marks': marks,
       if (earnsMarks != null) 'earns_marks': earnsMarks,
       if (sections != null) 'sections': sections,
+      if (summary != null) 'summary': summary,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
     });
@@ -1052,6 +1093,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
       Value<int?>? marks,
       Value<String>? earnsMarks,
       Value<String>? sections,
+      Value<String?>? summary,
       Value<int>? sortOrder,
       Value<int>? rowid}) {
     return QnasCompanion(
@@ -1062,6 +1104,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
       marks: marks ?? this.marks,
       earnsMarks: earnsMarks ?? this.earnsMarks,
       sections: sections ?? this.sections,
+      summary: summary ?? this.summary,
       sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
     );
@@ -1091,6 +1134,9 @@ class QnasCompanion extends UpdateCompanion<Qna> {
     if (sections.present) {
       map['sections'] = Variable<String>(sections.value);
     }
+    if (summary.present) {
+      map['summary'] = Variable<String>(summary.value);
+    }
     if (sortOrder.present) {
       map['sort_order'] = Variable<int>(sortOrder.value);
     }
@@ -1110,6 +1156,7 @@ class QnasCompanion extends UpdateCompanion<Qna> {
           ..write('marks: $marks, ')
           ..write('earnsMarks: $earnsMarks, ')
           ..write('sections: $sections, ')
+          ..write('summary: $summary, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -3712,6 +3759,7 @@ typedef $$QnasTableCreateCompanionBuilder = QnasCompanion Function({
   Value<int?> marks,
   required String earnsMarks,
   required String sections,
+  Value<String?> summary,
   Value<int> sortOrder,
   Value<int> rowid,
 });
@@ -3723,6 +3771,7 @@ typedef $$QnasTableUpdateCompanionBuilder = QnasCompanion Function({
   Value<int?> marks,
   Value<String> earnsMarks,
   Value<String> sections,
+  Value<String?> summary,
   Value<int> sortOrder,
   Value<int> rowid,
 });
@@ -3756,6 +3805,9 @@ class $$QnasTableFilterComposer extends Composer<_$AppDatabase, $QnasTable> {
   ColumnFilters<String> get sections => $composableBuilder(
       column: $table.sections, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get summary => $composableBuilder(
+      column: $table.summary, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnFilters(column));
 }
@@ -3788,6 +3840,9 @@ class $$QnasTableOrderingComposer extends Composer<_$AppDatabase, $QnasTable> {
 
   ColumnOrderings<String> get sections => $composableBuilder(
       column: $table.sections, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get summary => $composableBuilder(
+      column: $table.summary, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get sortOrder => $composableBuilder(
       column: $table.sortOrder, builder: (column) => ColumnOrderings(column));
@@ -3823,6 +3878,9 @@ class $$QnasTableAnnotationComposer
   GeneratedColumn<String> get sections =>
       $composableBuilder(column: $table.sections, builder: (column) => column);
 
+  GeneratedColumn<String> get summary =>
+      $composableBuilder(column: $table.summary, builder: (column) => column);
+
   GeneratedColumn<int> get sortOrder =>
       $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 }
@@ -3857,6 +3915,7 @@ class $$QnasTableTableManager extends RootTableManager<
             Value<int?> marks = const Value.absent(),
             Value<String> earnsMarks = const Value.absent(),
             Value<String> sections = const Value.absent(),
+            Value<String?> summary = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -3868,6 +3927,7 @@ class $$QnasTableTableManager extends RootTableManager<
             marks: marks,
             earnsMarks: earnsMarks,
             sections: sections,
+            summary: summary,
             sortOrder: sortOrder,
             rowid: rowid,
           ),
@@ -3879,6 +3939,7 @@ class $$QnasTableTableManager extends RootTableManager<
             Value<int?> marks = const Value.absent(),
             required String earnsMarks,
             required String sections,
+            Value<String?> summary = const Value.absent(),
             Value<int> sortOrder = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
@@ -3890,6 +3951,7 @@ class $$QnasTableTableManager extends RootTableManager<
             marks: marks,
             earnsMarks: earnsMarks,
             sections: sections,
+            summary: summary,
             sortOrder: sortOrder,
             rowid: rowid,
           ),

@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { summarize } from "../../src/summarize.js";
 
 export function id16(s) {
   return createHash("sha256").update(s).digest("hex").slice(0, 16);
@@ -45,12 +46,16 @@ export async function upsertChapter(client, specialityId, title, slug) {
 
 export async function insertQna(
   client,
-  { key, chapterId, question, years, marks, earnsMarks, sections },
+  { key, chapterId, question, years, marks, earnsMarks, sections, summary },
 ) {
   await client.query(
-    `INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 0)
-     ON CONFLICT (id) DO NOTHING`,
+    `INSERT INTO qnas (id, chapter_id, question, years, marks, earns_marks, sections, summary, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0)
+     ON CONFLICT (id) DO UPDATE SET
+       chapter_id = EXCLUDED.chapter_id, question = EXCLUDED.question,
+       years = EXCLUDED.years, marks = EXCLUDED.marks,
+       earns_marks = EXCLUDED.earns_marks, sections = EXCLUDED.sections,
+       summary = EXCLUDED.summary`,
     [
       key,
       chapterId,
@@ -59,6 +64,7 @@ export async function insertQna(
       marks ?? null,
       JSON.stringify(earnsMarks ?? []),
       JSON.stringify(sections),
+      summary ?? summarize(sections),
     ],
   );
 }

@@ -68,7 +68,8 @@ class QnaRow {
       required this.earnsMarks,
       required this.sections,
       required this.sortOrder,
-      required this.images});
+      required this.images,
+      this.summary});
   final String id, chapterId, question;
   final String? years;
   final int? marks;
@@ -76,7 +77,29 @@ class QnaRow {
   final List<AnswerSection> sections;
   final int sortOrder;
   final List<ImageRow> images;
+
+  /// One-line gist shown on the chapter question list. Persisted (drift
+  /// `qnas.summary`, computed at cache-write); null only on rows cached before
+  /// the column existed, where the list falls back to [summarizeSections].
+  final String? summary;
 }
+
+/// The list-page gist for an answer: the dedicated `Summary` section when the
+/// content author wrote one (fixtures/seed do), else the first section - the
+/// Bedrock corpus uses arbitrary headings but always ships >=1 section.
+/// Markdown is stripped so a clamped preview reads as prose, not raw `**`/`- `.
+String? summarizeSections(List<AnswerSection> sections) {
+  if (sections.isEmpty) return null;
+  final s = sections.firstWhere((s) => s.heading.toLowerCase() == 'summary',
+      orElse: () => sections.first);
+  return _stripMarkdown(s.bodyMd);
+}
+
+String _stripMarkdown(String md) => md
+    .replaceAll(RegExp(r'^\s*[-*+>#]+\s*', multiLine: true), '')
+    .replaceAll(RegExp(r'[*_`#]'), '')
+    .replaceAll(RegExp(r'\s+'), ' ')
+    .trim();
 
 /// Wire enum - values owned by sql/0003 review_events.rating CHECK
 /// (sql/ DDL is the enum source of truth; do not re-validate here).
