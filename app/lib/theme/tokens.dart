@@ -13,6 +13,7 @@ class DmColors {
     required this.rule,
     required this.ruleStrong,
     required this.teal,
+    required this.onTeal,
     required this.tealSoft,
     required this.tealInk,
     required this.amber,
@@ -34,6 +35,9 @@ class DmColors {
 
   /// Fills and strokes ONLY. Teal used as text must be [tealInk] (color law 1).
   final Color teal;
+
+  /// Foreground on a solid [teal] fill.
+  final Color onTeal;
   final Color tealSoft;
 
   /// Teal used as text (overlines, active nav, links).
@@ -59,6 +63,7 @@ const dmLight = DmColors(
   rule: Color(0xFFE1E7EE),
   ruleStrong: Color(0xFFCFD8E2),
   teal: Color(0xFF087A72),
+  onTeal: Colors.white,
   tealSoft: Color(0x14087A72),
   tealInk: Color(0xFF0A6E67),
   amber: Color(0xFFA85B10),
@@ -79,6 +84,7 @@ const dmDark = DmColors(
   rule: Color(0xFF302D31),
   ruleStrong: Color(0xFF3E3A3F),
   teal: Color(0xFF3ED8C4),
+  onTeal: Color(0xFF0C1413),
   tealSoft: Color(0x183ED8C4),
   tealInk: Color(0xFF8CEBDD),
   amber: Color(0xFFF2B44C),

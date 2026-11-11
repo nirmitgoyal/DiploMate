@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsAction;
+
 import 'package:diplomate/app_providers.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/providers/study_providers.dart';
@@ -27,11 +29,15 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('reader rating tray buttons are labeled for TalkBack', (t) async {
+  testWidgets(
+      'reader rating tray buttons are labeled and actionable for TalkBack',
+      (t) async {
     // bySemanticsLabel walks the semantics tree, which only exists while a
     // handle is held (ensureSemantics) - without it every lookup finds
     // nothing regardless of the widget tree's actual Semantics labels.
     final handle = t.ensureSemantics();
+    await t.binding.setSurfaceSize(const Size(800, 2600));
+    addTearDown(() => t.binding.setSurfaceSize(null));
     await t.pumpWidget(ProviderScope(
       child: MaterialApp(
           theme: dmLightTheme(),
@@ -42,9 +48,19 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.text('Reveal model answer'));
     await t.pumpAndSettle();
-    expect(find.bySemanticsLabel('Rate Easy'), findsOneWidget);
-    expect(find.bySemanticsLabel('Rate Medium'), findsOneWidget);
-    expect(find.bySemanticsLabel('Rate Hard'), findsOneWidget);
+    for (final label in ['Rate Easy', 'Rate Medium', 'Rate Hard']) {
+      final rating = find.bySemanticsLabel(label);
+      expect(rating, findsOneWidget);
+      expect(
+          t.getSemantics(rating).getSemanticsData().hasAction(SemanticsAction.tap),
+          isTrue,
+          reason: '$label must support accessibility activation');
+    }
+    final easy = t.getSemantics(find.bySemanticsLabel('Rate Easy'));
+    easy.owner!.performAction(easy.id, SemanticsAction.tap);
+    await t.pumpAndSettle();
+    expect(find.text('✓ Rated Easy - next answer'), findsOneWidget);
+    await t.pump(const Duration(seconds: 2));
     handle.dispose();
   });
 
@@ -119,8 +135,10 @@ void main() {
     // due==0, which would make this ordering moot for that element.
     await t.pumpWidget(ProviderScope(
       overrides: [
-        sessionUserProvider.overrideWith((ref) => _user),
+        sessionUserProvider.overrideWith((ref) =>
+            _user.copyWith(specialityId: '01J0SPECANAES0000000000001')),
         dueCountProvider.overrideWithValue(12),
+        reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
       ],
       child: MaterialApp(
         theme: dmLightTheme(),

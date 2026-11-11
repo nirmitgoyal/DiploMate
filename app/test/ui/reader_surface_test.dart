@@ -1,6 +1,8 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:diplomate/app_providers.dart';
+import 'package:diplomate/data/fixtures/fixture_content_repository.dart';
 import 'package:diplomate/data/repos/content_repository.dart';
 import 'package:diplomate/domain/models.dart';
 import 'package:diplomate/theme/app_theme.dart';
@@ -12,14 +14,34 @@ import 'package:flutter_test/flutter_test.dart';
 const _tapQna = '01J0QNATAPBLOCK00000000001';
 const _tapChapter = '01J0CHAPREGIONAL0000000001';
 
-Widget host({ContentRepository? repo}) => ProviderScope(
+Widget host({ContentRepository? repo, ThemeData? theme}) => ProviderScope(
       overrides: [
         if (repo != null) contentRepositoryProvider.overrideWithValue(repo),
       ],
       child: MaterialApp(
-          theme: dmLightTheme(),
-          home: const ReaderScreen.browse(qnaId: _tapQna, chapterId: _tapChapter)),
+          theme: theme ?? dmLightTheme(),
+          home: const ReaderScreen.browse(
+              qnaId: _tapQna, chapterId: _tapChapter)),
     );
+
+class _WithoutDiagramSection extends FixtureContentRepository {
+  @override
+  Future<List<QnaRow>> qnas(String chapterId) async => [
+        for (final qna in await super.qnas(chapterId))
+          QnaRow(
+            id: qna.id,
+            chapterId: qna.chapterId,
+            question: qna.question,
+            years: qna.years,
+            marks: qna.marks,
+            earnsMarks: qna.earnsMarks,
+            sections: qna.sections.where((s) => s.key != 'diagram').toList(),
+            sortOrder: qna.sortOrder,
+            images: qna.images,
+            summary: qna.summary,
+          ),
+      ];
+}
 
 /// qna() always returns null - exercises a successful fetch that finds no
 /// row (e.g. a stale/deleted deep-linked bookmark), which must render the
@@ -75,6 +97,58 @@ void main() {
     expect(find.textContaining('fascial plane block'), findsNothing,
         reason: 'answer hidden pre-reveal');
   });
+
+  testWidgets('dark Reveal renders dark text with at least 4.5:1 contrast',
+      (t) async {
+    await t.pumpWidget(host(theme: dmDarkTheme()));
+    await t.pumpAndSettle();
+
+    final reveal = find.widgetWithText(FilledButton, 'Reveal model answer');
+    final label = t.widget<RichText>(
+        find.descendant(of: reveal, matching: find.byType(RichText)));
+    final foreground = label.text.style!.color!;
+    final background =
+        t.widget<FilledButton>(reveal).style!.backgroundColor!.resolve({})!;
+    final contrast = (background.computeLuminance() + 0.05) /
+        (foreground.computeLuminance() + 0.05);
+
+    expect(math.max(contrast, 1 / contrast), greaterThanOrEqualTo(4.5));
+    expect(foreground, const Color(0xFF0C1413));
+  });
+
+  for (final hasDiagramSection in [false, true]) {
+    testWidgets(
+        'attached diagram is revealed once '
+        '${hasDiagramSection ? 'in its section' : 'before the summary'}',
+        (t) async {
+      await useTallSurface(t);
+      await t.pumpWidget(
+          host(repo: hasDiagramSection ? null : _WithoutDiagramSection()));
+      await t.pumpAndSettle();
+      final caption = find.textContaining('Fig 1 - TAP block');
+      expect(caption, findsNothing);
+
+      await t.tap(find.text('Reveal model answer'));
+      await t.pumpAndSettle();
+      expect(find.text('Diagram'),
+          hasDiagramSection ? findsOneWidget : findsNothing);
+      expect(caption, findsOneWidget);
+      final precedingHeading = hasDiagramSection
+          ? find.text('Diagram')
+          : find.text('Complications').last;
+      expect(t.getTopLeft(caption).dy,
+          greaterThan(t.getTopLeft(precedingHeading).dy));
+      final followingHeading = hasDiagramSection
+          ? find.text('Indications').last
+          : find.text('Summary');
+      expect(t.getTopLeft(caption).dy,
+          lessThan(t.getTopLeft(followingHeading).dy));
+
+      await t.tap(find.text('Tap to enlarge'));
+      await t.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+    });
+  }
 
   testWidgets(
       'reveal shows sections with red mark weights; tray is Easy/Medium/Hard; rating toasts and offers Next in chapter',

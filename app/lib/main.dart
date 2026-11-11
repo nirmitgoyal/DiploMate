@@ -58,14 +58,15 @@ Future<void> main() async {
   // Starter funnel: no auto-download. Flush pending events on app start and on
   // every backgrounding (fresh count at fire); the lifecycle observer also
   // recomputes the study day + records a session_start on resume (plan 5).
-  final sync = container.read(syncServiceProvider);
-  sync.flush();
+  container.read(syncServiceProvider).flush();
   WidgetsBinding.instance.addObserver(StudyLifecycleObserver(
     onResumed: () {
       container.read(localDayProvider.notifier).recompute();
-      container.read(studyRepositoryProvider).recordSessionStartIfIdle();
+      if (container.read(sessionUserProvider) != null) {
+        container.read(studyRepositoryProvider).recordSessionStartIfIdle();
+      }
     },
-    onPaused: sync.flush,
+    onPaused: () => container.read(syncServiceProvider).flush(),
   ));
 
   // Crash reporting: beforeSend/beforeBreadcrumb scrub licensed answer text

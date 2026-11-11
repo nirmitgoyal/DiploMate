@@ -23,12 +23,9 @@ class ChapterRow {
       required this.sortOrder,
       required this.examWeight,
       required this.contentVersion,
-      required this.qnaCount,
-      this.recalledCount = 0});
+      required this.qnaCount});
   final String id, specialityId, title, slug;
   final int sortOrder, examWeight, contentVersion, qnaCount;
-  final int
-      recalledCount; // fixture/UI aggregate; real value derives from plan 5 CardStates
 }
 
 class EarnRow {

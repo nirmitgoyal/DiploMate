@@ -18,7 +18,11 @@ Widget host(Widget child,
         double scale = 1.0,
         List<Override> overrides = const []}) =>
     ProviderScope(
-      overrides: [sessionUserProvider.overrideWith((ref) => _user), ...overrides],
+      overrides: [
+        sessionUserProvider.overrideWith((ref) => _user),
+        reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
+        ...overrides,
+      ],
       child: MaterialApp(
         theme: dmLightTheme(),
         home: MediaQuery(

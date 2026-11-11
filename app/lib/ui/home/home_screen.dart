@@ -3,13 +3,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app_providers.dart';
+import '../../domain/local_day.dart';
+import '../../domain/models.dart';
 import '../../providers/study_providers.dart';
 import '../../theme/tokens.dart';
 
-/// Two honest figures for "This Week". Plan 5 re-points this at real
-/// review_events folds; easyPct is null under the n>=5 weekly floor.
-final weeklyStatsProvider =
-    Provider<({int recalled, int? easyPct})>((ref) => (recalled: 41, easyPct: 71));
+/// Seven study days, including today. Hide the Easy share until five ratings.
+final weeklyStatsProvider = Provider<({int recalled, int? easyPct})>((ref) {
+  final today = ref.watch(localDayProvider);
+  final firstDay = addLocalDays(today, -6);
+  final events = ref.watch(reviewEventsProvider).valueOrNull ?? const [];
+  final weekly = events.where((event) =>
+      event.localDay.compareTo(firstDay) >= 0 &&
+      event.localDay.compareTo(today) <= 0).toList();
+  final easy = weekly.where((event) => event.rating == WireRating.good.name);
+  return (
+    recalled: weekly.length,
+    easyPct: weekly.length < 5 ? null : (100 * easy.length / weekly.length).round(),
+  );
+});
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -31,6 +43,7 @@ class HomeScreen extends ConsumerWidget {
     final due = ref.watch(dueCountProvider);
     final stats = ref.watch(weeklyStatsProvider);
     final resume = ref.watch(resumeChapterProvider).valueOrNull;
+    final questionIndex = resume?.questionIndex;
     final user = ref.watch(sessionUserProvider);
     final greeting = _greeting(DateTime.now(), user?.name);
     final first = user?.name?.split(' ').first;
@@ -112,7 +125,7 @@ class HomeScreen extends ConsumerWidget {
               Material(
                 color: dm.elevated,
                 child: InkWell(
-                  onTap: () => context.go('/reader/chapter/${resume.id}'),
+                  onTap: () => context.go('/reader/chapter/${resume.chapter.id}'),
                   child: Container(
                     decoration: BoxDecoration(
                         border: Border(top: BorderSide(color: dm.rule))),
@@ -134,16 +147,18 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  stats.recalled == 0
+                                  questionIndex == null
                                       ? 'START HERE'
                                       : 'PICK UP WHERE YOU LEFT OFF',
                                   style: DmType.label.copyWith(color: dm.ink3)),
                               const SizedBox(height: 2),
-                              Text(resume.title,
+                              Text(resume.chapter.title,
                                   style: DmType.bodyUi.copyWith(color: dm.ink)),
-                              if (stats.recalled == 0)
-                                Text('Begin with the highest-yield chapter',
-                                    style: DmType.meta.copyWith(color: dm.ink3)),
+                              Text(
+                                  questionIndex == null
+                                      ? 'Begin with the highest-yield chapter'
+                                      : 'Question ${questionIndex + 1} of ${resume.chapter.qnaCount}',
+                                  style: DmType.meta.copyWith(color: dm.ink3)),
                             ],
                           ),
                         ),

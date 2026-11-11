@@ -94,10 +94,15 @@ void main() {
 
     await service().flush();
 
-    expect(await db.unsyncedReviewEvents(), isEmpty, reason: 'inserted:1 -> deleted');
+    expect(await db.unsyncedReviewEvents(), isEmpty, reason: 'accepted ratings no longer need uploading');
+    expect((await study.allReviewEvents()).single.contentId, 'QN1',
+        reason: 'acknowledged ratings remain available for study progress');
     expect(await db.unsyncedAppEvents(), isEmpty);
     expect(adapter.paths, containsAll(['/sync/review-events', '/sync/app-events', '/me/bookmarks']));
     expect(await db.readSetting('last_synced_at'), now.toIso8601String());
+
+    await service().flush();
+    expect(adapter.paths.where((p) => p == '/sync/review-events'), hasLength(1));
   });
 
   // (b) rejected poison row increments sync_attempts and is DROPPED after 5.
@@ -170,8 +175,8 @@ void main() {
   // un-delete.
   test('a server bookmark tombstone overwrites a stale local un-delete',
       () async {
-    // Local row: QN1 bookmarked (deleted=false), updated more recently locally.
-    await db.upsertBookmark('QN1', now, false);
+    // Local row: QN1 bookmarked (deleted=false), older than the server tombstone.
+    await db.upsertBookmark('QN1', DateTime.utc(2026, 7, 4, 10), false);
     expect((await db.readBookmarkRows()).single.deleted, isFalse);
 
     adapter.handler = (o) {

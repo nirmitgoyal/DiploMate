@@ -73,17 +73,43 @@ final dueQueueProvider = Provider<List<String>>((ref) =>
 /// Home primary CTA count: "View N suggested answers" (hidden at N=0).
 final dueCountProvider = Provider<int>((ref) => ref.watch(dueQueueProvider).length);
 
-/// PRESERVED from plan 4's study_providers stub (consumed by home_screen.dart's
-/// day-zero resume slot - dropping it breaks Home). Highest-exam-weight chapter
-/// is the "Start here" funnel target; content loads on demand when the user
-/// enters it (no auto-download).
-final resumeChapterProvider = FutureProvider<ChapterRow?>((ref) async {
+/// Cached questions have the chapter association needed to count each
+/// rated question once. Progress never triggers a chapter download.
+final recalledByChapterProvider =
+    FutureProvider.autoDispose<Map<String, int>>((ref) async {
   final repo = ref.watch(contentRepositoryProvider);
-  final specs = await repo.specialities();
-  final withContent = specs.where((s) => s.hasContent).toList();
-  if (withContent.isEmpty) return null;
-  final chapters = await repo.chapters(withContent.first.id);
+  final recalled = ref.watch(cardStatesProvider);
+  final counts = <String, int>{};
+  for (final id in recalled.keys) {
+    final question = await repo.qna(id);
+    if (question != null) {
+      counts.update(question.chapterId, (count) => count + 1, ifAbsent: () => 1);
+    }
+  }
+  return counts;
+});
+
+/// Resume the most recently rated question in this track. Without history,
+/// direct the user to the highest exam weight chapter.
+final resumeChapterProvider =
+    FutureProvider<({ChapterRow chapter, int? questionIndex})?>((ref) async {
+  final repo = ref.watch(contentRepositoryProvider);
+  final specId =
+      ref.watch(sessionUserProvider.select((user) => user?.specialityId));
+  final reviews = ref.watch(reviewEventsProvider).valueOrNull ?? const [];
+  if (specId == null) return null;
+  final chapters = await repo.chapters(specId);
   if (chapters.isEmpty) return null;
-  chapters.sort((a, b) => b.examWeight.compareTo(a.examWeight));
-  return chapters.first;
+  final byId = {for (final chapter in chapters) chapter.id: chapter};
+  for (final review in reviews.reversed) {
+    final question = await repo.qna(review.contentId);
+    if (question == null) continue;
+    final chapter = byId[question.chapterId];
+    if (chapter == null) continue;
+    final questions = await repo.qnas(chapter.id);
+    final index = questions.indexWhere((q) => q.id == question.id);
+    if (index >= 0) return (chapter: chapter, questionIndex: index);
+  }
+  final highest = chapters.reduce((a, b) => a.examWeight >= b.examWeight ? a : b);
+  return (chapter: highest, questionIndex: null);
 });

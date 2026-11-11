@@ -335,9 +335,8 @@ class AppDatabase extends _$AppDatabase {
 
   // --- RemoteSyncService drift helpers (plan 6, Task 4) ------------------
   //
-  // Pending = synced_at IS NULL (never deleted on ack today - the Leitner fold
-  // reads history - but the flush drain DOES delete on inserted, since a synced
-  // row's history lives server-side once accepted). sync_attempts is the
+  // Pending = synced_at IS NULL. Accepted reviews remain in the local history
+  // for the Leitner fold and progress displays. sync_attempts is the
   // durable poison counter: bumped per rejection, the row dropped once it hits
   // the ceiling so a persistently-invalid row can never wedge the queue (T4).
 
@@ -355,9 +354,10 @@ class AppDatabase extends _$AppDatabase {
             ..orderBy([(t) => OrderingTerm.asc(t.occurredAt)]))
           .get();
 
-  Future<void> deleteReviewEventsByIds(List<String> ids) async {
+  Future<void> markReviewEventsSynced(List<String> ids, DateTime syncedAt) async {
     if (ids.isEmpty) return;
-    await (delete(pendingReviewEvents)..where((t) => t.id.isIn(ids))).go();
+    await (update(pendingReviewEvents)..where((t) => t.id.isIn(ids)))
+        .write(PendingReviewEventsCompanion(syncedAt: Value(syncedAt)));
   }
 
   Future<void> deleteAppEventsByIds(List<String> ids) async {
@@ -397,8 +397,27 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  /// LWW upsert by content_id (last-writer-wins is enforced by the caller: the
-  /// sync merge-back only calls this for rows the server declares newer).
+  // This database holds the study state of one account. Keep it across
+  // sign-out for that account, and clear it before a different account uses it.
+  static const _studyAccountKey = 'study_account_id';
+
+  Future<void> bindStudyAccount(String id) => transaction(() async {
+        final owner = await readSetting(_studyAccountKey);
+        if (owner == id) return;
+        if (owner != null) await clearStudyAccount();
+        await writeSetting(_studyAccountKey, id);
+      });
+
+  Future<void> clearStudyAccount() => transaction(() async {
+        await delete(pendingReviewEvents).go();
+        await delete(pendingAppEvents).go();
+        await delete(bookmarks).go();
+        await (delete(localSettings)
+              ..where((s) => s.key.isIn([_studyAccountKey, 'last_synced_at'])))
+            .go();
+      });
+
+  /// Store a bookmark or tombstone. The caller resolves timestamp ordering.
   Future<void> upsertBookmark(
           String contentId, DateTime updatedAt, bool deleted) =>
       into(bookmarks).insertOnConflictUpdate(BookmarksCompanion.insert(

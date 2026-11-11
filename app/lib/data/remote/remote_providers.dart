@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app_providers.dart';
 import '../../providers/study_providers.dart';
+import '../repos/drift_bookmark_repository.dart';
 import 'api_client.dart';
 import 'remote_auth_repository.dart';
 import 'remote_content_repository.dart';
@@ -60,25 +61,37 @@ List<Override> remoteOverrides({
     _googleProvider.overrideWithValue(
         google ?? RealGoogleSignIn(serverClientId: serverClientId)),
     authRepositoryProvider.overrideWith((ref) => RemoteAuthRepository(
-        api: ref.watch(_apiClientProvider), google: ref.watch(_googleProvider))),
+          api: ref.watch(_apiClientProvider),
+          google: ref.watch(_googleProvider),
+          db: ref.watch(appDatabaseProvider),
+        )),
     contentRepositoryProvider.overrideWith((ref) => RemoteContentRepository(
           api: ref.watch(_apiClientProvider),
           db: ref.watch(appDatabaseProvider),
           specialityId: () async =>
               ref.read(sessionUserProvider)?.specialityId,
         )),
-    syncServiceProvider.overrideWith((ref) => RemoteSyncService(
-          api: ref.watch(_apiClientProvider),
-          db: ref.watch(appDatabaseProvider),
-          // 401 with no silent re-auth means the session is gone - drive the
-          // auth layer to sign out AND null the session so the router (which
-          // only reruns its redirect on a sessionUserProvider change) bounces
-          // to Sign-in. Mirrors the UI sign-out paths (account_screen.dart).
-          onAuthExpired: () async {
-            await ref.read(authRepositoryProvider).signOut();
-            ref.read(sessionUserProvider.notifier).state = null;
-          },
+    bookmarkRepositoryProvider.overrideWith((ref) => DriftBookmarkRepository(
+          ref.watch(appDatabaseProvider),
+          now: ref.watch(clockProvider),
         )),
+    syncServiceProvider.overrideWith((ref) {
+      final api = ref.watch(_apiClientProvider);
+      final db = ref.watch(appDatabaseProvider);
+      final userId = ref.watch(sessionUserProvider.select((user) => user?.id));
+      var disposed = false;
+      ref.onDispose(() => disposed = true);
+      return RemoteSyncService(
+        api: api,
+        db: db,
+        isActive: () => !disposed && userId != null && api.sessionJwt != null,
+        // An expired session bounces the router to Sign-in.
+        onAuthExpired: () async {
+          await ref.read(authRepositoryProvider).signOut();
+          if (!disposed) ref.read(sessionUserProvider.notifier).state = null;
+        },
+      );
+    }),
     reportErrorProvider.overrideWith((ref) {
       final c = ref.watch(_apiClientProvider);
       return (qnaId, message) =>

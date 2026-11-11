@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app_providers.dart';
 import '../../data/repos/content_repository.dart';
 import '../../domain/models.dart';
+import '../../providers/study_providers.dart';
 import '../../theme/tokens.dart';
 
 /// Syllabus tab: chapter rows for the user's chosen speciality (DESIGN.md
@@ -117,26 +118,30 @@ class _SyllabusScreenState extends ConsumerState<SyllabusScreen> {
     if (_chapters.isEmpty) {
       return _EmptyTrack(specialityName: _spec?.name ?? 'Your speciality');
     }
+    final recalled = ref.watch(recalledByChapterProvider).valueOrNull ?? const {};
     return ListView(
       children: [
         const SizedBox(height: DmSpace.xs),
         Text(_spec?.name ?? '', style: DmType.meta.copyWith(color: dm.ink3)),
         const SizedBox(height: DmSpace.sm),
-        for (final c in _chapters) _ChapterRow(chapter: c),
+        for (final c in _chapters)
+          _ChapterRow(chapter: c, recalled: recalled[c.id] ?? 0),
       ],
     );
   }
 }
 
 class _ChapterRow extends StatelessWidget {
-  const _ChapterRow({required this.chapter});
+  const _ChapterRow({required this.chapter, required this.recalled});
   final ChapterRow chapter;
+  final int recalled;
 
   @override
   Widget build(BuildContext context) {
     final dm = context.dm;
-    final started = chapter.recalledCount > 0;
-    final fraction = started ? chapter.recalledCount / chapter.qnaCount : 0.0;
+    final count = recalled.clamp(0, chapter.qnaCount);
+    final started = count > 0;
+    final fraction = started ? count / chapter.qnaCount : 0.0;
     return InkWell(
       onTap: () => context.go('/reader/chapter/${chapter.id}'),
       child: Container(
@@ -159,7 +164,7 @@ class _ChapterRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                Text('${chapter.recalledCount}/${chapter.qnaCount} recalled',
+                Text('$count/${chapter.qnaCount} recalled',
                     style: DmType.meta.copyWith(
                         color: dm.tealInk, fontFeatures: DmType.tabularNums)),
               ],
@@ -168,7 +173,7 @@ class _ChapterRow extends StatelessWidget {
               const SizedBox(height: DmSpace.sm),
               Semantics(
                 label:
-                    '${chapter.recalledCount} of ${chapter.qnaCount} questions recalled',
+                    '$count of ${chapter.qnaCount} questions recalled',
                 child: ExcludeSemantics(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(DmRadius.sm),
