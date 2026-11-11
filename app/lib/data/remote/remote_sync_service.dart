@@ -8,8 +8,8 @@ import 'api_client.dart';
 
 /// Real SyncService (plan 6, Task 4). Drains the pending event tables to the
 /// server, merges bookmarks LWW, and stamps last_synced_at - all LOCAL-FIRST:
-/// a row is deleted only once the server has accepted it (inserted), and a
-/// persistently-rejected row is dropped as poison only after 5 rejections
+/// accepted reviews stay as study history, accepted app events are removed,
+/// and a persistently rejected row is dropped only after 5 rejections
 /// (the counter lives in drift, so the count survives restarts - T4). A
 /// network/5xx/401 arms an exponential backoff window; calls inside the window
 /// return immediately so a flaky connection never becomes a retry storm.
@@ -20,17 +20,20 @@ class RemoteSyncService implements SyncService {
     DateTime Function() now = DateTime.now,
     Random? random,
     void Function() onAuthExpired = _noop,
+    bool Function() isActive = _alwaysActive,
   })  : _api = api,
         _db = db,
         _now = now,
         _random = random ?? Random(),
-        _onAuthExpired = onAuthExpired;
+        _onAuthExpired = onAuthExpired,
+        _isActive = isActive;
 
   final ApiClient _api;
   final AppDatabase _db;
   final DateTime Function() _now;
   final Random _random;
   final void Function() _onAuthExpired;
+  final bool Function() _isActive;
 
   // Backoff state (in memory - a fresh process starts clean and simply tries
   // again, which is correct: the durable guarantee is the drain/poison state,
@@ -39,12 +42,14 @@ class RemoteSyncService implements SyncService {
   int _failures = 0;
 
   static void _noop() {}
+  static bool _alwaysActive() => true;
 
   static const _lastSyncedKey = 'last_synced_at';
   static const _maxBackoffMinutes = 32;
 
   @override
   Future<void> flush() async {
+    if (!_isActive()) return;
     if (_nextAttempt != null && _now().isBefore(_nextAttempt!)) {
       return; // inside the backoff window - no HTTP, no retry storm
     }
@@ -54,7 +59,7 @@ class RemoteSyncService implements SyncService {
         rows: await _db.unsyncedReviewEvents(),
         toWire: _reviewToWire,
         idOf: (r) => r.id,
-        onInserted: _db.deleteReviewEventsByIds,
+        onInserted: (ids) => _db.markReviewEventsSynced(ids, _now()),
         onRejected: _db.recordReviewRejections,
       );
       await _drain(
@@ -67,12 +72,13 @@ class RemoteSyncService implements SyncService {
       );
       await _syncBookmarks();
 
+      if (!_isActive()) return;
       // Full success: reset backoff and stamp the clock.
       _failures = 0;
       _nextAttempt = null;
       await _db.writeSetting(_lastSyncedKey, _now().toIso8601String());
     } on DioException catch (e) {
-      _handleFailure(e);
+      if (_isActive()) _handleFailure(e);
     }
   }
 
@@ -80,7 +86,7 @@ class RemoteSyncService implements SyncService {
   Stream<DateTime?> lastSyncedAt() =>
       _db.watchSetting(_lastSyncedKey).map((v) => v == null ? null : DateTime.tryParse(v));
 
-  // POST a batch, delete the rows the server took, bump/poison the rest.
+  // POST a batch, acknowledge accepted rows, and bump/poison the rest.
   Future<void> _drain<R>({
     required String path,
     required List<R> rows,
@@ -89,17 +95,18 @@ class RemoteSyncService implements SyncService {
     required Future<void> Function(List<String>) onInserted,
     required Future<void> Function(List<String>) onRejected,
   }) async {
-    if (rows.isEmpty) return;
+    if (!_isActive() || rows.isEmpty) return;
     final res = await _api.dio.post(path, data: {
       'events': [for (final r in rows) toWire(r)],
     });
+    if (!_isActive()) return;
     final body = res.data as Map<String, dynamic>;
     final rejectedIds = {
       for (final r in (body['rejected'] as List? ?? const []))
         (r as Map<String, dynamic>)['id'] as String,
     };
     // Everything sent that the server did NOT reject was accepted (inserted or
-    // idempotently already-present) - either way it is safe to delete locally.
+    // idempotently already-present) - either way it is safe to acknowledge.
     final acceptedIds = [
       for (final r in rows)
         if (!rejectedIds.contains(idOf(r))) idOf(r),
@@ -110,27 +117,34 @@ class RemoteSyncService implements SyncService {
 
   Future<void> _syncBookmarks() async {
     final local = await _db.readBookmarkRows();
+    if (!_isActive()) return;
     final res = await _api.dio.put('/me/bookmarks', data: {
       'bookmarks': [
         for (final b in local)
           {
             'content_id': b.contentId,
-            'updated_at': b.updatedAt.toIso8601String(),
+            'updated_at': b.updatedAt.toUtc().toIso8601String(),
             'deleted': b.deleted,
           },
       ],
     });
+    if (!_isActive()) return;
     final body = res.data as Map<String, dynamic>;
-    // Server response is the merged truth (incl. tombstones); overwrite local
-    // rows with it, keeping server updated_at/deleted (LWW resolved server-side).
-    for (final b in (body['bookmarks'] as List? ?? const [])) {
-      final m = b as Map<String, dynamic>;
-      await _db.upsertBookmark(
-        m['content_id'] as String,
-        DateTime.parse(m['updated_at'] as String),
-        m['deleted'] as bool? ?? false,
-      );
-    }
+    await _db.transaction(() async {
+      final current = {
+        for (final row in await _db.readBookmarkRows()) row.contentId: row,
+      };
+      if (!_isActive()) return;
+      for (final b in (body['bookmarks'] as List? ?? const [])) {
+        final m = b as Map<String, dynamic>;
+        final id = m['content_id'] as String;
+        final updatedAt = DateTime.parse(m['updated_at'] as String);
+        final row = current[id];
+        // The response may predate a toggle made while the request was in flight.
+        if (row != null && row.updatedAt.isAfter(updatedAt)) continue;
+        await _db.upsertBookmark(id, updatedAt, m['deleted'] as bool? ?? false);
+      }
+    });
   }
 
   void _handleFailure(DioException e) {

@@ -59,9 +59,14 @@ Play Console -> Testing (checklist sections 3-6). The build FAILS with
 `android/key.properties not found` if section 1 was skipped - that is by
 design; never work around it by debug-signing.
 
-Both dart-defines are REQUIRED: omitting them builds successfully but
-ships an app with an empty backend URL and empty OAuth audience - sign-in
-always fails (this bit the 2026-07-10 iOS device run).
+The bundle build requires an HTTPS API URL and a Google web OAuth client ID,
+and rejects `DEV_FAKE_AUTH=true`. Use the same OAuth client ID as the
+production server's `GOOGLE_WEB_CLIENT_ID`.
+
+Before uploading, confirm the build's version code is higher than every
+previous Play upload. Set it with `--build-number` if needed. Verify the
+bundle targets API 36 or higher and check its native libraries for
+[16 KB page size support](https://developer.android.com/guide/practices/page-sizes).
 
 ## 4. Device capture-protection matrix (Android)
 

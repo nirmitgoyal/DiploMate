@@ -1,3 +1,5 @@
+import java.net.URI
+import java.util.Base64
 import java.util.Properties
 
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -97,5 +99,37 @@ gradle.taskGraph.whenReady {
             "android/key.properties not found - release builds must be signed " +
                 "with the upload keystore. See docs/android-release-runbook.md."
         )
+    }
+
+    // A Play bundle must have working production auth configuration. Keep
+    // assembleRelease available for the runbook's local device smoke tests.
+    if (allTasks.any { it.path == ":app:bundleRelease" }) {
+        val defines = providers.gradleProperty("dart-defines").orNull.orEmpty()
+            .split(",")
+            .filter { it.isNotEmpty() }
+            .associate {
+                val entry = String(Base64.getDecoder().decode(it), Charsets.UTF_8)
+                entry.substringBefore("=") to entry.substringAfter("=", "")
+            }
+        val apiUrl = defines["API_BASE_URL"]?.let {
+            runCatching { URI(it) }.getOrNull()
+        }
+        if (apiUrl?.scheme != "https" || apiUrl.host.isNullOrBlank() ||
+            apiUrl.userInfo != null || apiUrl.query != null || apiUrl.fragment != null
+        ) {
+            throw GradleException(
+                "Play bundles require an HTTPS API_BASE_URL. See docs/android-release-runbook.md."
+            )
+        }
+        val clientId = defines["GOOGLE_SERVER_CLIENT_ID"].orEmpty()
+        if (!clientId.matches(Regex("""[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com"""))) {
+            throw GradleException(
+                "Play bundles require GOOGLE_SERVER_CLIENT_ID set to the Google web OAuth client ID. " +
+                    "See docs/android-release-runbook.md."
+            )
+        }
+        if (defines["DEV_FAKE_AUTH"] == "true") {
+            throw GradleException("Play bundles cannot use DEV_FAKE_AUTH.")
+        }
     }
 }

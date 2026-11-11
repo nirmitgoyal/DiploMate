@@ -167,6 +167,24 @@ class _ReaderViewState extends State<ReaderView> {
       _sectionKeys.putIfAbsent(s.key, GlobalKey.new);
     }
     final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final imageBuilder = widget.imageBuilder;
+    final summary = q.sections
+        .where((s) => s.heading.toLowerCase() == 'summary')
+        .firstOrNull;
+    Widget? fallbackPlates;
+    if (widget.revealed &&
+        imageBuilder != null &&
+        q.images.isNotEmpty &&
+        !q.sections.any((s) => s.key == 'diagram')) {
+      fallbackPlates = Padding(
+        padding: const EdgeInsets.only(
+            left: DmReader.examinerIndent + DmSpace.sm, bottom: DmSpace.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [for (final img in q.images) imageBuilder(context, img)],
+        ),
+      );
+    }
 
     return Scaffold(
       body: WatermarkedContent(
@@ -340,6 +358,9 @@ class _ReaderViewState extends State<ReaderView> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             for (final s in q.sections) ...[
+                                              if (s == summary &&
+                                                  fallbackPlates != null)
+                                                fallbackPlates,
                                               Row(
                                                 key: _sectionKeys[s.key],
                                                 crossAxisAlignment:
@@ -367,14 +388,12 @@ class _ReaderViewState extends State<ReaderView> {
                                                         ..._sectionText(s, dm),
                                                         if (s.key ==
                                                                 'diagram' &&
-                                                            widget.imageBuilder !=
+                                                            imageBuilder !=
                                                                 null)
                                                           for (final img
                                                               in q.images)
-                                                            widget
-                                                                .imageBuilder!(
-                                                                    context,
-                                                                    img),
+                                                            imageBuilder(
+                                                                context, img),
                                                       ],
                                                     ),
                                                   ),
@@ -383,6 +402,9 @@ class _ReaderViewState extends State<ReaderView> {
                                               const SizedBox(
                                                   height: DmSpace.lg),
                                             ],
+                                            if (summary == null &&
+                                                fallbackPlates != null)
+                                              fallbackPlates,
                                           ],
                                         ),
                                       ],
@@ -451,12 +473,13 @@ class _ReaderViewState extends State<ReaderView> {
                     onPressed: widget.onReveal,
                     style: FilledButton.styleFrom(
                       backgroundColor: dm.teal,
+                      foregroundColor: dm.onTeal,
                       minimumSize: const Size.fromHeight(52),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(DmRadius.md)),
                     ),
-                    child: Text('Reveal model answer',
-                        style: DmType.bodyUi.copyWith(color: Colors.white)),
+                    child:
+                        const Text('Reveal model answer', style: DmType.bodyUi),
                   ),
                 ),
               ),
@@ -484,6 +507,7 @@ class _RateButton extends StatelessWidget {
       child: Semantics(
         button: true,
         label: 'Rate $word',
+        onTap: onTap,
         // Without this the child Text's own semantics merges in too,
         // announcing "Rate Easy, Easy" instead of the clean label.
         excludeSemantics: true,

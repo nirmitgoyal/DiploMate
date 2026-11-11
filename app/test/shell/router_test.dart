@@ -3,6 +3,7 @@ import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/main.dart';
 import 'package:diplomate/providers/study_providers.dart';
 import 'package:diplomate/router.dart';
+import 'package:diplomate/ui/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,7 @@ Widget appWith(SessionUser? user) => ProviderScope(
       overrides: [
         sessionUserProvider.overrideWith((ref) => user),
         dueCountProvider.overrideWithValue(12),
+        reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
       ],
       child: const DiplomateApp(),
     );
@@ -49,7 +51,11 @@ void main() {
       'live sign-in navigates off Sign-in without remount; live sign-out returns to it',
       (t) async {
     final container = ProviderContainer(
-        overrides: [dueCountProvider.overrideWithValue(12)]);
+        overrides: [
+          dueCountProvider.overrideWithValue(12),
+          reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
+          weeklyStatsProvider.overrideWithValue((recalled: 0, easyPct: null)),
+        ]);
     addTearDown(container.dispose);
     await t.pumpWidget(UncontrolledProviderScope(
       container: container,

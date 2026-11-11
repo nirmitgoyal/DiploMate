@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../db/app_db.dart';
 import '../repos/auth_repository.dart';
 import 'api_client.dart';
 
@@ -44,9 +45,10 @@ class FakeGoogleSignIn implements GoogleSignInLike {
 }
 
 class RemoteAuthRepository implements AuthRepository {
-  RemoteAuthRepository({required this.api, required this.google});
+  RemoteAuthRepository({required this.api, required this.google, this.db});
   final ApiClient api;
   final GoogleSignInLike google;
+  final AppDatabase? db;
 
   SessionUser _toUser(Map<String, dynamic> u) => SessionUser(
         id: u['id'] as String,
@@ -67,7 +69,9 @@ class RemoteAuthRepository implements AuthRepository {
     if (idToken == null) throw SignInCancelled();
     try {
       final out = await api.authGoogle(idToken);
-      return _toUser(out.user);
+      final user = _toUser(out.user);
+      await db?.bindStudyAccount(user.id);
+      return user;
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
@@ -120,6 +124,7 @@ class RemoteAuthRepository implements AuthRepository {
   Future<void> deleteAccount() async {
     await api.dio.delete('/me');
     await signOut();
+    await db?.clearStudyAccount();
   }
 
   @override

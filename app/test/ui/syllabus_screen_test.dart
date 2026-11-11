@@ -5,6 +5,7 @@ import 'package:diplomate/data/fixtures/fixture_content_repository.dart';
 import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/data/repos/content_repository.dart';
 import 'package:diplomate/domain/models.dart';
+import 'package:diplomate/providers/study_providers.dart';
 import 'package:diplomate/theme/app_theme.dart';
 import 'package:diplomate/ui/syllabus/syllabus_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,9 +17,10 @@ SessionUser userWith(String specId) => SessionUser(
     id: 'u1', email: 'a@b.c', name: 'Ananya', photoUrl: null,
     specialityId: specId, specialityChangeCount: 0);
 
-Widget host(String specId, {ContentRepository? repo}) => ProviderScope(
+Widget host(String specId, {ContentRepository? repo, List<ReviewEvent> reviews = const []}) => ProviderScope(
       overrides: [
         sessionUserProvider.overrideWith((ref) => userWith(specId)),
+        reviewEventsProvider.overrideWith((ref) => Stream.value(reviews)),
         if (repo != null) contentRepositoryProvider.overrideWithValue(repo),
       ],
       child: MaterialApp(theme: dmLightTheme(), home: const SyllabusScreen()),
@@ -69,6 +71,19 @@ void main() {
     expect(find.textContaining('ownload'), findsNothing, reason: 'no download copy');
   });
 
+  testWidgets('two ratings of the same question count as one recalled', (t) async {
+    final repo = FixtureContentRepository();
+    final questions = await repo.qnas('01J0CHAPAIRWAY000000000001');
+    final now = DateTime(2026, 7, 10, 12);
+    await t.pumpWidget(host('01J0SPECANAES0000000000001', repo: repo, reviews: [
+      for (final id in ['first', 'second'])
+        ReviewEvent(id: id, contentId: questions.first.id, rating: 'good',
+            shownAt: now, revealedAt: now, ratedAt: now, localDay: '2026-07-10'),
+    ]));
+    await t.pumpAndSettle();
+    expect(find.text('1/2 recalled'), findsOneWidget);
+  });
+
   testWidgets('chapter row tap opens the chapter question list at /reader/chapter/<id> '
       '(nav level restored 2026-07-14)', (t) async {
     String? opened;
@@ -83,6 +98,7 @@ void main() {
     ]);
     await t.pumpWidget(ProviderScope(
       overrides: [
+        reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
         sessionUserProvider.overrideWith(
             (ref) => userWith('01J0SPECANAES0000000000001')),
       ],

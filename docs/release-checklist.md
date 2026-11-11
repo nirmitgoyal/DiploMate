@@ -24,12 +24,13 @@ ENG-T19 (Data Safety, consent screen, account-type gate, store listing).
       `cd android && ./gradlew signingReport`. Copy the `SHA1:` value from
       the `debug` variant block and confirm it matches the SHA-1
       fingerprint on the ANDROID client in Google Cloud Console.
-- [ ] The **upload keystore's** SHA-1 is also registered on the ANDROID
-      OAuth client. Get it with
+- [ ] For locally installed release APKs, a separate **ANDROID** OAuth client
+      exists for package `com.diplomate.app` and the **upload keystore's**
+      SHA-1. Get it with
       `keytool -list -v -keystore ~/keystores/diplomate-upload.jks -alias upload | grep "SHA1:"`
       (see `docs/android-release-runbook.md` section 1).
-- [ ] A second **ANDROID** OAuth client entry (or an additional SHA-1 on the
-      same client) exists for the **Play App Signing** key's SHA-1. Get it
+- [ ] An **ANDROID** OAuth client exists for package `com.diplomate.app`
+      and the **Play App Signing** key's SHA-1. Get it
       from Play Console -> Setup -> App integrity -> App signing key
       certificate -> SHA-1 certificate fingerprint. Confirm it matches an
       entry in Google Cloud Console.

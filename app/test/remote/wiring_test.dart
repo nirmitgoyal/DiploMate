@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:diplomate/app_providers.dart';
+import 'package:diplomate/data/db/app_db.dart';
 import 'package:diplomate/data/remote/api_client.dart';
 import 'package:diplomate/data/remote/remote_auth_repository.dart';
 import 'package:diplomate/data/remote/remote_providers.dart';
@@ -8,7 +11,9 @@ import 'package:diplomate/data/repos/auth_repository.dart';
 import 'package:diplomate/providers/study_providers.dart';
 import 'package:diplomate/router.dart';
 import 'package:diplomate/theme/app_theme.dart';
+import 'package:diplomate/ui/home/home_screen.dart';
 import 'package:dio/dio.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,10 +61,11 @@ Future<ProviderContainer> _boot(WidgetTester tester,
           serverClientId: 'web.client',
           api: api,
           google: google),
-      // This test exercises auth + routing, not the study loop; stub the due
-      // queue so Home never opens a live drift review-events stream (which
-      // would race the in-memory DB close at teardown).
-      dueQueueProvider.overrideWithValue(const []),
+      // These widget tests exercise auth + routing; the persistence test above
+      // exercises the real Drift repository outside the widget test clock.
+      reviewEventsProvider.overrideWith((ref) => Stream.value(const [])),
+      dueCountProvider.overrideWithValue(0),
+      weeklyStatsProvider.overrideWithValue((recalled: 0, easyPct: null)),
     ],
   );
   addTearDown(container.dispose);
@@ -95,6 +101,91 @@ Future<ProviderContainer> _boot(WidgetTester tester,
 }
 
 void main() {
+  test('remote bookmark toggle uploads and survives a database reopen', () async {
+    final directory = await Directory.systemTemp.createTemp('diplo-bookmarks-');
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/study.sqlite');
+    final uploads = <List<dynamic>>[];
+    final now = DateTime(2026, 7, 10, 12);
+
+    Future<void> withDb(Future<void> Function(ProviderContainer) run) async {
+      final api = ApiClient(
+          baseUrl: 'https://api.test', tokenStore: _MemoryTokenStore('jwt'));
+      await api.init();
+      api.dio.httpClientAdapter = _StubAdapter((o) {
+        final bookmarks = (o.data as Map)['bookmarks'] as List;
+        uploads.add(bookmarks);
+        return ResponseBody.fromString(jsonEncode({'bookmarks': bookmarks}), 200,
+            headers: {'content-type': ['application/json']});
+      });
+      final db = AppDatabase(NativeDatabase(file));
+      final container = ProviderContainer(overrides: [
+        ...remoteOverrides(apiBaseUrl: 'https://api.test', serverClientId: '',
+            api: api, google: _FakeGoogle()),
+        appDatabaseProvider.overrideWithValue(db),
+        clockProvider.overrideWithValue(() => now),
+      ]);
+      container.read(sessionUserProvider.notifier).state = const SessionUser(
+          id: 'u1', email: 'a@b.c', name: null, photoUrl: null,
+          specialityId: 's1', specialityChangeCount: 0);
+      try {
+        await run(container);
+      } finally {
+        container.dispose();
+        await db.close();
+      }
+    }
+
+    await withDb((container) async {
+      await container.read(bookmarkRepositoryProvider).toggle('question');
+      await container.read(syncServiceProvider).flush();
+    });
+    expect(uploads.single.single, containsPair('content_id', 'question'));
+
+    await withDb((container) async {
+      final bookmarks = container.read(bookmarkRepositoryProvider);
+      expect(await bookmarks.bookmarkedIds().first, {'question'});
+      await bookmarks.toggle('question');
+      expect(await bookmarks.entries().first, isEmpty);
+      await container.read(syncServiceProvider).flush();
+    });
+    final saved = uploads.first.single as Map;
+    final removed = uploads.last.single as Map;
+    expect(removed['deleted'], isTrue);
+    final savedAt = DateTime.parse(saved['updated_at'] as String);
+    final removedAt = DateTime.parse(removed['updated_at'] as String);
+    expect(savedAt.isUtc && removedAt.isUtc, isTrue);
+    expect(removedAt.isAfter(savedAt), isTrue,
+        reason: 'the deletion wins even when both toggles use the same clock time');
+  });
+
+  test('remote sign-in keeps the same account’s study data and isolates a different account', () async {
+    final api = ApiClient(
+        baseUrl: 'https://api.test', tokenStore: _MemoryTokenStore());
+    await api.init();
+    var id = 'first';
+    api.dio.httpClientAdapter = _StubAdapter((o) => ResponseBody.fromString(
+        jsonEncode({'session_jwt': 'jwt-$id', 'user': {'id': id, 'email': '$id@test'}}),
+        200, headers: {'content-type': ['application/json']}));
+    final container = ProviderContainer(overrides: remoteOverrides(
+        apiBaseUrl: 'https://api.test', serverClientId: '',
+        api: api, google: _FakeGoogle(token: 'id-token')));
+    addTearDown(container.dispose);
+
+    final auth = container.read(authRepositoryProvider);
+    final bookmarks = container.read(bookmarkRepositoryProvider);
+    await auth.signInWithGoogle();
+    await bookmarks.toggle('saved-by-first');
+    await auth.signOut();
+    await auth.signInWithGoogle();
+    expect(await bookmarks.bookmarkedIds().first, {'saved-by-first'});
+
+    await auth.signOut();
+    id = 'second';
+    await auth.signInWithGoogle();
+    expect(await bookmarks.bookmarkedIds().first, isEmpty);
+  });
+
   testWidgets('no stored JWT -> boots to Sign-in', (tester) async {
     final api = ApiClient(baseUrl: 'https://api.test', tokenStore: _MemoryTokenStore());
     await api.init();

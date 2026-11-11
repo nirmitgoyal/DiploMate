@@ -33,7 +33,10 @@ class ApiClient {
         // Sliding renewal (D5 addendum): store and continue - never
         // interrupts an in-flight sync batch (state 4).
         final refreshed = response.headers.value('x-refreshed-token');
-        if (refreshed != null) {
+        final jwt = sessionJwt;
+        if (refreshed != null &&
+            jwt != null &&
+            response.requestOptions.headers['Authorization'] == 'Bearer $jwt') {
           sessionJwt = refreshed;
           tokenStore.write(refreshed); // fire-and-forget persist
         }
